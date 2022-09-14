@@ -2,10 +2,11 @@
 TARGET = Capstone_Project
 
 # Sources
-CPP_SOURCES = main.cpp
+SRC = ./src
+CPP_SOURCES = $(SRC)/main.cpp
 
 # Library Locations
-LIBDAISY_DIR = ../libDaisy
+LIBDAISY_DIR = ./libDaisy
 
 # Core location, and generic Makefile.
 SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
