@@ -3,7 +3,7 @@ TARGET = Capstone_Project
 
 # Sources
 SRC = ./src
-CPP_SOURCES = $(SRC)/main.cpp
+CPP_SOURCES = $(SRC)/main.cpp $(SRC)/Oscillator.cpp
 
 # Library Locations
 LIBDAISY_DIR = ./libDaisy

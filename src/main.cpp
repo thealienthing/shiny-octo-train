@@ -7,77 +7,61 @@
 // * Connect other end of resistor to pin D1 on the daisy.
 //
 #include "daisy_seed.h"
+#include "Oscillator.h"
 
 using namespace daisy;
 using namespace daisy::seed;
 
 DaisySeed hw;
+CpuLoadMeter cpuLoadMeter;
+float sample_rate;
+Oscillator osc;
+
+void AudioCallback( AudioHandle::InputBuffer in,
+                    AudioHandle::OutputBuffer out,
+                    size_t size)
+{
+    //Loop through sample block size and output
+    cpuLoadMeter.OnBlockStart();
+    for(size_t i = 0; i < size; i++) {
+        float sample = osc.get_sample();
+        out[0][i] = sample;
+        out[1][i] = sample;
+    }
+    cpuLoadMeter.OnBlockEnd();
+}
+
+void CPULoadCheck(const CpuLoadMeter& meter) {
+    // get the current load (smoothed value and peak values)
+    const float avgLoad = meter.GetAvgCpuLoad();
+    const float maxLoad = meter.GetMaxCpuLoad();
+    const float minLoad = meter.GetMinCpuLoad();
+    // print it to the serial connection (as percentages)
+    hw.PrintLine("Processing Load %:");
+    hw.PrintLine("Max: " FLT_FMT3, FLT_VAR3(maxLoad * 100.0f));
+    hw.PrintLine("Avg: " FLT_FMT3, FLT_VAR3(avgLoad * 100.0f));
+    hw.PrintLine("Min: " FLT_FMT3, FLT_VAR3(minLoad * 100.0f));
+}
 
 int main(void)
 {
     // Initialize the Daisy Seed hardware
     hw.Init();
-
-    // Create an LED
-    GPIO my_led;
-    GPIO my_button;
-    Encoder my_encoder;
-    int32_t enc_val = 0;
-    int32_t temp = 0;
-
-    // Initialize it to pin D1 as an OUTPUT
-    //my_led.Init(D28, GPIO::Mode::OUTPUT);
-    //my_button.Init(D15, GPIO::Mode::INPUT);
-    
-   
-    dsy_gpio_pin a, b, click;
-    a     = hw.GetPin(15);
-    b     = hw.GetPin(16);
-    click = hw.GetPin(17);
-    my_encoder.Init(a, b, click);
-
-    hw.StartLog(true);
+    hw.StartLog();
     hw.PrintLine("Program start");
+    cpuLoadMeter.Init(hw.AudioSampleRate(), hw.AudioBlockSize());
+    sample_rate = hw.AudioSampleRate();
+    osc.init(sample_rate);
+    hw.StartAudio(AudioCallback);
+    
+    
 
-
-    bool pressed = false;
-    // In an infinite loop, we'll continuously turn the LED on/off.
+    
     while(1)
     {
-        
-        //System::Delay(100);
-        temp = enc_val;
-        my_encoder.Debounce();
-        enc_val += my_encoder.Increment();
-        if(temp != enc_val) {
-            hw.PrintLine("Encoder value = %d", enc_val);
-        }
-
-        if(my_encoder.Pressed() && !pressed) {
-            pressed = true;
-            hw.PrintLine("Button press!");
-        }
-        else if(pressed) {
-            pressed = false;
-            hw.PrintLine("Button released!");
-        }
-
-
-        
-
-        // // Set the pin HIGH
-        // my_led.Write(true);
-        // // Wait half a second (500ms)
-        // System::Delay(500);
-        // // Set the pin LOW
-        // my_led.Write(false);
-        // // Wait another half a second (500ms)
-        // System::Delay(500);
-        // // You can also use Toggle to change the state
-        // my_led.Toggle();
-        // // Wait another half a second (500ms)
-        // System::Delay(500);
-        // // And once more to flip it back
-        // my_led.Toggle();
+        // don't spam the serial connection too much
+        CPULoadCheck(cpuLoadMeter);
+        hw.PrintLine("Sample rate = " FLT_FMT3, FLT_VAR3(sample_rate));
+        System::Delay(1000);
     }
 }
