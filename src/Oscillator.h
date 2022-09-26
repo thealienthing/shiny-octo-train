@@ -3,6 +3,7 @@
 class Oscillator {
 public:
     void init(float sample_rate);
+    void set_pitch(float pitch_hz);
     float get_sample();
 private:
     float _sample_rate = 0.0;

@@ -7,6 +7,10 @@ void Oscillator::init(float sample_rate) {
     _phase_delta = _phase;
 }
 
+void Oscillator::set_pitch(float pitch_hz) {
+    _pitch = pitch_hz;
+}
+
 float Oscillator::get_sample() {
     float sample = sinf(_pitch * _phase);
     _phase += _phase_delta;
