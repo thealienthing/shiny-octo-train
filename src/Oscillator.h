@@ -1,12 +1,25 @@
 #include <cmath>
 #include "utils.h"
+#include <random>
 
 enum WaveForm {
     Sin,
     Tri,
     Saw,
     Square,
-    Noise
+    WhiteNoise
+};
+
+class Noise {
+private:
+    const double _coefficient = 3.5829485 * (pow(0.1, 10.0));
+    int32_t _seed = 1;
+public:
+    Noise() {};
+    double process() {
+        _seed *= 2385;
+        return (_coefficient * _seed) * 1.0;
+    }
 };
 
 class Oscillator {
@@ -15,6 +28,7 @@ public:
     void set_pitch(float pitch_hz);
     void set_waveform(WaveForm waveform);
     float get_sample();
+    Noise noise;
 
     
     

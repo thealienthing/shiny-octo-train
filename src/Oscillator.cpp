@@ -21,17 +21,19 @@ void Oscillator::set_pitch(float pitch_hz)
     _phase = 0;
     _phase_delta = (1 / _sample_rate) * TWO_PI * _pitch;
     //_changing_pitch = true;
-    hw.PrintLine("Pitch pending");
+    //hw.PrintLine("Pitch pending");
 }
 
 void Oscillator::set_waveform(WaveForm waveform)
 {
     _waveform = waveform;
+    //hw.PrintLine("Waveform: %d", (int)waveform);
 }
 
 float Oscillator::get_sample()
 {
     float sample = 0.0;
+    float t = 0.0;
     // if(_changing_pitch) {
     //     if(((_phase >= 0.0) && (_phase <= START_OF_CYCLE))) {
     //         _changing_pitch = false;
@@ -46,15 +48,27 @@ float Oscillator::get_sample()
             sample = sinf(_phase);
             break;
         }
-        case WaveForm::Square: {
-            sample = (_phase < _half_cycle) ? 1.0f: -1.0f;
+        case WaveForm::Tri: {
+            t   = -1.0f + (2.0f * _phase * TWO_PI_RECIP);
+            sample = 2.0f * (fabsf(t) - 0.5f);
             break;
         }
         case WaveForm::Saw: {
             sample = ((_phase * TWO_PI_RECIP * 2.0f) * -1.0f) * -1.0f;
-        }
-        default:
             break;
+        }
+        case WaveForm::Square: {
+            sample = (_phase < _half_cycle) ? 1.0f: -1.0f;
+            break;
+        }
+        case WaveForm::WhiteNoise: {
+            sample = noise.process();
+            break;
+        }
+        default: {
+            sample = 0.0;
+            break;
+        }
     }
 
     _phase += _phase_delta;
