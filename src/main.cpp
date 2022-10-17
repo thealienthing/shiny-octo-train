@@ -1,11 +1,3 @@
-// GPIO Output
-// Example of toggling an LED on/off
-//
-// Setup:
-// * Connect the CATHODE (negative leg) of the LED to GND
-// * Connect the ANODE (positive leg, usually longer) of the LED to one side of a resistor (1K)
-// * Connect other end of resistor to pin D1 on the daisy.
-//
 #include "daisy_seed.h"
 #include "Oscillator.h"
 #include "hardware.h"
@@ -34,8 +26,6 @@ void AudioCallback( AudioHandle::InputBuffer in,
         sample = osc.get_sample() * 0.1;
         out[0][i] = sample;
         out[1][i] = sample;
-        // out[0][i] = 0.0f;
-        // out[1][i] = 0.0f;
     }
     cpuLoadMeter.OnBlockEnd();
 }
@@ -57,6 +47,10 @@ static void SerialDebugWriteString( const char txBuffer[],  int bufferSize){
     
 }
 
+float mtof(int note) {
+    return 440.0 * powf(2.0, (( (float)(note-69) )/12.0));
+}
+
 int main(void)
 {
     // Initialize the Daisy Seed hardware
@@ -76,23 +70,18 @@ int main(void)
     uart_config.pin_config.tx = {DSY_GPIOB, 6}; // (USART_1 TX) Daisy pin 14
 
     uart.Init(uart_config);
-    
-    int pitch = 0;
-    int wave = 0;
 
-    
     //cpuLoadMeter.Init(hw.AudioSampleRate(), hw.AudioBlockSize());
     sample_rate = hw.AudioSampleRate();
     osc.init(sample_rate);
     hw.StartAudio(AudioCallback);
-    SerialDebugWriteString("HELLO", 5);
-    //WaveForm waveform = WaveForm::WhiteNoise;
+    osc.set_waveform(WaveForm::Saw);
 
     char str[100];
     while(1)
     {
         midi.Listen();
-        bool pitch_changed = false;
+        float pitch_hz = 0.0;
         while(midi.HasEvents())
         {
             /** Pull the oldest one from the list... */
@@ -104,15 +93,10 @@ int main(void)
                     /** and change the frequency of the oscillator */
                     auto note_msg = msg.AsNoteOn();
                     if(note_msg.velocity != 0)
-                        //osc.SetFreq(mtof(note_msg.note));
-                        pitch++;
-                        pitch = pitch % 5;
-                        pitch_changed = true;
-                        sprintf(str, "Note %d played at channel %d with vel %d", note_msg.note, note_msg.channel, note_msg.velocity);
+                        pitch_hz = mtof(note_msg.note);
+                        osc.set_pitch(pitch_hz);
+                        sprintf(str, "MIDI %d - HZ %.3f\n", note_msg.note, pitch_hz);
                         SerialDebugWriteString(str, strlen(str));
-                        //SerialDebugWriteString(msg, 4);
-                        //uart.PollTx((uint8_t *)&msg[0],  4);
-                        
                 }
                 break;
                     // Since we only care about note-on messages in this example
@@ -120,31 +104,5 @@ int main(void)
                 default: break;
             }
         }
-        
-        //hw.PrintLine("Pitch set: %d", pitch);
-        if(pitch_changed) {
-            pitch_changed = false;
-            switch(pitch) {
-                case 0:
-                    osc.set_pitch(261.626);
-                    break;
-                case 1:
-                    osc.set_pitch(293.625);
-                    break;
-                case 2:
-                    osc.set_pitch(329.628);
-                    break;
-                case 3:
-                    osc.set_pitch(349.228);
-                    break;
-                case 4:
-                    osc.set_pitch(391.995);
-                    break;
-                
-            }
-        }
-        
-        
-
     }
 }
