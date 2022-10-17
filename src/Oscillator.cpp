@@ -1,5 +1,4 @@
 #include "daisy_seed.h"
-#include "hardware.h"
 #include "Oscillator.h"
 
 using namespace daisy;
