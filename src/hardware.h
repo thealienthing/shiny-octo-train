@@ -1,6 +1,9 @@
 #include "daisy_seed.h"
 
-//using namespace daisy;
-//using namespace daisy::seed;
+using namespace daisy;
+using namespace daisy::seed;
 
-//extern DaisySeed hw;
+//Hardware
+// DaisySeed synth_hw;
+// UartHandler synth_uart;
+// MidiUsbHandler synth_midi;

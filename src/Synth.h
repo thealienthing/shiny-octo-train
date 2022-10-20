@@ -1,5 +1,6 @@
 #include "daisy.h"
 #include "daisy_seed.h"
+#include "Voice.h"
 #include "Oscillator.h"
 
 using namespace daisy;
@@ -9,7 +10,7 @@ using namespace daisy::seed;
 class Synth {
 private:
     //Synth component data members
-    Oscillator _osc;
+    Voice _voice;
     float _amp = 0.5;
 
     //Audio data

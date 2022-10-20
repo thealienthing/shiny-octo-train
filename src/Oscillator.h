@@ -1,3 +1,6 @@
+#ifndef OSCILLATOR_H
+#define OSCILLATOR_H
+
 #include <cmath>
 #include "utils.h"
 #include <random>
@@ -43,3 +46,5 @@ private:
     bool _crossing_zero = false;
     bool _changing_pitch = false;
 };
+
+#endif

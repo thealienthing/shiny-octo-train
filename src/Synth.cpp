@@ -1,6 +1,5 @@
 #include "Synth.h"
 
-
 Synth::Synth(float sample_rate) {
     MidiUsbHandler::Config midi_cfg;
     midi_cfg.transport_config.periph = MidiUsbTransport::Config::INTERNAL;
@@ -19,12 +18,13 @@ Synth::Synth(float sample_rate) {
 
     //cpuLoadMeter.Init(hw.AudioSampleRate(), hw.AudioBlockSize());
     _sample_rate = sample_rate;
-    _osc.init(_sample_rate);
-    _osc.set_waveform(WaveForm::Saw);
+    _voice.init(_sample_rate);
+    _voice.set_waveform(Voice::Osc_Number::Osc1, WaveForm::Sin);
+    _voice.set_waveform(Voice::Osc_Number::Osc2, WaveForm::Saw);
 }
 
 float Synth::ProcessAudio() {
-    return _osc.get_sample() * _amp;
+    return _voice.get_sample() * _amp;
 }
 
 void Synth::ProcessHardware() {
@@ -43,7 +43,7 @@ void Synth::ProcessHardware() {
                 auto note_msg = msg.AsNoteOn();
                 if(note_msg.velocity != 0) {
                     pitch_hz = mtof(note_msg.note);
-                    _osc.set_pitch(pitch_hz);
+                    _voice.set_pitch(pitch_hz);
                     _amp = (float)note_msg.velocity / 127.0;
                     // sprintf(out, "MIDI %d - HZ %.3f\n", note_msg.note, pitch_hz);
                     sprintf(out, "MIDI %d ON VEL %d\n", note_msg.note, note_msg.velocity);
