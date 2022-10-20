@@ -1,21 +1,6 @@
 #include "Synth.h"
 
 Synth::Synth(float sample_rate) {
-    MidiUsbHandler::Config midi_cfg;
-    midi_cfg.transport_config.periph = MidiUsbTransport::Config::INTERNAL;
-    _midi.Init(midi_cfg);
-    UartHandler::Config uart_config;
-    uart_config.baudrate      = 115200;
-    uart_config.periph        = UartHandler::Config::Peripheral::USART_1;
-    uart_config.stopbits      = UartHandler::Config::StopBits::BITS_2;
-    uart_config.parity        = UartHandler::Config::Parity::NONE;
-    uart_config.mode          = UartHandler::Config::Mode::TX_RX;
-    uart_config.wordlength    = UartHandler::Config::WordLength::BITS_8;
-    uart_config.pin_config.rx = {DSY_GPIOB, 7}; // (USART_1 RX) Daisy pin 15
-    uart_config.pin_config.tx = {DSY_GPIOB, 6}; // (USART_1 TX) Daisy pin 14
-
-    _uart.Init(uart_config);
-
     //cpuLoadMeter.Init(hw.AudioSampleRate(), hw.AudioBlockSize());
     _sample_rate = sample_rate;
     _voice.init(_sample_rate);
@@ -28,13 +13,13 @@ float Synth::ProcessAudio() {
 }
 
 void Synth::ProcessHardware() {
-    _midi.Listen();
+    synth_midi.Listen();
     float pitch_hz = 0.0;
     char out[100];
-    while(_midi.HasEvents())
+    while(synth_midi.HasEvents())
     {
         /** Pull the oldest one from the list... */
-        auto msg = _midi.PopEvent();
+        auto msg = synth_midi.PopEvent();
         switch(msg.type)
         {
             case NoteOn:
@@ -70,7 +55,7 @@ void Synth::ProcessHardware() {
 
 
 void Synth::SerialDebugWriteString( const char txBuffer[],  int bufferSize){
-    _uart.PollTx((uint8_t *)&txBuffer[0],  bufferSize);
+    synth_uart.PollTx((uint8_t *)&txBuffer[0],  bufferSize);
     
 }
 

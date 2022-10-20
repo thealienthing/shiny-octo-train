@@ -1,3 +1,6 @@
+#ifndef SYNTH_H
+#define SYNTH_H
+
 #include "daisy.h"
 #include "daisy_seed.h"
 #include "Voice.h"
@@ -5,6 +8,10 @@
 
 using namespace daisy;
 using namespace daisy::seed;
+
+extern MidiUsbHandler synth_midi;
+extern UartHandler synth_uart;
+extern DaisySeed synth_seed;
 
 
 class Synth {
@@ -16,12 +23,6 @@ private:
     //Audio data
     float _sample_rate = 48000.0;
     
-    //Hardware
-    DaisySeed _hw;
-    UartHandler _uart;
-    MidiUsbHandler _midi;
-
-
     void AudioCallback( AudioHandle::InputBuffer in,
                         AudioHandle::OutputBuffer out,
                         size_t size);
@@ -34,3 +35,5 @@ public:
         int bufferSize);
 
 };
+
+#endif
