@@ -3,13 +3,21 @@
 Synth::Synth(float sample_rate) {
     //cpuLoadMeter.Init(hw.AudioSampleRate(), hw.AudioBlockSize());
     _sample_rate = sample_rate;
-    _voice.init(_sample_rate);
-    _voice.set_waveform(Voice::Osc_Number::Osc1, WaveForm::Sin);
-    _voice.set_waveform(Voice::Osc_Number::Osc2, WaveForm::Saw);
+    for(int i = 0; i < sizeof(_voices)/sizeof(Voice); i++) {
+        _voices[i].init(_sample_rate);
+        _voices[i].set_waveform(Voice::Osc_Number::Osc1, WaveForm::Sin);
+        _voices[i].set_waveform(Voice::Osc_Number::Osc2, WaveForm::Saw);
+    }
+    
 }
 
 float Synth::ProcessAudio() {
-    return _voice.get_sample() * _amp;
+    float sample = 0.0;
+    //float voice_balance = 1.0 / _voice_count;
+    for(int i = 0; i < _voice_count; i++) {
+       sample += _voices[i].get_sample();// * voice_balance;
+    }
+    return sample * _amp;
 }
 
 void Synth::ProcessHardware() {
@@ -24,24 +32,26 @@ void Synth::ProcessHardware() {
         {
             case NoteOn:
             {
+                MidiNoteOn(msg.AsNoteOn());
                 /** and change the frequency of the oscillator */
-                auto note_msg = msg.AsNoteOn();
-                if(note_msg.velocity != 0) {
-                    pitch_hz = mtof(note_msg.note);
-                    _voice.set_pitch(pitch_hz);
-                    _amp = (float)note_msg.velocity / 127.0;
+                // auto note_msg = msg.AsNoteOn();
+                // if(note_msg.velocity != 0) {
+                    // pitch_hz = mtof(note_msg.note);
+                    // _voices.set_pitch(pitch_hz);
+                    // _amp = (float)note_msg.velocity / 127.0;
                     // sprintf(out, "MIDI %d - HZ %.3f\n", note_msg.note, pitch_hz);
-                    sprintf(out, "MIDI %d ON VEL %d\n", note_msg.note, note_msg.velocity);
-                    SerialDebugWriteString(out, strlen(out));
-                }
+                    // sprintf(out, "MIDI %d ON VEL %d\n", note_msg.note, note_msg.velocity);
+                    // SerialDebugWriteString(out, strlen(out));
+                // }
                 break;
             }
             case NoteOff:
             {
-                auto note_msg = msg.AsNoteOff();
-                _amp = 0.0;
-                sprintf(out, "MIDI %d OFF VEL %d\n", note_msg.note, note_msg.velocity);
-                SerialDebugWriteString(out, strlen(out));
+                MidiNoteOff(msg.AsNoteOff());
+                // auto note_msg = msg.AsNoteOff();
+                // _amp = 0.0;
+                // sprintf(out, "MIDI %d OFF VEL %d\n", note_msg.note, note_msg.velocity);
+                // SerialDebugWriteString(out, strlen(out));
                 break;
             }
             break;
@@ -50,6 +60,60 @@ void Synth::ProcessHardware() {
             default: break;
         }
     }
+}
+
+void Synth::MidiNoteOn(NoteOnEvent event) {
+    //sprintf(_console_str, "MIDI %d ON VEL %d\n", event.note, event.velocity);
+    //SerialDebugWriteString(_console_str, strlen(_console_str));
+    if(_voice_count == NUM_VOICES) {
+        sprintf(_console_str, "Note %d! Max voices. Removing oldest voice\n", event.note);
+        SerialDebugWriteString(_console_str, strlen(_console_str));
+        for(int i = 0; i < NUM_VOICES-1; i++){
+            _voice_map[i] = _voice_map[i+1];
+            _voices[i].set_pitch(mtof(_voice_map[i].note));
+        }
+        _voice_map[NUM_VOICES-1] = event;
+    }
+    else {
+        _voice_map[_voice_count] = event;
+        _voices[_voice_count].set_pitch(mtof(event.note));
+        _voice_count++;
+        sprintf(_console_str, "Note %d! Voice count: %d\n", event.note, _voice_count);
+        SerialDebugWriteString(_console_str, strlen(_console_str));
+    }
+    PrintVoiceMap();
+}
+
+void Synth::MidiNoteOff(NoteOffEvent event) {
+    //sprintf(_console_str, "MIDI %d OFF VEL %d\n", event.note, event.velocity);
+    //SerialDebugWriteString(_console_str, strlen(_console_str));
+    if(_voice_count > 0) {
+        int i = 0;
+        //sprintf(_console_str, "Note off! Voice count: %d\n", _voice_count);
+        //SerialDebugWriteString(_console_str, strlen(_console_str));
+        for(; i < NUM_VOICES; i++) {
+            if(_voice_map[i].note == event.note){
+                //_voice_map[i] = NoteOnEvent();
+                break;
+            }
+        }
+        for(; i < _voice_count-1; i++) {
+            _voice_map[i] = _voice_map[i+1];
+            _voices[i].set_pitch(mtof(_voice_map[i].note));
+        }
+        _voice_map[_voice_count-1] = NoteOnEvent();
+        _voice_count--;
+    }
+    PrintVoiceMap();
+}
+
+void Synth::PrintVoiceMap() {
+    SerialDebugWriteString("VoiceMap[", 9);
+    for(int i = 0; i < NUM_VOICES; i++){
+        sprintf(_console_str, "%d,", _voice_map[i].note);
+        SerialDebugWriteString(_console_str, strlen(_console_str));
+    }
+    SerialDebugWriteString("]\n", 2);
 }
 
 
