@@ -54,6 +54,24 @@ void Synth::ProcessHardware() {
                 // SerialDebugWriteString(out, strlen(out));
                 break;
             }
+            case MidiMessageType::ControlChange:
+            {
+                auto cc_msg = msg.AsControlChange();
+                if(cc_msg.control_number == 5) {
+                    for(int i = 0; i < NUM_VOICES; i++) {
+                        _voices[i].set_osc_volume(Voice::Osc1, (float)cc_msg.value/127.0);
+                        
+                    }
+                }
+                else if(cc_msg.control_number == 84) {
+                    for(int i = 0; i < NUM_VOICES; i++) {
+                        _voices[i].set_osc_volume(Voice::Osc2, (float)cc_msg.value/127.0);
+                    }
+                }
+                sprintf(out, "CC MSG: CHAN %d | CTRL NUM %d | CC VAL %d\n",
+                    cc_msg.channel, cc_msg.control_number, cc_msg.value);
+                SerialDebugWriteString(out, strlen(out));
+            }
             break;
                 // Since we only care about note-on messages in this example
                 // we'll ignore all other message types
