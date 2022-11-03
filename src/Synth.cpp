@@ -72,13 +72,17 @@ void Synth::MidiCCProcess(ControlChangeEvent event) {
     switch(event.control_number) {
         case CC_OSC1_MIX_LEVEL: {
             for(int i = 0; i < NUM_VOICES; i++) {
-                _voices[i].set_osc_volume(Voice::Osc1, (float)event.value/127.0);
+                float volume = sqrtf((float)event.value/127.0);
+                _voices[i].set_osc_volume(Voice::Osc1, volume*0.5);
+                //sprintf(_console_str, "Volume is %f with midi val %d\n", volume, event.value);
+                //SerialDebugWriteString(_console_str, strlen(_console_str));
             }
             break;
         }
         case CC_OSC2_MIX_LEVEL: {
             for(int i = 0; i < NUM_VOICES; i++) {
-                _voices[i].set_osc_volume(Voice::Osc2, (float)event.value/127.0);
+                float volume = sqrtf((float)event.value/127.0);
+                _voices[i].set_osc_volume(Voice::Osc2, volume*0.5);
             }
             break;
         }

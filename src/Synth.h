@@ -27,7 +27,7 @@ private:
     uint8_t _voice_count = 0;
     char _console_str[64];
 
-    float _amp = 0.1;
+    float _amp = 0.25;
 
     //Audio data
     float _sample_rate = 48000.0;
