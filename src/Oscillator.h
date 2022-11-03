@@ -5,6 +5,8 @@
 #include "utils.h"
 #include <random>
 
+#define WAVEFORMS_TOTAL 5
+
 enum WaveForm {
     Sin,
     Tri,

@@ -19,6 +19,8 @@ extern DaisySeed synth_seed;
 class Synth {
 private:
     //Synth component data members
+    WaveForm _osc1_wf = WaveForm::Sin;
+    WaveForm _osc2_wf = WaveForm::Sin;
     Voice _voices[NUM_VOICES];
     NoteOnEvent _voice_map[NUM_VOICES];
 
@@ -49,6 +51,8 @@ public:
     */
     void MidiNoteOn(NoteOnEvent event);
     void MidiNoteOff(NoteOffEvent event);
+    void MidiCCProcess(ControlChangeEvent event);
+    void SetVoiceWaveform(Voice::Osc_Number osc, WaveForm waveform);
     void PrintVoiceMap();
 };
 

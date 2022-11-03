@@ -1,12 +1,13 @@
 #include "Synth.h"
+#include "midi_map.h"
 
 Synth::Synth(float sample_rate) {
     //cpuLoadMeter.Init(hw.AudioSampleRate(), hw.AudioBlockSize());
     _sample_rate = sample_rate;
     for(int i = 0; i < sizeof(_voices)/sizeof(Voice); i++) {
         _voices[i].init(_sample_rate);
-        _voices[i].set_waveform(Voice::Osc_Number::Osc1, WaveForm::Sin);
-        _voices[i].set_waveform(Voice::Osc_Number::Osc2, WaveForm::Saw);
+        _voices[i].set_waveform(Voice::Osc_Number::Osc1, _osc1_wf);
+        _voices[i].set_waveform(Voice::Osc_Number::Osc2, _osc2_wf);
     }
     
 }
@@ -56,21 +57,8 @@ void Synth::ProcessHardware() {
             }
             case MidiMessageType::ControlChange:
             {
-                auto cc_msg = msg.AsControlChange();
-                if(cc_msg.control_number == 5) {
-                    for(int i = 0; i < NUM_VOICES; i++) {
-                        _voices[i].set_osc_volume(Voice::Osc1, (float)cc_msg.value/127.0);
-                        
-                    }
-                }
-                else if(cc_msg.control_number == 84) {
-                    for(int i = 0; i < NUM_VOICES; i++) {
-                        _voices[i].set_osc_volume(Voice::Osc2, (float)cc_msg.value/127.0);
-                    }
-                }
-                sprintf(out, "CC MSG: CHAN %d | CTRL NUM %d | CC VAL %d\n",
-                    cc_msg.channel, cc_msg.control_number, cc_msg.value);
-                SerialDebugWriteString(out, strlen(out));
+                //auto cc_msg = msg.AsControlChange();
+                MidiCCProcess(msg.AsControlChange());
             }
             break;
                 // Since we only care about note-on messages in this example
@@ -78,6 +66,48 @@ void Synth::ProcessHardware() {
             default: break;
         }
     }
+}
+
+void Synth::MidiCCProcess(ControlChangeEvent event) {
+    switch(event.control_number) {
+        case CC_OSC1_MIX_LEVEL: {
+            for(int i = 0; i < NUM_VOICES; i++) {
+                _voices[i].set_osc_volume(Voice::Osc1, (float)event.value/127.0);
+            }
+            break;
+        }
+        case CC_OSC2_MIX_LEVEL: {
+            for(int i = 0; i < NUM_VOICES; i++) {
+                _voices[i].set_osc_volume(Voice::Osc2, (float)event.value/127.0);
+            }
+            break;
+        }
+        case CC_OSC1_WAVE_FORM: {
+            auto sel = event.value / (127 / WAVEFORMS_TOTAL);
+            if (sel >= WAVEFORMS_TOTAL) sel--;
+            if ((WaveForm) sel != _osc1_wf) {
+                _osc1_wf = (WaveForm)sel;
+                sprintf(_console_str, "WAVE SEL = %d\n", sel);
+                SerialDebugWriteString(_console_str, strlen(_console_str));
+                SetVoiceWaveform(Voice::Osc_Number::Osc1, _osc1_wf);
+            }
+            break;
+        }
+        case CC_OSC2_WAVE_FORM: {
+            auto sel = event.value / (127 / WAVEFORMS_TOTAL);
+            if (sel >= WAVEFORMS_TOTAL) sel--;
+            if ((WaveForm) sel != _osc2_wf) {
+                _osc2_wf = (WaveForm)sel;
+                sprintf(_console_str, "WAVE SEL = %d\n", sel);
+                SerialDebugWriteString(_console_str, strlen(_console_str));
+                SetVoiceWaveform(Voice::Osc_Number::Osc2, _osc2_wf);
+            }
+            break;
+        }
+    }
+    sprintf(_console_str, "CC MSG: CHAN %d | CTRL NUM %d | CC VAL %d\n",
+        event.channel, event.control_number, event.value);
+    SerialDebugWriteString(_console_str, strlen(_console_str));
 }
 
 void Synth::MidiNoteOn(NoteOnEvent event) {
@@ -134,11 +164,15 @@ void Synth::PrintVoiceMap() {
     SerialDebugWriteString("]\n", 2);
 }
 
-
-
 void Synth::SerialDebugWriteString( const char txBuffer[],  int bufferSize){
     synth_uart.PollTx((uint8_t *)&txBuffer[0],  bufferSize);
     
+}
+
+void Synth::SetVoiceWaveform(Voice::Osc_Number osc, WaveForm waveform) {
+    for(int i = 0; i < NUM_VOICES; i++){
+        _voices[i].set_waveform(osc, waveform);
+    }
 }
 
 float Synth::mtof(int note) {
