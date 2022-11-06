@@ -1,15 +1,60 @@
 #include "hardware.h"
+#include "Synth.h"
+
 
 MidiUsbHandler Hardware::synth_midi;
 DaisySeed Hardware::synth_hw;
 UartHandler Hardware::synth_uart;
+Synth* Hardware::synth;
 
-void Hardware::Callback(void* data)
+void Hardware::MIDICallback(void* data)
 {
-    /** Use system time to blink LED once per second (1023ms) */
-    bool led_state = (System::GetNow() & 1023) > 511;
-    /** Set LED */
-    synth_hw.SetLed(led_state);
+    bool led = (System::GetNow() & 1023) > 511;
+    synth_hw.SetLed(led);
+
+    synth_midi.Listen();
+    while(synth_midi.HasEvents())
+    {
+        /** Pull the oldest one from the list... */
+        auto msg = synth_midi.PopEvent();
+        //auto msg = MidiEvent();
+        switch(msg.type)
+        {
+            case NoteOn:
+            {
+                synth->MidiNoteOn(msg.AsNoteOn());
+                /** and change the frequency of the oscillator */
+                // auto note_msg = msg.AsNoteOn();
+                // if(note_msg.velocity != 0) {
+                    // pitch_hz = mtof(note_msg.note);
+                    // _voices.set_pitch(pitch_hz);
+                    // _amp = (float)note_msg.velocity / 127.0;
+                    // sprintf(out, "MIDI %d - HZ %.3f\n", note_msg.note, pitch_hz);
+                    // sprintf(out, "MIDI %d ON VEL %d\n", note_msg.note, note_msg.velocity);
+                    // SerialDebugWriteString(out, strlen(out));
+                // }
+                break;
+            }
+            case NoteOff:
+            {
+                synth->MidiNoteOff(msg.AsNoteOff());
+                // auto note_msg = msg.AsNoteOff();
+                // _amp = 0.0;
+                // sprintf(out, "MIDI %d OFF VEL %d\n", note_msg.note, note_msg.velocity);
+                // SerialDebugWriteString(out, strlen(out));
+                break;
+            }
+            case MidiMessageType::ControlChange:
+            {
+                //auto cc_msg = msg.AsControlChange();
+                synth->MidiCCProcess(msg.AsControlChange());
+            }
+            break;
+                // Since we only care about note-on messages in this example
+                // we'll ignore all other message types
+            default: break;
+        }
+    }
 }
 
 void Hardware::synth_hardware_init() {
@@ -44,14 +89,14 @@ void Hardware::synth_hardware_init() {
 
     /** Initialize timer */
     tim5.Init(tim_cfg);
-    tim5.SetCallback(Hardware::Callback);
+    tim5.SetCallback(MIDICallback);
 
     /** Start the timer, and generate callbacks at the end of each period */
     tim5.Start();
 }
 
-void Hardware::Test() {
-
+void Hardware::SynthConfig(Synth* s) {
+    synth = s;
 }
 
 

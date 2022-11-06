@@ -22,52 +22,6 @@ float Synth::ProcessAudio() {
     return sample * _amp;
 }
 
-void Synth::ProcessHardware() {
-    Hardware::synth_midi.Listen();
-    while(Hardware::synth_midi.HasEvents())
-    {
-        /** Pull the oldest one from the list... */
-        auto msg = Hardware::synth_midi.PopEvent();
-        //auto msg = MidiEvent();
-        switch(msg.type)
-        {
-            case NoteOn:
-            {
-                MidiNoteOn(msg.AsNoteOn());
-                /** and change the frequency of the oscillator */
-                // auto note_msg = msg.AsNoteOn();
-                // if(note_msg.velocity != 0) {
-                    // pitch_hz = mtof(note_msg.note);
-                    // _voices.set_pitch(pitch_hz);
-                    // _amp = (float)note_msg.velocity / 127.0;
-                    // sprintf(out, "MIDI %d - HZ %.3f\n", note_msg.note, pitch_hz);
-                    // sprintf(out, "MIDI %d ON VEL %d\n", note_msg.note, note_msg.velocity);
-                    // SerialDebugWriteString(out, strlen(out));
-                // }
-                break;
-            }
-            case NoteOff:
-            {
-                MidiNoteOff(msg.AsNoteOff());
-                // auto note_msg = msg.AsNoteOff();
-                // _amp = 0.0;
-                // sprintf(out, "MIDI %d OFF VEL %d\n", note_msg.note, note_msg.velocity);
-                // SerialDebugWriteString(out, strlen(out));
-                break;
-            }
-            case MidiMessageType::ControlChange:
-            {
-                //auto cc_msg = msg.AsControlChange();
-                MidiCCProcess(msg.AsControlChange());
-            }
-            break;
-                // Since we only care about note-on messages in this example
-                // we'll ignore all other message types
-            default: break;
-        }
-    }
-}
-
 void Synth::MidiCCProcess(ControlChangeEvent event) {
     switch(event.control_number) {
         case CC_OSC1_MIX_LEVEL: {

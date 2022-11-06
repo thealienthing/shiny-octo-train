@@ -33,9 +33,9 @@ int main(void)
     hw.synth_hardware_init();
     synth = new Synth(Hardware::synth_hw.AudioSampleRate());
     Hardware::synth_hw.StartAudio(AudioCallback);
+    hw.SynthConfig(synth);
     // Initialize the Daisy Seed hardware
     while(1)
     {
-        synth->ProcessHardware();
     }
 }

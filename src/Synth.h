@@ -30,13 +30,14 @@ private:
     //Audio data
     float _sample_rate = 48000.0;
     
+    
     void AudioCallback( AudioHandle::InputBuffer in,
                         AudioHandle::OutputBuffer out,
                         size_t size);
     float mtof(int note);
 public:
+    bool led = false;
     Synth(float sample_rate);
-    void ProcessHardware();
     float ProcessAudio();
     // void SerialDebugWriteString(const char txBuffer[],
     //     int bufferSize);

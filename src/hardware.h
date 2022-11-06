@@ -6,18 +6,22 @@
 using namespace daisy;
 using namespace daisy::seed;
 
+class Synth;
+
 class Hardware {
 public:
     Hardware () {}
     ~Hardware () {}
+
+    static Synth* synth;
     //Hardware
     static DaisySeed synth_hw;
     static UartHandler synth_uart;
     static MidiUsbHandler synth_midi;
-    static void Callback(void* data);
+    static void MIDICallback(void* data);
     void synth_hardware_init();
     void SerialDebugWriteString(const char txBuffer[], int bufferSize);
-    void Test();
+    void SynthConfig(Synth* s);
     
 };
 
