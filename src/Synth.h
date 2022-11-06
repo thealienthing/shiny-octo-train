@@ -5,20 +5,18 @@
 #include "daisy_seed.h"
 #include "Voice.h"
 #include "Oscillator.h"
+#include "hardware.h"
+
 
 #define NUM_VOICES 8
 
 using namespace daisy;
 using namespace daisy::seed;
 
-extern MidiUsbHandler synth_midi;
-extern UartHandler synth_uart;
-extern DaisySeed synth_seed;
-
-
 class Synth {
 private:
     //Synth component data members
+    Hardware hw;
     WaveForm _osc1_wf = WaveForm::Sin;
     WaveForm _osc2_wf = WaveForm::Sin;
     Voice _voices[NUM_VOICES];
@@ -40,8 +38,8 @@ public:
     Synth(float sample_rate);
     void ProcessHardware();
     float ProcessAudio();
-    void SerialDebugWriteString(const char txBuffer[],
-        int bufferSize);
+    // void SerialDebugWriteString(const char txBuffer[],
+    //     int bufferSize);
 
     /*
     These two midi note on/off commands buffer notes is a 

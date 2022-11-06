@@ -1,15 +1,17 @@
 #include <daisy.h>
 #include <daisy_seed.h>
-#include "Synth.h"
 #include "hardware.h"
+#include "Synth.h"
+
 
 using namespace daisy;
 using namespace daisy::seed;
 
 //static DaisySeed hw;
-extern DaisySeed synth_seed;
+//extern DaisySeed synth_seed;
 
 static Synth* synth;
+Hardware hw;
 
 void AudioCallback( AudioHandle::InputBuffer in,
                     AudioHandle::OutputBuffer out,
@@ -28,9 +30,9 @@ void AudioCallback( AudioHandle::InputBuffer in,
 
 int main(void)
 {
-    synth_hardware_init();
-    synth = new Synth(synth_hw.AudioSampleRate());
-    synth_hw.StartAudio(AudioCallback);
+    hw.synth_hardware_init();
+    synth = new Synth(Hardware::synth_hw.AudioSampleRate());
+    Hardware::synth_hw.StartAudio(AudioCallback);
     // Initialize the Daisy Seed hardware
     while(1)
     {
