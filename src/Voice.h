@@ -2,6 +2,7 @@
 #define VOICE_H
 
 #include "Oscillator.h"
+#include "Envelope.h"
 
 class Voice {
 public:
@@ -9,6 +10,7 @@ public:
         Osc1,
         Osc2
     };
+    Envelope amp_env;
     void set_pitch(float pitch_hz);
     void set_waveform(Osc_Number osc_num, WaveForm waveform);
     void set_osc_volume(Osc_Number osc_num, float amp);

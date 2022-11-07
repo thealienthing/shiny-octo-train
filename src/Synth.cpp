@@ -77,12 +77,14 @@ void Synth::MidiNoteOn(NoteOnEvent event) {
         for(int i = 0; i < NUM_VOICES-1; i++){
             _voice_map[i] = _voice_map[i+1];
             _voices[i].set_pitch(mtof(_voice_map[i].note));
+            _voices[i].amp_env.trigger();
         }
         _voice_map[NUM_VOICES-1] = event;
     }
     else {
         _voice_map[_voice_count] = event;
         _voices[_voice_count].set_pitch(mtof(event.note));
+        _voices[_voice_count].amp_env.trigger();
         _voice_count++;
         sprintf(_console_str, "Note %d! Voice count: %d\n", event.note, _voice_count);
         hw.SerialDebugWriteString(_console_str, strlen(_console_str));
@@ -107,6 +109,7 @@ void Synth::MidiNoteOff(NoteOffEvent event) {
             _voice_map[i] = _voice_map[i+1];
             _voices[i].set_pitch(mtof(_voice_map[i].note));
         }
+        _voices[_voice_count-1].amp_env.reset();
         _voice_map[_voice_count-1] = NoteOnEvent();
         _voice_count--;
     }

@@ -38,7 +38,7 @@ float Voice::get_sample()
 {
     float sample1 = _osc1.get_sample() * _osc1_amp;
     float sample2 = _osc2.get_sample() * _osc2_amp;
-    return sample1 + sample2;
+    return (sample1 + sample2) * amp_env.process();
 }
 
 void Voice::set_osc_volume(Osc_Number osc_num, float amp) {
