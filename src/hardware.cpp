@@ -7,11 +7,17 @@ DaisySeed Hardware::synth_hw;
 UartHandler Hardware::synth_uart;
 Synth* Hardware::synth;
 
-void Hardware::MIDICallback(void* data)
+void Hardware::Timer5Callback(void* data)
 {
     bool led = (System::GetNow() & 1023) > 511;
     synth_hw.SetLed(led);
 
+    MIDIProcess();
+    synth->AmpEnvelopeProcess();
+    
+}
+
+void Hardware::MIDIProcess() {
     synth_midi.Listen();
     while(synth_midi.HasEvents())
     {
@@ -75,24 +81,18 @@ void Hardware::synth_hardware_init() {
     synth_uart.Init(uart_config);
     
 
-    TimerHandle         tim5;
-    TimerHandle::Config tim_cfg;
-
-    /** TIM5 with IRQ enabled */
-    tim_cfg.periph     = TimerHandle::Config::Peripheral::TIM_5;
-    tim_cfg.enable_irq = true;
-
-    /** Configure frequency (30Hz) */
-    auto tim_target_freq = 30;
+    /** Setup timer to handle midi events */
+    TimerHandle         timer5;
+    TimerHandle::Config timer5_cfg;
+    /** timer5 with IRQ enabled */
+    timer5_cfg.periph     = TimerHandle::Config::Peripheral::TIM_5;
+    timer5_cfg.enable_irq = true;
+    auto tim_target_freq = TIMER5_SPEED_HZ; //Set frequency to 50hz
     auto tim_base_freq   = System::GetPClk2Freq();
-    tim_cfg.period       = tim_base_freq / tim_target_freq;
-
-    /** Initialize timer */
-    tim5.Init(tim_cfg);
-    tim5.SetCallback(MIDICallback);
-
-    /** Start the timer, and generate callbacks at the end of each period */
-    tim5.Start();
+    timer5_cfg.period       = tim_base_freq / tim_target_freq;
+    timer5.Init(timer5_cfg);
+    timer5.SetCallback(Timer5Callback);
+    timer5.Start();
 }
 
 void Hardware::SynthConfig(Synth* s) {

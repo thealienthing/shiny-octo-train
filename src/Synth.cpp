@@ -22,14 +22,37 @@ float Synth::ProcessAudio() {
     return sample * _amp;
 }
 
+void Synth::AmpEnvelopeSet(Envelope::Phase phase, uint8_t val) {
+    sprintf(_console_str, "AMP ENV PHASE %d = %d\n", (int)phase, val);
+    hw.SerialDebugWriteString(_console_str, strlen(_console_str));
+    for(uint8_t i = 0; i < NUM_VOICES; i++) {
+        if(phase == Envelope::Phase::ATTACK)
+            _voices[i].amp_env.set_attack(val);
+        else if(phase == Envelope::Phase::DECAY)
+            _voices[i].amp_env.set_decay(val);
+        else if(phase == Envelope::Phase::SUSTAIN)
+            _voices[i].amp_env.set_sustain(val);
+        else if(phase == Envelope::Phase::RELEASE)
+            _voices[i].amp_env.set_release(val);
+    }
+}
+
+void Synth::AmpEnvelopeProcess() {
+    for(uint8_t i = 0; i < NUM_VOICES; i++) {
+        if(_voices[i].amp_env.trigger_on) {
+            _voices[i].amp_env.process();
+        }
+    }
+}
+
 void Synth::MidiCCProcess(ControlChangeEvent event) {
     switch(event.control_number) {
+
+        //Oscillator Controls, waveform, mix level etc...
         case CC_OSC1_MIX_LEVEL: {
             for(int i = 0; i < NUM_VOICES; i++) {
                 float volume = sqrtf((float)event.value/127.0);
                 _voices[i].set_osc_volume(Voice::Osc1, volume*0.5);
-                //sprintf(_console_str, "Volume is %f with midi val %d\n", volume, event.value);
-                //SerialDebugWriteString(_console_str, strlen(_console_str));
             }
             break;
         }
@@ -62,10 +85,40 @@ void Synth::MidiCCProcess(ControlChangeEvent event) {
             }
             break;
         }
+
+        //Amp and filter envelope controls
+        case CC_AMP_ENV_ATTACK: {
+            AmpEnvelopeSet(Envelope::Phase::ATTACK, event.value);
+            break;
+        }
+        case CC_AMP_ENV_DECAY: {
+            AmpEnvelopeSet(Envelope::Phase::DECAY, event.value);
+            break;
+        }
+        case CC_AMP_ENV_SUSTAIN: {
+            AmpEnvelopeSet(Envelope::Phase::SUSTAIN, event.value);
+            break;
+        }
+        case CC_AMP_ENV_RELEASE: {
+            AmpEnvelopeSet(Envelope::Phase::RELEASE, event.value);
+            break;
+        }
+        case CC_FILTER_ENV_ATTACK: {
+            break;
+        }
+        case CC_FILTER_ENV_DECAY: {
+            break;
+        }
+        case CC_FILTER_ENV_SUSTAIN: {
+            break;
+        }
+        case CC_FILTER_ENV_RELEASE: {
+            break;
+        }
     }
-    sprintf(_console_str, "CC MSG: CHAN %d | CTRL NUM %d | CC VAL %d\n",
-        event.channel, event.control_number, event.value);
-    hw.SerialDebugWriteString(_console_str, strlen(_console_str));
+    //sprintf(_console_str, "CC MSG: CHAN %d | CTRL NUM %d | CC VAL %d\n",
+    //    event.channel, event.control_number, event.value);
+    //hw.SerialDebugWriteString(_console_str, strlen(_console_str));
 }
 
 void Synth::MidiNoteOn(NoteOnEvent event) {

@@ -13,13 +13,13 @@ void Envelope::reset() {
 
 float Envelope::process() {
     if(phase == Phase::ATTACK) {
-        val += 0.00001;
+        val += _attack;
         if(val >= 1.0) {
             phase = Phase::RELEASE;
         }
     }
     else if(phase == Phase::RELEASE) {
-        val -= 0.00002;
+        val -= _release;
         if(val <= 0.0) {
             phase = Phase::ATTACK;
         }
@@ -30,7 +30,9 @@ float Envelope::process() {
 }
 
 void Envelope::set_attack(uint8_t attack) {
-    _attack = attack;
+
+    //Calculate how much to increase amp volume per millisecond
+    _attack = 1.0 / ((attack/127.0)*TIMER5_SPEED_HZ*ENVELOPE_MAX_TIME);
 }
 
 void Envelope::set_decay(uint8_t decay) {
@@ -42,7 +44,7 @@ void Envelope::set_sustain(uint8_t sustain) {
 }
 
 void Envelope::set_release(uint8_t release) {
-    _release = release;
+    _release = 1.0 / ((release/127.0)*TIMER5_SPEED_HZ*ENVELOPE_MAX_TIME);
 }
 
 uint32_t Envelope::_sample_rate = 1000;

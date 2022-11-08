@@ -54,6 +54,8 @@ public:
     void MidiCCProcess(ControlChangeEvent event);
     void SetVoiceWaveform(Voice::Osc_Number osc, WaveForm waveform);
     void PrintVoiceMap();
+    void AmpEnvelopeSet(Envelope::Phase phase, uint8_t val);
+    void AmpEnvelopeProcess();
 };
 
 #endif

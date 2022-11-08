@@ -2,9 +2,13 @@
 #define ENVELOPE_H
 
 #include <stdint.h>
+#include "hardware.h"
+
+#define ENVELOPE_MAX_TIME 5
 
 class Envelope {
-    //Private enum for tracking what action is happening within the envelope
+public:
+    //Enum for tracking what action is happening within the envelope
     enum Phase {
         ATTACK,
         DECAY,
@@ -13,7 +17,8 @@ class Envelope {
         TAIL_OFF //For when note is changing before a release can be completed (when not enough voices)
     };
 
-public:
+    Hardware hw;
+
     Envelope() {}
     ~Envelope() {}
     float val = 0.0;
@@ -33,10 +38,10 @@ private:
     
 
     //Private setters for these variables since they will trigger a change in other variables
-    uint8_t _attack = 0;
-    uint8_t _decay = 0;
-    uint8_t _sustain = 0;
-    uint8_t _release = 0;
+    float _attack = 0;
+    float _decay = 0;
+    float _sustain = 0;
+    float _release = 0;
 
     //Can be reset by hardware interface which will reconfigure the timer
     static uint32_t _sample_rate; //hz
