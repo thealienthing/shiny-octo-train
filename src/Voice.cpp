@@ -9,7 +9,9 @@ extern DaisySeed hw;
 void Voice::init(float sample_rate)
 {
     _sample_rate = sample_rate;
+    _osc1_amp = 0.5;
     _osc1.init(_sample_rate);
+    _osc2_amp = 0.5;
     _osc2.init(_sample_rate);
 }
 
@@ -35,10 +37,16 @@ void Voice::set_waveform(Osc_Number osc_num, WaveForm waveform)
 }
 
 float Voice::get_sample()
-{
-    float sample1 = _osc1.get_sample() * _osc1_amp;
-    float sample2 = _osc2.get_sample() * _osc2_amp;
-    return (sample1 + sample2) * amp_env.val;
+{   
+    if(amp_env.phase != Envelope::Phase::TAIL_OFF) {
+        float sample1 = (_osc1.get_sample() * _osc1_amp)/NUM_VOICES;
+        float sample2 = (_osc2.get_sample() * _osc2_amp)/NUM_VOICES;
+        return (sample1 + sample2) * amp_env.val;
+    }
+    else {
+        return 0.0;
+    }
+    
 }
 
 void Voice::set_osc_volume(Osc_Number osc_num, float amp) {

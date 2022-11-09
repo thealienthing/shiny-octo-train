@@ -3,6 +3,7 @@
 
 #include "Oscillator.h"
 #include "Envelope.h"
+#include "system_consts.h"
 
 class Voice {
 public:

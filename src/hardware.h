@@ -19,12 +19,21 @@ public:
     static DaisySeed synth_hw;
     static UartHandler synth_uart;
     static MidiUsbHandler synth_midi;
+    static CpuLoadMeter synth_cpu;
+    static char _console_out[100];
+    static void SerialDebugWriteString(char txBuffer[]);
     void synth_hardware_init();
-    void SerialDebugWriteString(const char txBuffer[], int bufferSize);
+    
     void SynthConfig(Synth* s);
+
+    //Report triggers
+    static bool report_amp_env;
 private:
+    static int timer5_counter;
+    
     static void Timer5Callback(void* data);
     static void MIDIProcess();
+    static void CpuLoadReport();
 };
 
 #endif

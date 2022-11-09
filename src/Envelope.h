@@ -14,7 +14,8 @@ public:
         DECAY,
         SUSTAIN,
         RELEASE,
-        TAIL_OFF //For when note is changing before a release can be completed (when not enough voices)
+        TAIL_OFF, //For when note is changing before a release can be completed (when not enough voices)
+        READY
     };
 
     Hardware hw;
@@ -23,25 +24,26 @@ public:
     ~Envelope() {}
     float val = 0.0;
     bool trigger_on = false;
-    Phase phase = Phase::ATTACK;
+    Phase phase = Phase::READY;
     float process();
-    void trigger();
+    void gate_set(bool set);
     void reset();
-    void set_attack(uint8_t attack);
-    void set_decay(uint8_t decay);
-    void set_sustain(uint8_t sustain);
-    void set_release(uint8_t release);
-     
+
+    static float get_attack();
+    static float get_decay();
+    static float get_sustain();
+    static float get_release();
+    static void set_attack(uint8_t attack);
+    static void set_decay(uint8_t decay);
+    static void set_sustain(uint8_t sustain);
+    static void set_release(uint8_t release);
     
 private:
-
-    
-
     //Private setters for these variables since they will trigger a change in other variables
-    float _attack = 0;
-    float _decay = 0;
-    float _sustain = 0;
-    float _release = 0;
+    static float _attack;
+    static float _decay;
+    static float _sustain;
+    static float _release;
 
     //Can be reset by hardware interface which will reconfigure the timer
     static uint32_t _sample_rate; //hz

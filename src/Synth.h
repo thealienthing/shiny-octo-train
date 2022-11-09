@@ -7,9 +7,7 @@
 #include "Envelope.h"
 #include "Oscillator.h"
 #include "hardware.h"
-
-
-#define NUM_VOICES 8
+#include "system_consts.h"
 
 using namespace daisy;
 using namespace daisy::seed;
@@ -19,7 +17,7 @@ private:
     //Synth component data members
     Hardware hw;
     WaveForm _osc1_wf = WaveForm::Sin;
-    WaveForm _osc2_wf = WaveForm::Sin;
+    WaveForm _osc2_wf = WaveForm::Saw;
     Voice _voices[NUM_VOICES];
     NoteOnEvent _voice_map[NUM_VOICES];
 

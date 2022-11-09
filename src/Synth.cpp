@@ -23,23 +23,21 @@ float Synth::ProcessAudio() {
 }
 
 void Synth::AmpEnvelopeSet(Envelope::Phase phase, uint8_t val) {
-    sprintf(_console_str, "AMP ENV PHASE %d = %d\n", (int)phase, val);
-    hw.SerialDebugWriteString(_console_str, strlen(_console_str));
     for(uint8_t i = 0; i < NUM_VOICES; i++) {
         if(phase == Envelope::Phase::ATTACK)
-            _voices[i].amp_env.set_attack(val);
+            Envelope::set_attack(val);
         else if(phase == Envelope::Phase::DECAY)
-            _voices[i].amp_env.set_decay(val);
+            Envelope::set_decay(val);
         else if(phase == Envelope::Phase::SUSTAIN)
-            _voices[i].amp_env.set_sustain(val);
+            Envelope::set_sustain(val);
         else if(phase == Envelope::Phase::RELEASE)
-            _voices[i].amp_env.set_release(val);
+            Envelope::set_release(val);
     }
 }
 
 void Synth::AmpEnvelopeProcess() {
     for(uint8_t i = 0; i < NUM_VOICES; i++) {
-        if(_voices[i].amp_env.trigger_on) {
+        if(_voices[i].amp_env.phase != Envelope::Phase::TAIL_OFF) {
             _voices[i].amp_env.process();
         }
     }
@@ -69,7 +67,7 @@ void Synth::MidiCCProcess(ControlChangeEvent event) {
             if ((WaveForm) sel != _osc1_wf) {
                 _osc1_wf = (WaveForm)sel;
                 sprintf(_console_str, "WAVE SEL = %d\n", sel);
-                hw.SerialDebugWriteString(_console_str, strlen(_console_str));
+                Hardware::SerialDebugWriteString(Hardware::_console_out);
                 SetVoiceWaveform(Voice::Osc_Number::Osc1, _osc1_wf);
             }
             break;
@@ -80,7 +78,7 @@ void Synth::MidiCCProcess(ControlChangeEvent event) {
             if ((WaveForm) sel != _osc2_wf) {
                 _osc2_wf = (WaveForm)sel;
                 sprintf(_console_str, "WAVE SEL = %d\n", sel);
-                hw.SerialDebugWriteString(_console_str, strlen(_console_str));
+                Hardware::SerialDebugWriteString(Hardware::_console_out);
                 SetVoiceWaveform(Voice::Osc_Number::Osc2, _osc2_wf);
             }
             break;
@@ -118,7 +116,7 @@ void Synth::MidiCCProcess(ControlChangeEvent event) {
     }
     //sprintf(_console_str, "CC MSG: CHAN %d | CTRL NUM %d | CC VAL %d\n",
     //    event.channel, event.control_number, event.value);
-    //hw.SerialDebugWriteString(_console_str, strlen(_console_str));
+    //Hardware::SerialDebugWriteString(_console_str, strlen(_console_str));
 }
 
 void Synth::MidiNoteOn(NoteOnEvent event) {
@@ -126,21 +124,27 @@ void Synth::MidiNoteOn(NoteOnEvent event) {
     //SerialDebugWriteString(_console_str, strlen(_console_str));
     if(_voice_count == NUM_VOICES) {
         sprintf(_console_str, "Note %d! Max voices. Removing oldest voice\n", event.note);
-        hw.SerialDebugWriteString(_console_str, strlen(_console_str));
+        Hardware::SerialDebugWriteString(Hardware::_console_out);
         for(int i = 0; i < NUM_VOICES-1; i++){
             _voice_map[i] = _voice_map[i+1];
             _voices[i].set_pitch(mtof(_voice_map[i].note));
-            _voices[i].amp_env.trigger();
+            _voices[i].amp_env.gate_set(true);
         }
         _voice_map[NUM_VOICES-1] = event;
     }
     else {
-        _voice_map[_voice_count] = event;
-        _voices[_voice_count].set_pitch(mtof(event.note));
-        _voices[_voice_count].amp_env.trigger();
-        _voice_count++;
-        sprintf(_console_str, "Note %d! Voice count: %d\n", event.note, _voice_count);
-        hw.SerialDebugWriteString(_console_str, strlen(_console_str));
+        for(int i = 0; i < NUM_VOICES; i++) {
+            if(_voices[i].amp_env.phase == Envelope::Phase::READY) {
+                _voice_map[i] = event;
+                _voices[i].set_pitch(mtof(event.note));
+                _voices[i].amp_env.gate_set(true);
+                _voice_count++;
+                sprintf(_console_str, "Note %d! Voice count: %d\n", event.note, _voice_count);
+                Hardware::SerialDebugWriteString(Hardware::_console_out);
+                break;
+            }
+        }
+        
     }
     PrintVoiceMap();
 }
@@ -155,28 +159,31 @@ void Synth::MidiNoteOff(NoteOffEvent event) {
         for(; i < NUM_VOICES; i++) {
             if(_voice_map[i].note == event.note){
                 //_voice_map[i] = NoteOnEvent();
+                _voices[i].amp_env.gate_set(false);
+                _voice_count--;
                 break;
             }
         }
-        for(; i < _voice_count-1; i++) {
-            _voice_map[i] = _voice_map[i+1];
-            _voices[i].set_pitch(mtof(_voice_map[i].note));
-        }
-        _voices[_voice_count-1].amp_env.reset();
-        _voice_map[_voice_count-1] = NoteOnEvent();
-        _voice_count--;
+        //for(; i < _voice_count-1; i++) {
+        //    _voice_map[i] = _voice_map[i+1];
+        //    _voices[i].set_pitch(mtof(_voice_map[i].note));
+        //}
+        //_voices[_voice_count-1].amp_env.gate_set(false);
+        //_voice_map[_voice_count-1] = NoteOnEvent();
+        //_voice_count--;
     }
     PrintVoiceMap();
 }
 
 void Synth::PrintVoiceMap() {
-    
-    hw.SerialDebugWriteString("VoiceMap[", 9);
+    sprintf(Hardware::_console_out, "VoiceMap[");
+    Hardware::SerialDebugWriteString(Hardware::_console_out);
     for(int i = 0; i < NUM_VOICES; i++){
-        sprintf(_console_str, "%d,", _voice_map[i].note);
-        hw.SerialDebugWriteString(_console_str, strlen(_console_str));
+        sprintf(Hardware::_console_out, "%d,", _voice_map[i].note);
+        Hardware::SerialDebugWriteString(Hardware::_console_out);
     }
-    hw.SerialDebugWriteString("]\n", 2);
+    sprintf(Hardware::_console_out, "]\n");
+    Hardware::SerialDebugWriteString(Hardware::_console_out);
 }
 
 void Synth::SetVoiceWaveform(Voice::Osc_Number osc, WaveForm waveform) {

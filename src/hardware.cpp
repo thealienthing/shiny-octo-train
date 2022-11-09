@@ -5,16 +5,46 @@
 MidiUsbHandler Hardware::synth_midi;
 DaisySeed Hardware::synth_hw;
 UartHandler Hardware::synth_uart;
+CpuLoadMeter Hardware::synth_cpu;
+int Hardware::timer5_counter = 0;
+char Hardware::_console_out[];
+bool Hardware::report_amp_env = false;
 Synth* Hardware::synth;
 
 void Hardware::Timer5Callback(void* data)
 {
+    timer5_counter = (timer5_counter + 1) % TIMER5_SPEED_HZ;
+    synth_cpu.OnBlockStart();
     bool led = (System::GetNow() & 1023) > 511;
     synth_hw.SetLed(led);
+    if(timer5_counter == 0) {
+        //CpuLoadReport();
+    }
+    if(report_amp_env) {
+        sprintf(_console_out, "A=%f D=%f S=%f R=%f\n", Envelope::get_attack(), Envelope::get_decay(), Envelope::get_sustain(), Envelope::get_release());
+        SerialDebugWriteString(_console_out);
+        report_amp_env = false;
+    }
 
     MIDIProcess();
     synth->AmpEnvelopeProcess();
-    
+    synth_cpu.OnBlockEnd();
+    //CpuLoadReport();
+}
+
+void Hardware::CpuLoadReport() {
+    const float avgLoad = synth_cpu.GetAvgCpuLoad();
+    const float maxLoad = synth_cpu.GetMaxCpuLoad();
+    const float minLoad = synth_cpu.GetMinCpuLoad();
+    // print it to the serial connection (as percentages)
+    sprintf(_console_out, "====CPU Load====\n");
+    SerialDebugWriteString(_console_out);
+    sprintf(_console_out, "Max: %f\n", (maxLoad * 100.0f));
+    SerialDebugWriteString(_console_out);
+    sprintf(_console_out, "Avg: %f\n", (avgLoad * 100.0f));
+    SerialDebugWriteString(_console_out);
+    sprintf(_console_out, "Min: %f\n", (minLoad * 100.0f));
+    SerialDebugWriteString(_console_out);
 }
 
 void Hardware::MIDIProcess() {
@@ -79,6 +109,8 @@ void Hardware::synth_hardware_init() {
     uart_config.pin_config.rx = {DSY_GPIOB, 7}; // (USART_1 RX) Daisy pin 15
     uart_config.pin_config.tx = {DSY_GPIOB, 6}; // (USART_1 TX) Daisy pin 14
     synth_uart.Init(uart_config);
+
+    synth_cpu.Init(synth_hw.AudioSampleRate(), synth_hw.AudioBlockSize());
     
 
     /** Setup timer to handle midi events */
@@ -100,6 +132,6 @@ void Hardware::SynthConfig(Synth* s) {
 }
 
 
-void Hardware::SerialDebugWriteString( const char txBuffer[],  int bufferSize){
-    Hardware::synth_uart.PollTx((uint8_t *)&txBuffer[0],  bufferSize);
+void Hardware::SerialDebugWriteString(char txBuffer[] ){
+    Hardware::synth_uart.PollTx((uint8_t *)&txBuffer[0],  strlen(txBuffer));
 }

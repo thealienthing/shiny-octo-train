@@ -5,5 +5,8 @@
             "binaryPath": "/home/ben/Masters-Project/build/Capstone_Project.elf",
             "binaryArgs": []
         }
-    ]
+    ],
+    "files.associations": {
+        "variant": "cpp"
+    }
 }
