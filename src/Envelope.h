@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "hardware.h"
 
-#define ENVELOPE_MAX_TIME 5
+#define ENVELOPE_MAX_TIME_SEC 5
 
 class Envelope {
 public:
@@ -23,10 +23,10 @@ public:
     Envelope() {}
     ~Envelope() {}
     float val = 0.0;
-    bool trigger_on = false;
     Phase phase = Phase::READY;
     float process();
-    void gate_set(bool set);
+    void note_on();
+    void note_off();
     void reset();
 
     static float get_attack();
@@ -40,6 +40,7 @@ public:
     
 private:
     //Private setters for these variables since they will trigger a change in other variables
+    static uint16_t _attack_ms, _decay_ms, _release_ms;
     static float _attack;
     static float _decay;
     static float _sustain;

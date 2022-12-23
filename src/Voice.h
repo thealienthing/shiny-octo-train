@@ -17,6 +17,7 @@ public:
     void set_osc_volume(Osc_Number osc_num, float amp);
     void init(float sample_rate);
     float get_sample();
+    uint8_t note;
 private:
     float _pitch;
     float _sample_rate;

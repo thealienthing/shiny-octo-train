@@ -8,11 +8,13 @@ extern DaisySeed hw;
 
 void Voice::init(float sample_rate)
 {
+    note = 0;
     _sample_rate = sample_rate;
     _osc1_amp = 0.5;
     _osc1.init(_sample_rate);
     _osc2_amp = 0.5;
     _osc2.init(_sample_rate);
+    amp_env.reset();
 }
 
 void Voice::set_pitch(float pitch_hz)
