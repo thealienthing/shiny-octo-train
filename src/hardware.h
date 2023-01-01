@@ -1,7 +1,7 @@
 #ifndef HARDWARE_H
 #define HARDWARE_H
 
-#define TIMER5_SPEED_HZ 50
+#define ENV_PROCESS_SPEED_HZ 50
 
 #include "daisy_seed.h"
 

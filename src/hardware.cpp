@@ -13,7 +13,7 @@ Synth* Hardware::synth;
 
 void Hardware::Timer5Callback(void* data)
 {
-    timer5_counter = (timer5_counter + 1) % TIMER5_SPEED_HZ;
+    timer5_counter = (timer5_counter + 1) % ENV_PROCESS_SPEED_HZ;
     synth_cpu.OnBlockStart();
     bool led = (System::GetNow() & 1023) > 511;
     synth_hw.SetLed(led);
@@ -21,7 +21,8 @@ void Hardware::Timer5Callback(void* data)
         //CpuLoadReport();
     }
     if(report_amp_env) {
-        sprintf(_console_out, "A=%f D=%f S=%f R=%f\n", Envelope::get_attack(), Envelope::get_decay(), Envelope::get_sustain(), Envelope::get_release());
+        //sprintf(_console_out, "A=%f D=%f S=%f R=%f\n", Envelope::get_attack(), Envelope::get_decay(), Envelope::get_sustain(), Envelope::get_release());
+        synth->PrintVoiceInfo(7);
         SerialDebugWriteString(_console_out);
         report_amp_env = false;
     }
@@ -119,7 +120,7 @@ void Hardware::synth_hardware_init() {
     /** timer5 with IRQ enabled */
     timer5_cfg.periph     = TimerHandle::Config::Peripheral::TIM_5;
     timer5_cfg.enable_irq = true;
-    auto tim_target_freq = TIMER5_SPEED_HZ; //Set frequency to 50hz
+    auto tim_target_freq = ENV_PROCESS_SPEED_HZ; //Set frequency to 50hz
     auto tim_base_freq   = System::GetPClk2Freq();
     timer5_cfg.period       = tim_base_freq / tim_target_freq;
     timer5.Init(timer5_cfg);

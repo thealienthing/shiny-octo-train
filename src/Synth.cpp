@@ -16,8 +16,10 @@ Synth::Synth(float sample_rate) {
 float Synth::ProcessAudio() {
     float sample = 0.0;
     //float voice_balance = 1.0 / _voice_count;
-    for(uint8_t i = 0; i < _voice_count; i++) {
-       sample += _voices[i].get_sample();// * voice_balance;
+    for(uint8_t i = 0; i < NUM_VOICES; i++) {
+        if(_voices[i].amp_env.phase != Envelope::Phase::READY) {
+            sample += _voices[i].get_sample();// * voice_balance;
+        }
     }
     return sample * _amp;
 }
@@ -35,12 +37,22 @@ void Synth::AmpEnvelopeSet(Envelope::Phase phase, uint8_t val) {
     }
 }
 
+/*
+ * This is a timer callback function that is run triggers at rate ENV_PROCESS_SPEED_HZ
+*/
 void Synth::AmpEnvelopeProcess() {
     for(uint8_t i = 0; i < NUM_VOICES; i++) {
-        if(_voices[i].amp_env.phase != Envelope::Phase::TAIL_OFF) {
+        if(_voices[i].amp_env.phase != Envelope::Phase::READY) {
             _voices[i].amp_env.process();
+            if(_voices[i].amp_env.phase == Envelope::Phase::READY)
+                _voices[i].note = 0;
         }
     }
+}
+
+void Synth::PrintVoiceInfo(uint8_t voice) {
+    sprintf(Hardware::_console_out, "V%d PHZ=%d\n", voice, _voices[voice].amp_env.phase);
+    Hardware::SerialDebugWriteString(Hardware::_console_out);
 }
 
 void Synth::MidiCCProcess(ControlChangeEvent event) {
@@ -120,66 +132,56 @@ void Synth::MidiCCProcess(ControlChangeEvent event) {
 }
 
 void Synth::MidiNoteOn(NoteOnEvent event) {
-    //sprintf(_console_str, "MIDI %d ON VEL %d\n", event.note, event.velocity);
-    //SerialDebugWriteString(_console_str, strlen(_console_str));
-    if(_voice_count == NUM_VOICES) {
-        sprintf(_console_str, "Note %d! Max voices. Removing oldest voice\n", event.note);
-        Hardware::SerialDebugWriteString(Hardware::_console_out);
-        for(int i = 0; i < NUM_VOICES-1; i++){
-            _voice_map[i] = _voice_map[i+1];
-            _voices[i].set_pitch(mtof(_voice_map[i].note));
-            _voices[i].amp_env.gate_set(true);
+    uint8_t voice_index = UINT8_MAX;
+    for(int i = 0; i < NUM_VOICES; i++) {
+        //Note is already actively being played. Ignore this event
+        if(_voices[i].note == event.note) {
+            voice_index = UINT8_MAX;
+            _voices[i].amp_env.note_on();
+            break;
         }
-        _voice_map[NUM_VOICES-1] = event;
-    }
-    else {
-        for(int i = 0; i < NUM_VOICES; i++) {
-            if(_voices[i].amp_env.phase == Envelope::Phase::READY) {
-                _voice_map[i] = event;
-                _voices[i].set_pitch(mtof(event.note));
-                _voices[i].amp_env.gate_set(true);
-                _voice_count++;
-                sprintf(_console_str, "Note %d! Voice count: %d\n", event.note, _voice_count);
-                Hardware::SerialDebugWriteString(Hardware::_console_out);
-                break;
-            }
+        if(_voices[i].amp_env.phase == Envelope::Phase::READY) {
+            voice_index = i;  
         }
-        
     }
+
+    if(voice_index != UINT8_MAX) {
+        _voices[voice_index].note = event.note;
+        _voices[voice_index].set_pitch(mtof(event.note));
+        _voices[voice_index].amp_env.note_on();
+    }
+    
     PrintVoiceMap();
 }
 
 void Synth::MidiNoteOff(NoteOffEvent event) {
     //sprintf(_console_str, "MIDI %d OFF VEL %d\n", event.note, event.velocity);
     //SerialDebugWriteString(_console_str, strlen(_console_str));
-    if(_voice_count > 0) {
-        int i = 0;
-        //sprintf(_console_str, "Note off! Voice count: %d\n", _voice_count);
-        //SerialDebugWriteString(_console_str, strlen(_console_str));
-        for(; i < NUM_VOICES; i++) {
-            if(_voice_map[i].note == event.note){
-                //_voice_map[i] = NoteOnEvent();
-                _voices[i].amp_env.gate_set(false);
-                _voice_count--;
-                break;
-            }
+    int i = 0;
+    //sprintf(_console_str, "Note off! Voice count: %d\n", _voice_count);
+    //SerialDebugWriteString(_console_str, strlen(_console_str));
+    for(; i < NUM_VOICES; i++) {
+        if(_voices[i].note == event.note){
+            _voices[i].amp_env.note_off();
+            break;
         }
-        //for(; i < _voice_count-1; i++) {
-        //    _voice_map[i] = _voice_map[i+1];
-        //    _voices[i].set_pitch(mtof(_voice_map[i].note));
-        //}
-        //_voices[_voice_count-1].amp_env.gate_set(false);
-        //_voice_map[_voice_count-1] = NoteOnEvent();
-        //_voice_count--;
     }
+    //for(; i < _voice_count-1; i++) {
+    //    _voice_map[i] = _voice_map[i+1];
+    //    _voices[i].set_pitch(mtof(_voice_map[i].note));
+    //}
+    //_voices[_voice_count-1].amp_env.gate_set(false);
+    //_voice_map[_voice_count-1] = NoteOnEvent();
+    //_voice_count--;
+
     PrintVoiceMap();
 }
 
 void Synth::PrintVoiceMap() {
-    sprintf(Hardware::_console_out, "VoiceMap[");
+    sprintf(Hardware::_console_out, "VoiceMap[%d", _voices[0].note);
     Hardware::SerialDebugWriteString(Hardware::_console_out);
-    for(int i = 0; i < NUM_VOICES; i++){
-        sprintf(Hardware::_console_out, "%d,", _voice_map[i].note);
+    for(int i = 1; i < NUM_VOICES; i++){
+        sprintf(Hardware::_console_out, ",%d", _voices[i].note);
         Hardware::SerialDebugWriteString(Hardware::_console_out);
     }
     sprintf(Hardware::_console_out, "]\n");
