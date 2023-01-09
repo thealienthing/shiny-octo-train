@@ -2,10 +2,12 @@
 #include "Synth.h"
 
 
-MidiUsbHandler Hardware::synth_midi;
+//MidiUsbHandler Hardware::synth_midi;
+
 DaisySeed Hardware::synth_hw;
-UartHandler Hardware::synth_uart;
+//UartHandler Hardware::synth_uart;
 CpuLoadMeter Hardware::synth_cpu;
+I2CHandle Hardware::i2c;
 int Hardware::timer5_counter = 0;
 char Hardware::_console_out[];
 bool Hardware::report_amp_env = false;
@@ -15,15 +17,15 @@ void Hardware::Timer5Callback(void* data)
 {
     timer5_counter = (timer5_counter + 1) % ENV_PROCESS_SPEED_HZ;
     synth_cpu.OnBlockStart();
-    bool led = (System::GetNow() & 1023) > 511;
-    synth_hw.SetLed(led);
+    //bool led = (System::GetNow() & 1023) > 511;
+    //synth_hw.SetLed(led);
     if(timer5_counter == 0) {
         //CpuLoadReport();
     }
     if(report_amp_env) {
         //sprintf(_console_out, "A=%f D=%f S=%f R=%f\n", Envelope::get_attack(), Envelope::get_decay(), Envelope::get_sustain(), Envelope::get_release());
         synth->PrintVoiceInfo(7);
-        SerialDebugWriteString(_console_out);
+        //SerialDebugWriteString(_console_out);
         report_amp_env = false;
     }
 
@@ -39,20 +41,21 @@ void Hardware::CpuLoadReport() {
     const float minLoad = synth_cpu.GetMinCpuLoad();
     // print it to the serial connection (as percentages)
     sprintf(_console_out, "====CPU Load====\n");
-    SerialDebugWriteString(_console_out);
+    //SerialDebugWriteString(_console_out);
     sprintf(_console_out, "Max: %f\n", (maxLoad * 100.0f));
-    SerialDebugWriteString(_console_out);
+    //SerialDebugWriteString(_console_out);
     sprintf(_console_out, "Avg: %f\n", (avgLoad * 100.0f));
-    SerialDebugWriteString(_console_out);
+    //SerialDebugWriteString(_console_out);
     sprintf(_console_out, "Min: %f\n", (minLoad * 100.0f));
-    SerialDebugWriteString(_console_out);
+    //SerialDebugWriteString(_console_out);
 }
 
 void Hardware::MIDIProcess() {
+    /*
     synth_midi.Listen();
     while(synth_midi.HasEvents())
     {
-        /** Pull the oldest one from the list... */
+        // Pull the oldest one from the list...
         auto msg = synth_midi.PopEvent();
         //auto msg = MidiEvent();
         switch(msg.type)
@@ -60,7 +63,7 @@ void Hardware::MIDIProcess() {
             case NoteOn:
             {
                 synth->MidiNoteOn(msg.AsNoteOn());
-                /** and change the frequency of the oscillator */
+                //and change the frequency of the oscillator 
                 // auto note_msg = msg.AsNoteOn();
                 // if(note_msg.velocity != 0) {
                     // pitch_hz = mtof(note_msg.note);
@@ -92,24 +95,30 @@ void Hardware::MIDIProcess() {
             default: break;
         }
     }
+    */
 }
 
 void Hardware::synth_hardware_init() {
     synth_hw.Init();
     synth_hw.Configure();
-    MidiUsbHandler::Config midi_cfg;
-    midi_cfg.transport_config.periph = MidiUsbTransport::Config::INTERNAL;
-    synth_midi.Init(midi_cfg);
-    UartHandler::Config uart_config;
-    uart_config.baudrate      = 115200;
-    uart_config.periph        = UartHandler::Config::Peripheral::USART_1;
-    uart_config.stopbits      = UartHandler::Config::StopBits::BITS_2;
-    uart_config.parity        = UartHandler::Config::Parity::NONE;
-    uart_config.mode          = UartHandler::Config::Mode::TX_RX;
-    uart_config.wordlength    = UartHandler::Config::WordLength::BITS_8;
-    uart_config.pin_config.rx = {DSY_GPIOB, 7}; // (USART_1 RX) Daisy pin 15
-    uart_config.pin_config.tx = {DSY_GPIOB, 6}; // (USART_1 TX) Daisy pin 14
-    synth_uart.Init(uart_config);
+    synth_hw.StartLog(false);
+    //MidiUsbHandler::Config midi_cfg;
+    //midi_cfg.transport_config.periph = MidiUsbTransport::Config::INTERNAL;
+    //synth_midi.Init(midi_cfg);
+
+
+    
+    // UartHandler::Config uart_config;
+    // uart_config.baudrate      = 115200;
+    // uart_config.periph        = UartHandler::Config::Peripheral::USART_1;
+    // uart_config.stopbits      = UartHandler::Config::StopBits::BITS_2;
+    // uart_config.parity        = UartHandler::Config::Parity::NONE;
+    // uart_config.mode          = UartHandler::Config::Mode::TX_RX;
+    // uart_config.wordlength    = UartHandler::Config::WordLength::BITS_8;
+    // uart_config.pin_config.rx = {DSY_GPIOB, 7}; // (USART_1 RX) Daisy pin 15
+    // uart_config.pin_config.tx = {DSY_GPIOB, 6}; // (USART_1 TX) Daisy pin 14
+
+    //synth_uart.Init(uart_config);
 
     synth_cpu.Init(synth_hw.AudioSampleRate(), synth_hw.AudioBlockSize());
     
@@ -126,6 +135,24 @@ void Hardware::synth_hardware_init() {
     timer5.Init(timer5_cfg);
     timer5.SetCallback(Timer5Callback);
     timer5.Start();
+
+    // setup the configuration
+    I2CHandle::Config i2c_conf;
+    i2c_conf.periph = I2CHandle::Config::Peripheral::I2C_1;
+    i2c_conf.speed  = I2CHandle::Config::Speed::I2C_100KHZ;
+    i2c_conf.mode   = I2CHandle::Config::Mode::I2C_MASTER;
+    i2c_conf.pin_config.scl  = {DSY_GPIOB, 8};
+    i2c_conf.pin_config.sda  = {DSY_GPIOB, 9};
+    // initialise the peripheral
+    i2c.Init(i2c_conf);
+    lcd_init(&i2c);
+    // now i2c points to the corresponding peripheral and can be used.
+}
+
+void Hardware::LCD_SetScreen(char* str) {
+    lcd_clear(&i2c);
+    lcd_put_cur(&i2c, 0, 0);
+    lcd_send_string(&i2c, str);
 }
 
 void Hardware::SynthConfig(Synth* s) {

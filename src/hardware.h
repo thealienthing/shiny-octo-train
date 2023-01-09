@@ -4,6 +4,7 @@
 #define ENV_PROCESS_SPEED_HZ 50
 
 #include "daisy_seed.h"
+#include "i2c-lcd.h"
 
 using namespace daisy;
 using namespace daisy::seed;
@@ -20,6 +21,7 @@ public:
     static UartHandler synth_uart;
     static MidiUsbHandler synth_midi;
     static CpuLoadMeter synth_cpu;
+    static I2CHandle i2c;
     static char _console_out[100];
     static void SerialDebugWriteString(char txBuffer[]);
     void synth_hardware_init();
@@ -28,6 +30,7 @@ public:
 
     //Report triggers
     static bool report_amp_env;
+    void LCD_SetScreen(char* str);
 private:
     static int timer5_counter;
     

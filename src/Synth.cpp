@@ -52,7 +52,7 @@ void Synth::AmpEnvelopeProcess() {
 
 void Synth::PrintVoiceInfo(uint8_t voice) {
     sprintf(Hardware::_console_out, "V%d PHZ=%d\n", voice, _voices[voice].amp_env.phase);
-    Hardware::SerialDebugWriteString(Hardware::_console_out);
+    //Hardware::SerialDebugWriteString(Hardware::_console_out);
 }
 
 void Synth::MidiCCProcess(ControlChangeEvent event) {
@@ -79,7 +79,7 @@ void Synth::MidiCCProcess(ControlChangeEvent event) {
             if ((WaveForm) sel != _osc1_wf) {
                 _osc1_wf = (WaveForm)sel;
                 sprintf(_console_str, "WAVE SEL = %d\n", sel);
-                Hardware::SerialDebugWriteString(Hardware::_console_out);
+                //Hardware::SerialDebugWriteString(Hardware::_console_out);
                 SetVoiceWaveform(Voice::Osc_Number::Osc1, _osc1_wf);
             }
             break;
@@ -90,7 +90,7 @@ void Synth::MidiCCProcess(ControlChangeEvent event) {
             if ((WaveForm) sel != _osc2_wf) {
                 _osc2_wf = (WaveForm)sel;
                 sprintf(_console_str, "WAVE SEL = %d\n", sel);
-                Hardware::SerialDebugWriteString(Hardware::_console_out);
+                //Hardware::SerialDebugWriteString(Hardware::_console_out);
                 SetVoiceWaveform(Voice::Osc_Number::Osc2, _osc2_wf);
             }
             break;
@@ -179,13 +179,13 @@ void Synth::MidiNoteOff(NoteOffEvent event) {
 
 void Synth::PrintVoiceMap() {
     sprintf(Hardware::_console_out, "VoiceMap[%d", _voices[0].note);
-    Hardware::SerialDebugWriteString(Hardware::_console_out);
+    //Hardware::SerialDebugWriteString(Hardware::_console_out);
     for(int i = 1; i < NUM_VOICES; i++){
         sprintf(Hardware::_console_out, ",%d", _voices[i].note);
-        Hardware::SerialDebugWriteString(Hardware::_console_out);
+        //Hardware::SerialDebugWriteString(Hardware::_console_out);
     }
     sprintf(Hardware::_console_out, "]\n");
-    Hardware::SerialDebugWriteString(Hardware::_console_out);
+    //Hardware::SerialDebugWriteString(Hardware::_console_out);
 }
 
 void Synth::SetVoiceWaveform(Voice::Osc_Number osc, WaveForm waveform) {
