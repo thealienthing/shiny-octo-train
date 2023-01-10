@@ -3,7 +3,7 @@
 
 
 //MidiUsbHandler Hardware::synth_midi;
-
+MidiUartHandler Hardware::synth_midi;
 DaisySeed Hardware::synth_hw;
 //UartHandler Hardware::synth_uart;
 CpuLoadMeter Hardware::synth_cpu;
@@ -21,6 +21,7 @@ void Hardware::Timer5Callback(void* data)
     //synth_hw.SetLed(led);
     if(timer5_counter == 0) {
         //CpuLoadReport();
+        //synth_hw.PrintLine("Tick...");
     }
     if(report_amp_env) {
         //sprintf(_console_out, "A=%f D=%f S=%f R=%f\n", Envelope::get_attack(), Envelope::get_decay(), Envelope::get_sustain(), Envelope::get_release());
@@ -51,10 +52,10 @@ void Hardware::CpuLoadReport() {
 }
 
 void Hardware::MIDIProcess() {
-    /*
     synth_midi.Listen();
     while(synth_midi.HasEvents())
     {
+        
         // Pull the oldest one from the list...
         auto msg = synth_midi.PopEvent();
         //auto msg = MidiEvent();
@@ -62,6 +63,8 @@ void Hardware::MIDIProcess() {
         {
             case NoteOn:
             {
+                synth_hw.SetLed(true);
+                //LCD_SetScreen("NoteOn!");
                 synth->MidiNoteOn(msg.AsNoteOn());
                 //and change the frequency of the oscillator 
                 // auto note_msg = msg.AsNoteOn();
@@ -77,6 +80,8 @@ void Hardware::MIDIProcess() {
             }
             case NoteOff:
             {
+                synth_hw.SetLed(false);
+                //LCD_SetScreen("NoteOff!");
                 synth->MidiNoteOff(msg.AsNoteOff());
                 // auto note_msg = msg.AsNoteOff();
                 // _amp = 0.0;
@@ -95,20 +100,36 @@ void Hardware::MIDIProcess() {
             default: break;
         }
     }
-    */
 }
 
 void Hardware::synth_hardware_init() {
     synth_hw.Init();
     synth_hw.Configure();
     synth_hw.StartLog(false);
+    
+    //MidiHandler<MidiUartTransport>::Config midi_cfg;
+    
+    MidiUartHandler::Config midi_config;
+    midi_config.transport_config.periph = UartHandler::Config::Peripheral::USART_1;
+    midi_config.transport_config.tx = {DSY_GPIOB, 6}; // (USART_6 TX)
+    midi_config.transport_config.rx = {DSY_GPIOB, 7}; // (USART_6 RX)
+    synth_midi.Init(midi_config);
+    synth_midi.StartReceive();
+    
+    
+    
     //MidiUsbHandler::Config midi_cfg;
     //midi_cfg.transport_config.periph = MidiUsbTransport::Config::INTERNAL;
     //synth_midi.Init(midi_cfg);
-
-
+    //MidiUartTransport::Config midi_cfg;
+    //midi_cfg.periph = UartHandler::Config::Peripheral::USART_1;
+    //midi_cfg.tx = {DSY_GPIOB, 6}; // (USART_1 TX) Daisy pin 14
+    //midi_cfg.rx = {DSY_GPIOB, 7}; // (USART_1 RX) Daisy pin 15
+    //synth_midi = MidiUartHandler<midi_transport>;
     
-    // UartHandler::Config uart_config;
+    
+    // MidiUartHandler::Config uart_config;
+    // uart_config.
     // uart_config.baudrate      = 115200;
     // uart_config.periph        = UartHandler::Config::Peripheral::USART_1;
     // uart_config.stopbits      = UartHandler::Config::StopBits::BITS_2;
@@ -117,7 +138,7 @@ void Hardware::synth_hardware_init() {
     // uart_config.wordlength    = UartHandler::Config::WordLength::BITS_8;
     // uart_config.pin_config.rx = {DSY_GPIOB, 7}; // (USART_1 RX) Daisy pin 15
     // uart_config.pin_config.tx = {DSY_GPIOB, 6}; // (USART_1 TX) Daisy pin 14
-
+    // synth_midi.Init(uart_config);
     //synth_uart.Init(uart_config);
 
     synth_cpu.Init(synth_hw.AudioSampleRate(), synth_hw.AudioBlockSize());
@@ -137,6 +158,7 @@ void Hardware::synth_hardware_init() {
     timer5.Start();
 
     // setup the configuration
+    
     I2CHandle::Config i2c_conf;
     i2c_conf.periph = I2CHandle::Config::Peripheral::I2C_1;
     i2c_conf.speed  = I2CHandle::Config::Speed::I2C_100KHZ;
@@ -146,6 +168,7 @@ void Hardware::synth_hardware_init() {
     // initialise the peripheral
     i2c.Init(i2c_conf);
     lcd_init(&i2c);
+    
     // now i2c points to the corresponding peripheral and can be used.
 }
 
@@ -161,5 +184,5 @@ void Hardware::SynthConfig(Synth* s) {
 
 
 void Hardware::SerialDebugWriteString(char txBuffer[] ){
-    Hardware::synth_uart.PollTx((uint8_t *)&txBuffer[0],  strlen(txBuffer));
+    //Hardware::synth_uart.PollTx((uint8_t *)&txBuffer[0],  strlen(txBuffer));
 }

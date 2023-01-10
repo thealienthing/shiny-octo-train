@@ -19,7 +19,8 @@ public:
     //Hardware
     static DaisySeed synth_hw;
     static UartHandler synth_uart;
-    static MidiUsbHandler synth_midi;
+    //static MidiUsbHandler synth_midi;
+    static MidiUartHandler synth_midi;
     static CpuLoadMeter synth_cpu;
     static I2CHandle i2c;
     static char _console_out[100];
@@ -30,7 +31,7 @@ public:
 
     //Report triggers
     static bool report_amp_env;
-    void LCD_SetScreen(char* str);
+    static void LCD_SetScreen(char* str);
 private:
     static int timer5_counter;
     

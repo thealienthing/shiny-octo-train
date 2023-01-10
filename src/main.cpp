@@ -38,11 +38,11 @@ int main(void)
     // Initialize the Daisy Seed hardware
     while(1)
     {
-        hw.synth_hw.DelayMs(500);
-        hw.LCD_SetScreen("Hello");
-        hw.synth_hw.PrintLine("Log Hello");
-        hw.synth_hw.DelayMs(500);
-        hw.LCD_SetScreen("Goodbye");
-        hw.synth_hw.PrintLine("Log Goodbye");
+        // hw.synth_hw.DelayMs(500);
+        // hw.LCD_SetScreen("Hello");
+        // hw.synth_hw.PrintLine("Log Hello");
+        // hw.synth_hw.DelayMs(500);
+        // hw.LCD_SetScreen("Goodbye");
+        // hw.synth_hw.PrintLine("Log Goodbye");
     }
 }
