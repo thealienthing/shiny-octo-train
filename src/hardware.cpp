@@ -15,18 +15,21 @@ Synth* Hardware::synth;
 
 void Hardware::Timer5Callback(void* data)
 {
-    timer5_counter = (timer5_counter + 1) % ENV_PROCESS_SPEED_HZ;
+    //timer5_counter = (timer5_counter + 1) % ENV_PROCESS_SPEED_HZ;
+    timer5_counter = (timer5_counter + 1) % 10;
     synth_cpu.OnBlockStart();
-    //bool led = (System::GetNow() & 1023) > 511;
-    //synth_hw.SetLed(led);
     if(timer5_counter == 0) {
+        int knob_read[KNOB_COUNT];
+        for(int i = 0; i < KNOB_COUNT; i++){
+            knob_read[i] = synth_hw.adc.Get(i)/516;
+        }
+        sprintf(_console_out, "%d %d %d %d",
+            knob_read[0], knob_read[1], knob_read[2],
+            knob_read[3]);
+        LCD_SetScreen(_console_out);
         //CpuLoadReport();
-        //synth_hw.PrintLine("Tick...");
     }
     if(report_amp_env) {
-        //sprintf(_console_out, "A=%f D=%f S=%f R=%f\n", Envelope::get_attack(), Envelope::get_decay(), Envelope::get_sustain(), Envelope::get_release());
-        synth->PrintVoiceInfo(7);
-        //SerialDebugWriteString(_console_out);
         report_amp_env = false;
     }
 
@@ -64,7 +67,6 @@ void Hardware::MIDIProcess() {
             case NoteOn:
             {
                 synth_hw.SetLed(true);
-                //LCD_SetScreen("NoteOn!");
                 synth->MidiNoteOn(msg.AsNoteOn());
                 //and change the frequency of the oscillator 
                 // auto note_msg = msg.AsNoteOn();
@@ -81,7 +83,6 @@ void Hardware::MIDIProcess() {
             case NoteOff:
             {
                 synth_hw.SetLed(false);
-                //LCD_SetScreen("NoteOff!");
                 synth->MidiNoteOff(msg.AsNoteOff());
                 // auto note_msg = msg.AsNoteOff();
                 // _amp = 0.0;
@@ -103,46 +104,32 @@ void Hardware::MIDIProcess() {
 }
 
 void Hardware::synth_hardware_init() {
+    //Boiler plate hardware setup
     synth_hw.Init();
     synth_hw.Configure();
     synth_hw.StartLog(false);
     
-    //MidiHandler<MidiUartTransport>::Config midi_cfg;
-    
+    //Set up MIDI DIN connection
     MidiUartHandler::Config midi_config;
     midi_config.transport_config.periph = UartHandler::Config::Peripheral::USART_1;
     midi_config.transport_config.tx = {DSY_GPIOB, 6}; // (USART_6 TX)
     midi_config.transport_config.rx = {DSY_GPIOB, 7}; // (USART_6 RX)
     synth_midi.Init(midi_config);
     synth_midi.StartReceive();
-    
-    
-    
-    //MidiUsbHandler::Config midi_cfg;
-    //midi_cfg.transport_config.periph = MidiUsbTransport::Config::INTERNAL;
-    //synth_midi.Init(midi_cfg);
-    //MidiUartTransport::Config midi_cfg;
-    //midi_cfg.periph = UartHandler::Config::Peripheral::USART_1;
-    //midi_cfg.tx = {DSY_GPIOB, 6}; // (USART_1 TX) Daisy pin 14
-    //midi_cfg.rx = {DSY_GPIOB, 7}; // (USART_1 RX) Daisy pin 15
-    //synth_midi = MidiUartHandler<midi_transport>;
-    
-    
-    // MidiUartHandler::Config uart_config;
-    // uart_config.
-    // uart_config.baudrate      = 115200;
-    // uart_config.periph        = UartHandler::Config::Peripheral::USART_1;
-    // uart_config.stopbits      = UartHandler::Config::StopBits::BITS_2;
-    // uart_config.parity        = UartHandler::Config::Parity::NONE;
-    // uart_config.mode          = UartHandler::Config::Mode::TX_RX;
-    // uart_config.wordlength    = UartHandler::Config::WordLength::BITS_8;
-    // uart_config.pin_config.rx = {DSY_GPIOB, 7}; // (USART_1 RX) Daisy pin 15
-    // uart_config.pin_config.tx = {DSY_GPIOB, 6}; // (USART_1 TX) Daisy pin 14
-    // synth_midi.Init(uart_config);
-    //synth_uart.Init(uart_config);
 
+    //Set up CPU monitor
     synth_cpu.Init(synth_hw.AudioSampleRate(), synth_hw.AudioBlockSize());
     
+    //Configure ADC channels for reading knobs
+    AdcChannelConfig adc_conf[KNOB_COUNT];
+    adc_conf[0].InitSingle(A0);
+    adc_conf[1].InitSingle(A1);
+    adc_conf[2].InitSingle(A2);
+    adc_conf[3].InitSingle(A3);
+    adc_conf[4].InitSingle(A4);
+    adc_conf[5].InitSingle(A5);
+    synth_hw.adc.Init(adc_conf, KNOB_COUNT);
+    synth_hw.adc.Start();
 
     /** Setup timer to handle midi events */
     TimerHandle         timer5;
@@ -157,19 +144,16 @@ void Hardware::synth_hardware_init() {
     timer5.SetCallback(Timer5Callback);
     timer5.Start();
 
-    // setup the configuration
-    
+    //Set up I2C connection for LCD screen
     I2CHandle::Config i2c_conf;
     i2c_conf.periph = I2CHandle::Config::Peripheral::I2C_1;
     i2c_conf.speed  = I2CHandle::Config::Speed::I2C_100KHZ;
     i2c_conf.mode   = I2CHandle::Config::Mode::I2C_MASTER;
     i2c_conf.pin_config.scl  = {DSY_GPIOB, 8};
     i2c_conf.pin_config.sda  = {DSY_GPIOB, 9};
-    // initialise the peripheral
     i2c.Init(i2c_conf);
+    //Send LCD initialization message
     lcd_init(&i2c);
-    
-    // now i2c points to the corresponding peripheral and can be used.
 }
 
 void Hardware::LCD_SetScreen(char* str) {

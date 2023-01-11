@@ -2,6 +2,7 @@
 #define HARDWARE_H
 
 #define ENV_PROCESS_SPEED_HZ 50
+#define KNOB_COUNT 6
 
 #include "daisy_seed.h"
 #include "i2c-lcd.h"
@@ -19,7 +20,6 @@ public:
     //Hardware
     static DaisySeed synth_hw;
     static UartHandler synth_uart;
-    //static MidiUsbHandler synth_midi;
     static MidiUartHandler synth_midi;
     static CpuLoadMeter synth_cpu;
     static I2CHandle i2c;

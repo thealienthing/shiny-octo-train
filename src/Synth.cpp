@@ -132,8 +132,8 @@ void Synth::MidiCCProcess(ControlChangeEvent event) {
 }
 
 void Synth::MidiNoteOn(NoteOnEvent event) {
-    sprintf(_console_str, "%d %d %d", event.channel, event.note, event.velocity);
-    Hardware::LCD_SetScreen(_console_str);
+    sprintf(_console_str, "Note on: %d %d %d", event.channel, event.note, event.velocity);
+    //Hardware::LCD_SetScreen(_console_str);
     Hardware::synth_hw.PrintLine(_console_str);
     uint8_t voice_index = UINT8_MAX;
     for(int i = 0; i < NUM_VOICES; i++) {
