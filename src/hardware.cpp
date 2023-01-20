@@ -8,7 +8,9 @@ DaisySeed Hardware::synth_hw;
 //UartHandler Hardware::synth_uart;
 CpuLoadMeter Hardware::synth_cpu;
 I2CHandle Hardware::i2c;
+LCDScreen Hardware::synth_lcd(&Hardware::i2c);
 int Hardware::timer5_counter = 0;
+int Hardware::knob_readings[];
 char Hardware::_console_out[];
 bool Hardware::report_amp_env = false;
 Synth* Hardware::synth;
@@ -19,14 +21,21 @@ void Hardware::Timer5Callback(void* data)
     timer5_counter = (timer5_counter + 1) % 10;
     synth_cpu.OnBlockStart();
     if(timer5_counter == 0) {
-        int knob_read[KNOB_COUNT];
+        bool refresh_screen = false;
         for(int i = 0; i < KNOB_COUNT; i++){
-            knob_read[i] = synth_hw.adc.Get(i)/516;
+            int reading = synth_hw.adc.Get(i)/516;
+            if(reading != knob_readings[i]) {
+                refresh_screen = true;
+                knob_readings[i] = reading;
+            }
         }
-        sprintf(_console_out, "%d %d %d %d",
-            knob_read[0], knob_read[1], knob_read[2],
-            knob_read[3]);
-        LCD_SetScreen(_console_out);
+        if(refresh_screen){
+            sprintf(_console_out, "f: %d %d %d %d %d",
+                knob_readings[0], knob_readings[1], knob_readings[2],
+                knob_readings[3], knob_readings[4]);
+            synth_lcd.clear();
+            synth_lcd.send_string(_console_out);
+        }
         //CpuLoadReport();
     }
     if(report_amp_env) {
@@ -127,7 +136,6 @@ void Hardware::synth_hardware_init() {
     adc_conf[2].InitSingle(A2);
     adc_conf[3].InitSingle(A3);
     adc_conf[4].InitSingle(A4);
-    adc_conf[5].InitSingle(A5);
     synth_hw.adc.Init(adc_conf, KNOB_COUNT);
     synth_hw.adc.Start();
 
@@ -153,13 +161,8 @@ void Hardware::synth_hardware_init() {
     i2c_conf.pin_config.sda  = {DSY_GPIOB, 9};
     i2c.Init(i2c_conf);
     //Send LCD initialization message
-    lcd_init(&i2c);
-}
-
-void Hardware::LCD_SetScreen(char* str) {
-    lcd_clear(&i2c);
-    lcd_put_cur(&i2c, 0, 0);
-    lcd_send_string(&i2c, str);
+    
+    synth_lcd.init();
 }
 
 void Hardware::SynthConfig(Synth* s) {
