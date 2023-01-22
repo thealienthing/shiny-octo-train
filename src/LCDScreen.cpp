@@ -99,27 +99,6 @@ void LCDScreen::init()
 	send_cmd(0x06); //Entry mode set --> I/D = 1 (increment cursor) & S = 0 (no shift)
 	hw.DelayMs(1);
 	send_cmd(0x0C); //Display on/off control --> D = 1, C and B = 0. (Cursor and blink, last two bits)
-
-	uint8_t val = 0x08;
-	i2c->TransmitBlocking(SLAVE_ADDRESS_LCD, (uint8_t *)&val, 4, 100);
-	hw.DelayMs(1000);
-	 val = 0x00;
-	i2c->TransmitBlocking(SLAVE_ADDRESS_LCD, (uint8_t *)&val, 4, 100);
-	hw.DelayMs(1000);
-	 val = 0x08;
-	i2c->TransmitBlocking(SLAVE_ADDRESS_LCD, (uint8_t *)&val, 4, 100);
-	hw.DelayMs(1000);
-	 val = 0x00;
-	i2c->TransmitBlocking(SLAVE_ADDRESS_LCD, (uint8_t *)&val, 4, 100);
-	hw.DelayMs(1000);
-	 val = 0x08;
-	i2c->TransmitBlocking(SLAVE_ADDRESS_LCD, (uint8_t *)&val, 4, 100);
-	hw.DelayMs(1000);
-	 val = 0x00;
-	i2c->TransmitBlocking(SLAVE_ADDRESS_LCD, (uint8_t *)&val, 4, 100);
-	hw.DelayMs(1000);
-
-	
 }
 
 void LCDScreen::send_string (char *str)

@@ -9,6 +9,7 @@ DaisySeed Hardware::synth_hw;
 CpuLoadMeter Hardware::synth_cpu;
 I2CHandle Hardware::i2c;
 LCDScreen Hardware::synth_lcd(&Hardware::i2c);
+Encoder Hardware::menu_knob;
 int Hardware::timer5_counter = 0;
 int Hardware::knob_readings[];
 char Hardware::_console_out[];
@@ -18,10 +19,22 @@ Synth* Hardware::synth;
 void Hardware::Timer5Callback(void* data)
 {
     //timer5_counter = (timer5_counter + 1) % ENV_PROCESS_SPEED_HZ;
+    static int menu_knob_val = 0;
+    static bool refresh_screen = false;
     timer5_counter = (timer5_counter + 1) % 10;
     synth_cpu.OnBlockStart();
+
+
+    //Read rotary encoder
+    menu_knob.Debounce();
+    int reading = menu_knob.Increment();
+    if(reading) {
+        refresh_screen = true;
+        menu_knob_val += reading;
+    }
+
     if(timer5_counter == 0) {
-        bool refresh_screen = false;
+        //Read potentiometers
         for(int i = 0; i < KNOB_COUNT; i++){
             int reading = synth_hw.adc.Get(i)/516;
             if(reading != knob_readings[i]) {
@@ -29,18 +42,25 @@ void Hardware::Timer5Callback(void* data)
                 knob_readings[i] = reading;
             }
         }
-        if(refresh_screen){
-            sprintf(_console_out, "f: %d %d %d %d %d",
-                knob_readings[0], knob_readings[1], knob_readings[2],
-                knob_readings[3], knob_readings[4]);
-            synth_lcd.clear();
-            synth_lcd.send_string(_console_out);
-        }
         //CpuLoadReport();
     }
     if(report_amp_env) {
         report_amp_env = false;
     }
+
+    if(refresh_screen){
+        synth_lcd.clear();
+        sprintf(_console_out, "f: %d %d %d %d %d",
+            knob_readings[0], knob_readings[1], knob_readings[2],
+            knob_readings[3], knob_readings[4]);
+        synth_lcd.send_string(_console_out);
+        //synth_lcd.clear();
+        synth_lcd.put_cur(2, 0);
+        sprintf(_console_out, "menu_knob: %d", menu_knob_val);
+        synth_lcd.send_string(_console_out);
+    }
+
+    refresh_screen = false;
 
     MIDIProcess();
     synth->AmpEnvelopeProcess();
@@ -151,6 +171,9 @@ void Hardware::synth_hardware_init() {
     timer5.Init(timer5_cfg);
     timer5.SetCallback(Timer5Callback);
     timer5.Start();
+
+    //Menu knob encoder for navigating options on LCD
+    menu_knob.Init(D1, D2, D0, 0.0f);
 
     //Set up I2C connection for LCD screen
     I2CHandle::Config i2c_conf;

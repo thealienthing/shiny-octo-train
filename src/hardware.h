@@ -25,6 +25,7 @@ public:
     static CpuLoadMeter synth_cpu;
     static LCDScreen synth_lcd;
     static I2CHandle i2c;
+    static Encoder menu_knob;
     static char _console_out[100];
     static void SerialDebugWriteString(char txBuffer[]);
     void synth_hardware_init();
