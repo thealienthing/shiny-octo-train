@@ -11,13 +11,26 @@
 
 using namespace daisy;
 
+#define CURSOR_ON       0x02
+#define CURSOR_OFF      0x00
+#define CURSOR_BLINK    0x01
+#define CURSOR_NOBLINK  0x00
+#define ROW1            0x80
+#define ROW2            0xC0
+#define ROW3            0x94
+#define ROW4            0xD4
+
 class LCDScreen {
 public:
     LCDScreen(I2CHandle* i2c_handle);
     void init();   // initialize lcd
     void send_string (char *str);  // send string to the lcd
     void put_cur(int row, int col);  // put cursor at the entered position row (0 or 1), col (0-15);
+    void cursor_setup(bool cur_on, bool blink_on);
     void clear();
+
+    bool cursor_on = false;
+    bool cursor_blink = false;
 
 private:
     I2CHandle* i2c;

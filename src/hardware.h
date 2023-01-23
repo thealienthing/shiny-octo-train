@@ -1,6 +1,7 @@
 #ifndef HARDWARE_H
 #define HARDWARE_H
 
+#define HW_DEBUG_MODE false
 #define ENV_PROCESS_SPEED_HZ 50
 #define KNOB_COUNT 5
 
@@ -38,6 +39,7 @@ private:
     static int knob_readings[KNOB_COUNT];
     static int timer5_counter;
     static void Timer5Callback(void* data);
+    static void HardwareDebugCallback(void* data);
     static void MIDIProcess();
     static void CpuLoadReport();
 };

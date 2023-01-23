@@ -56,22 +56,26 @@ void LCDScreen::clear ()
 
 void LCDScreen::put_cur(int row, int col)
 {
-    switch (row)
-    {
-        case 0:
-            col |= 0x00;
-            break;
-        case 1:
-            col |= 0x40;
-            break;
-		case 2:
-            col |= 0x14;
-            break;
-		case 3:
-            col |= 0x54;
-            break;
-    }
-    send_cmd (col);
+	int pos_byte = 0x00;
+	switch(row) {
+		case 1: {
+			pos_byte = ROW1 + col;
+			break;
+		}
+		case 2: {
+			pos_byte = ROW2 + col;
+			break;
+		}
+		case 3: {
+			pos_byte = ROW3 + col;
+			break;
+		}
+		case 4: {
+			pos_byte = ROW4 + col;
+			break;
+		}
+	}
+	send_cmd(pos_byte);
 }
 
 
@@ -99,6 +103,25 @@ void LCDScreen::init()
 	send_cmd(0x06); //Entry mode set --> I/D = 1 (increment cursor) & S = 0 (no shift)
 	hw.DelayMs(1);
 	send_cmd(0x0C); //Display on/off control --> D = 1, C and B = 0. (Cursor and blink, last two bits)
+}
+
+void LCDScreen::cursor_setup(bool cur_on, bool blink_on) {
+	char cmd = 0x00;
+	if(cur_on) {
+		cursor_on = true;
+		cmd |= CURSOR_ON;
+	} else {
+		cursor_on = false;
+	}
+
+	if(blink_on) {
+		cursor_blink = true;
+		cmd |= CURSOR_BLINK;
+	} else {
+		cursor_blink = false;
+	}
+		
+	send_cmd(cmd);
 }
 
 void LCDScreen::send_string (char *str)

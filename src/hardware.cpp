@@ -50,12 +50,13 @@ void Hardware::Timer5Callback(void* data)
 
     if(refresh_screen){
         synth_lcd.clear();
+        synth_lcd.put_cur(1,0);
         sprintf(_console_out, "f: %d %d %d %d %d",
             knob_readings[0], knob_readings[1], knob_readings[2],
             knob_readings[3], knob_readings[4]);
         synth_lcd.send_string(_console_out);
         //synth_lcd.clear();
-        synth_lcd.put_cur(2, 0);
+        synth_lcd.put_cur(4, 5);
         sprintf(_console_out, "menu_knob: %d", menu_knob_val);
         synth_lcd.send_string(_console_out);
     }
@@ -66,6 +67,9 @@ void Hardware::Timer5Callback(void* data)
     synth->AmpEnvelopeProcess();
     synth_cpu.OnBlockEnd();
     //CpuLoadReport();
+}
+
+void Hardware::HardwareDebugCallback(void* data) {
 }
 
 void Hardware::CpuLoadReport() {
@@ -159,19 +163,6 @@ void Hardware::synth_hardware_init() {
     synth_hw.adc.Init(adc_conf, KNOB_COUNT);
     synth_hw.adc.Start();
 
-    /** Setup timer to handle midi events */
-    TimerHandle         timer5;
-    TimerHandle::Config timer5_cfg;
-    /** timer5 with IRQ enabled */
-    timer5_cfg.periph     = TimerHandle::Config::Peripheral::TIM_5;
-    timer5_cfg.enable_irq = true;
-    auto tim_target_freq = ENV_PROCESS_SPEED_HZ; //Set frequency to 50hz
-    auto tim_base_freq   = System::GetPClk2Freq();
-    timer5_cfg.period       = tim_base_freq / tim_target_freq;
-    timer5.Init(timer5_cfg);
-    timer5.SetCallback(Timer5Callback);
-    timer5.Start();
-
     //Menu knob encoder for navigating options on LCD
     menu_knob.Init(D1, D2, D0, 0.0f);
 
@@ -186,6 +177,28 @@ void Hardware::synth_hardware_init() {
     //Send LCD initialization message
     
     synth_lcd.init();
+
+    synth_lcd.cursor_setup(true, false);
+    synth_lcd.clear();
+
+    /** Setup timer to handle midi events */
+    TimerHandle         timer5;
+    TimerHandle::Config timer5_cfg;
+    /** timer5 with IRQ enabled */
+    timer5_cfg.periph     = TimerHandle::Config::Peripheral::TIM_5;
+    timer5_cfg.enable_irq = true;
+    auto tim_target_freq = ENV_PROCESS_SPEED_HZ; //Set frequency to 50hz
+    auto tim_base_freq   = System::GetPClk2Freq();
+    timer5_cfg.period       = tim_base_freq / tim_target_freq;
+    timer5.Init(timer5_cfg);
+    if(!HW_DEBUG_MODE){
+        timer5.SetCallback(Timer5Callback);
+    } 
+    else{
+        timer5.SetCallback(HardwareDebugCallback);
+    }
+    
+    timer5.Start();
 }
 
 void Hardware::SynthConfig(Synth* s) {
