@@ -1,5 +1,6 @@
 #include "hardware.h"
 #include "Synth.h"
+#include "Menu.h"
 
 
 //MidiUsbHandler Hardware::synth_midi;
@@ -19,8 +20,9 @@ Synth* Hardware::synth;
 void Hardware::Timer5Callback(void* data)
 {
     //timer5_counter = (timer5_counter + 1) % ENV_PROCESS_SPEED_HZ;
+    static Menu menu;
     static int menu_knob_val = 0;
-    static bool refresh_screen = false;
+    static bool refresh_screen = true;
     timer5_counter = (timer5_counter + 1) % 10;
     synth_cpu.OnBlockStart();
 
@@ -30,7 +32,7 @@ void Hardware::Timer5Callback(void* data)
     int reading = menu_knob.Increment();
     if(reading) {
         refresh_screen = true;
-        menu_knob_val += reading;
+        menu.increment_index(reading);
     }
 
     if(timer5_counter == 0) {
@@ -38,7 +40,7 @@ void Hardware::Timer5Callback(void* data)
         for(int i = 0; i < KNOB_COUNT; i++){
             int reading = synth_hw.adc.Get(i)/516;
             if(reading != knob_readings[i]) {
-                refresh_screen = true;
+                //refresh_screen = true;
                 knob_readings[i] = reading;
             }
         }
@@ -50,15 +52,18 @@ void Hardware::Timer5Callback(void* data)
 
     if(refresh_screen){
         synth_lcd.clear();
-        synth_lcd.put_cur(1,0);
-        sprintf(_console_out, "f: %d %d %d %d %d",
-            knob_readings[0], knob_readings[1], knob_readings[2],
-            knob_readings[3], knob_readings[4]);
-        synth_lcd.send_string(_console_out);
-        //synth_lcd.clear();
-        synth_lcd.put_cur(4, 5);
-        sprintf(_console_out, "menu_knob: %d", menu_knob_val);
-        synth_lcd.send_string(_console_out);
+        int index = menu.menu_index;
+        for(int i = 0; i < 4; i++) {
+            synth_lcd.put_cur(i, 0);
+            index = (index + 1) % MENU_LEN;
+            sprintf(_console_out, "%s", menu.menu[index].name);
+            synth_lcd.send_string(_console_out);
+            if(i == 0) {
+                synth_lcd.send_string(" <-");
+            }
+        }
+        synth_lcd.put_cur(1, 10);
+        synth_lcd.cursor_setup(true, true);
     }
 
     refresh_screen = false;
@@ -178,7 +183,7 @@ void Hardware::synth_hardware_init() {
     
     synth_lcd.init();
 
-    synth_lcd.cursor_setup(true, false);
+    synth_lcd.cursor_setup(true, true);
     synth_lcd.clear();
 
     /** Setup timer to handle midi events */
