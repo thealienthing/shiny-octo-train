@@ -31,11 +31,11 @@ public:
 
     bool cursor_on = false;
     bool cursor_blink = false;
+    daisy::I2CHandle::Result send_cmd (char cmd);  // send command to the lcd
+    daisy::I2CHandle::Result send_data (char data);  // send data to the lcd
 
 private:
     I2CHandle* i2c;
-    daisy::I2CHandle::Result send_cmd (char cmd);  // send command to the lcd
-    daisy::I2CHandle::Result send_data (char data);  // send data to the lcd
 };
 
 #endif
