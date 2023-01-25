@@ -58,19 +58,19 @@ void LCDScreen::put_cur(int row, int col)
 {
 	int pos_byte = 0x00;
 	switch(row) {
-		case 1: {
+		case 0: {
 			pos_byte = ROW1 + col;
 			break;
 		}
-		case 2: {
+		case 1: {
 			pos_byte = ROW2 + col;
 			break;
 		}
-		case 3: {
+		case 2: {
 			pos_byte = ROW3 + col;
 			break;
 		}
-		case 4: {
+		case 3: {
 			pos_byte = ROW4 + col;
 			break;
 		}
