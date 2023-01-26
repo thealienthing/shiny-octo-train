@@ -1,6 +1,5 @@
 #include "hardware.h"
 #include "Synth.h"
-#include "Menu.h"
 
 
 //MidiUsbHandler Hardware::synth_midi;
@@ -11,6 +10,7 @@ CpuLoadMeter Hardware::synth_cpu;
 I2CHandle Hardware::i2c;
 LCDScreen Hardware::synth_lcd(&Hardware::i2c);
 Encoder Hardware::menu_knob;
+Menu Hardware::menu;
 int Hardware::timer5_counter = 0;
 int Hardware::knob_readings[];
 char Hardware::_console_out[];
@@ -20,9 +20,6 @@ Synth* Hardware::synth;
 void Hardware::Timer5Callback(void* data)
 {
     //timer5_counter = (timer5_counter + 1) % ENV_PROCESS_SPEED_HZ;
-    static Menu menu;
-    static int menu_knob_val = 0;
-    static bool refresh_screen = true;
     timer5_counter = (timer5_counter + 1) % 10;
     synth_cpu.OnBlockStart();
 
@@ -31,9 +28,12 @@ void Hardware::Timer5Callback(void* data)
     menu_knob.Debounce();
     int reading = menu_knob.Increment();
     if(reading) {
-        refresh_screen = true;
-        menu.increment_index(reading);
+        menu.navigate(reading);
     }
+    if(menu_knob.RisingEdge()) {
+        menu.select();
+    }
+    
 
     if(timer5_counter == 0) {
         //Read potentiometers
@@ -49,24 +49,6 @@ void Hardware::Timer5Callback(void* data)
     if(report_amp_env) {
         report_amp_env = false;
     }
-
-    if(refresh_screen){
-        synth_lcd.clear();
-        int index = menu.menu_index;
-        for(int i = 0; i < 4; i++) {
-            synth_lcd.put_cur(i, 0);
-            index = (index + 1) % MENU_LEN;
-            sprintf(_console_out, "%s", menu.menu[index].name);
-            synth_lcd.send_string(_console_out);
-            if(i == 0) {
-                synth_lcd.send_string(" <-");
-            }
-        }
-        synth_lcd.put_cur(1, 10);
-        synth_lcd.cursor_setup(true, true);
-    }
-
-    refresh_screen = false;
 
     MIDIProcess();
     synth->AmpEnvelopeProcess();
@@ -181,10 +163,15 @@ void Hardware::synth_hardware_init() {
     i2c.Init(i2c_conf);
     //Send LCD initialization message
     
+    //Setup the lcd screen
     synth_lcd.init();
-
     synth_lcd.cursor_setup(true, true);
     synth_lcd.clear();
+
+    //Then pass lcd to menu initializer
+
+    menu = Menu();
+    menu.init(&synth_lcd);
 
     /** Setup timer to handle midi events */
     TimerHandle         timer5;
