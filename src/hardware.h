@@ -7,12 +7,14 @@
 
 #include "daisy_seed.h"
 #include "LCDScreen.h"
+#include "Menu.h"
 
 using namespace daisy;
 using namespace daisy::seed;
 
 class Synth;
 class LCDScreen;
+class Menu;
 
 class Hardware {
 public:
@@ -27,6 +29,7 @@ public:
     static LCDScreen synth_lcd;
     static I2CHandle i2c;
     static Encoder menu_knob;
+    static Menu menu;
     static char _console_out[100];
     static void SerialDebugWriteString(char txBuffer[]);
     void synth_hardware_init();
