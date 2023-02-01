@@ -37,12 +37,23 @@ void Hardware::Timer5Callback(void* data)
 
     if(timer5_counter == 0) {
         //Read potentiometers
+        bool print_knobs = false;
         for(int i = 0; i < KNOB_COUNT; i++){
             int reading = synth_hw.adc.Get(i)/516;
             if(reading != knob_readings[i]) {
                 //refresh_screen = true;
+                print_knobs = true;
                 knob_readings[i] = reading;
             }
+        }
+        if(print_knobs) {
+            synth_hw.PrintLine("k1=%d k2=%d k3=%d k4=%d k5=%d",
+                knob_readings[0],
+                knob_readings[1],
+                knob_readings[2],
+                knob_readings[3],
+                knob_readings[4]
+            );
         }
         //CpuLoadReport();
     }

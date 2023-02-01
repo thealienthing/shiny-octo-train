@@ -6,6 +6,16 @@
 #ifndef LCDSCREEN_H
 #define LCDSCREEN_H
 
+class Screen {
+public:
+    virtual void init() = 0;
+    virtual void send_string (char *str) = 0;
+    virtual void put_cur(int row, int col) = 0;
+    virtual void cursor_setup(bool cur_on, bool blink_on) = 0;
+    virtual void clear() = 0;
+};
+
+#ifdef MASTERS_CAPSTONE
 #include "daisy.h"
 #include "hardware.h"
 
@@ -20,22 +30,23 @@ using namespace daisy;
 #define ROW3            0x94
 #define ROW4            0xD4
 
-class LCDScreen {
+class LCDScreen : public Screen {
 public:
     LCDScreen(I2CHandle* i2c_handle);
-    void init();   // initialize lcd
-    void send_string (char *str);  // send string to the lcd
-    void put_cur(int row, int col);  // put cursor at the entered position row (0 or 1), col (0-15);
-    void cursor_setup(bool cur_on, bool blink_on);
-    void clear();
+    void init() override;   // initialize lcd
+    void send_string (char *str) override;  // send string to the lcd
+    void put_cur(int row, int col) override;  // put cursor at the entered position row (0 or 1), col (0-15);
+    void cursor_setup(bool cur_on, bool blink_on) override;
+    void clear() override;
 
     bool cursor_on = false;
     bool cursor_blink = false;
-    daisy::I2CHandle::Result send_cmd (char cmd);  // send command to the lcd
-    daisy::I2CHandle::Result send_data (char data);  // send data to the lcd
 
 private:
+    daisy::I2CHandle::Result send_cmd (char cmd);  // send command to the lcd
+    daisy::I2CHandle::Result send_data (char data);  // send data to the lcd
     I2CHandle* i2c;
 };
+#endif
 
 #endif
