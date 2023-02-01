@@ -1,5 +1,6 @@
 #include "Menu.h"
 #include "cstring"
+#include <cstdio>
 #include "LCDScreen.h"
 
 MenuOption::MenuOption(const char* _name, MenuID _id) {
@@ -28,6 +29,7 @@ void Menu::navigate(int reading, LCDScreen* lcd) {
         }
     }
     lcd->put_cur(1, 10);
+    selected_id = MENU_END;
 }
 
 void Menu::select(LCDScreen* lcd) {
@@ -35,142 +37,45 @@ void Menu::select(LCDScreen* lcd) {
     MenuOption* m = &menu[menu_index];
     lcd->clear();
     lcd->put_cur(0, 0);
-    switch(m->id) {
+    switch(selected_id) {
         case MenuID::VOICE: {
-            sprintf(out, "OscCnt %d", m->get_p1());
-            lcd->send_string(out);
-            lcd->put_cur(1,0);
-            sprintf(out, "VceAsn %d", m->get_p2());
-            lcd->send_string(out);
-            lcd->put_cur(2,0);
-            sprintf(out, "TrgMod %d", m->get_p3());
-            lcd->send_string(out);
-            lcd->put_cur(3,0);
-            sprintf(out, "UnisDet %d", m->get_p4());
-            lcd->send_string(out);
+            voice_menu_print();
             break;
         }
         case MenuID::PITCH: {
-            sprintf(out, "Trnspos %d", m->get_p1());
-            lcd->send_string(out);
-            lcd->put_cur(1,0);
-            sprintf(out, "Tune %d", m->get_p2());
-            lcd->send_string(out);
-            lcd->put_cur(2,0);
-            sprintf(out, "Portamento %d", m->get_p3());
-            lcd->send_string(out);
-            lcd->put_cur(3,0);
-            sprintf(out, "BendRng %d", m->get_p4());
-            lcd->send_string(out);
+            pitch_menu_print();
             break;
         }
         case MenuID::OSCILLATORS: {
-            sprintf(out, "Osc1 Wave %d", m->get_p1());
-            lcd->send_string(out);
-            lcd->put_cur(1,0);
-            sprintf(out, "Osc2 Wave %d", m->get_p2());
-            lcd->send_string(out);
-            lcd->put_cur(2,0);
-            sprintf(out, "Osc2 Semi %d", m->get_p3());
-            lcd->send_string(out);
-            lcd->put_cur(3,0);
-            sprintf(out, "Osc2 Tune %d", m->get_p4());
-            lcd->send_string(out);
+            oscillator_menu_print();
             break;
         }
         case MenuID::MIXER: {
-            sprintf(out, "Osc1 Lvl %d", m->get_p1());
-            lcd->send_string(out);
-            lcd->put_cur(1,0);
-            sprintf(out, "Osc2 Lvl %d", m->get_p2());
-            lcd->send_string(out);
-            lcd->put_cur(2,0);
-            sprintf(out, "Noise Lvl %d", m->get_p3());
-            lcd->send_string(out);
+            mixer_menu_print();
             break;
         }
         case MenuID::FILTER: {
-            sprintf(out, "Type %d", m->get_p1());
-            lcd->send_string(out);
-            lcd->put_cur(1,0);
-            sprintf(out, "Cutoff %d", m->get_p2());
-            lcd->send_string(out);
-            lcd->put_cur(2,0);
-            sprintf(out, "Resonance %d", m->get_p3());
-            lcd->send_string(out);
-            lcd->put_cur(3,0);
-            sprintf(out, "FiltEnvInt %d", m->get_p4());
-            lcd->send_string(out);
+            filter_menu_print();
             break;
         }
         case MenuID::FILTER_ENV: {
-            sprintf(out, "Attack %d", m->get_p1());
-            lcd->send_string(out);
-            lcd->put_cur(1,0);
-            sprintf(out, "Decay %d", m->get_p2());
-            lcd->send_string(out);
-            lcd->put_cur(2,0);
-            sprintf(out, "Sustain %d", m->get_p3());
-            lcd->send_string(out);
-            lcd->put_cur(3,0);
-            sprintf(out, "Release %d", m->get_p4());
-            lcd->send_string(out);
+            filter_env_menu_print();
             break;
         }
         case MenuID::AMP: {
-            sprintf(out, "Level %d", m->get_p1());
-            lcd->send_string(out);
-            lcd->put_cur(1,0);
-            sprintf(out, "PanPot %d", m->get_p2());
-            lcd->send_string(out);
-            lcd->put_cur(2,0);
-            sprintf(out, "Distortion %d", m->get_p3());
-            lcd->send_string(out);
-            lcd->put_cur(3,0);
-            sprintf(out, "KBD Track %d", m->get_p4());
-            lcd->send_string(out);
+            amp_menu_print();
             break;
         }
         case MenuID::AMP_ENV: {
-            sprintf(out, "Attack %d", m->get_p1());
-            lcd->send_string(out);
-            lcd->put_cur(1,0);
-            sprintf(out, "Decay %d", m->get_p2());
-            lcd->send_string(out);
-            lcd->put_cur(2,0);
-            sprintf(out, "Sustain %d", m->get_p3());
-            lcd->send_string(out);
-            lcd->put_cur(3,0);
-            sprintf(out, "Release %d", m->get_p4());
-            lcd->send_string(out);
+            amp_env_menu_print();
             break;
         }
         case MenuID::LFO1: {
-            sprintf(out, "Wave %d", m->get_p1());
-            lcd->send_string(out);
-            lcd->put_cur(1,0);
-            sprintf(out, "Key Sync %d", m->get_p2());
-            lcd->send_string(out);
-            lcd->put_cur(2,0);
-            sprintf(out, "Temp Sync %d", m->get_p3());
-            lcd->send_string(out);
-            lcd->put_cur(3,0);
-            sprintf(out, "Frequency %d", m->get_p4());
-            lcd->send_string(out);
+            lfo1_menu_print();
             break;
         }
         case MenuID::LFO2: {
-            sprintf(out, "Wave %d", m->get_p1());
-            lcd->send_string(out);
-            lcd->put_cur(1,0);
-            sprintf(out, "Key Sync %d", m->get_p2());
-            lcd->send_string(out);
-            lcd->put_cur(2,0);
-            sprintf(out, "Temp Sync %d", m->get_p3());
-            lcd->send_string(out);
-            lcd->put_cur(3,0);
-            sprintf(out, "Frequency %d", m->get_p4());
-            lcd->send_string(out);
+            lfo2_menu_print();
             break;
         }
     }
@@ -185,4 +90,146 @@ void Menu::increment_index(int inc) {
         if(menu_index < 0)
             menu_index = MENU_LEN - 1;
     }
+}
+
+void Menu::voice_menu_print() {
+    char out[20];
+    sprintf(out, "OscCnt");
+    lcd->send_string(out);
+    lcd->put_cur(1,0);
+    sprintf(out, "VceAsn");
+    lcd->send_string(out);
+    lcd->put_cur(2,0);
+    sprintf(out, "TrgMod");
+    lcd->send_string(out);
+    lcd->put_cur(3,0);
+    sprintf(out, "UnisDet");
+    lcd->send_string(out);
+}
+
+void Menu::pitch_menu_print() {
+    char out[20];
+    sprintf(out, "Trnspos ");
+    lcd->send_string(out);
+    lcd->put_cur(1,0);
+    sprintf(out, "Tune");
+    lcd->send_string(out);
+    lcd->put_cur(2,0);
+    sprintf(out, "Porta");
+    lcd->send_string(out);
+    lcd->put_cur(3,0);
+    sprintf(out, "BendRng");
+    lcd->send_string(out);
+}
+
+void Menu::oscillator_menu_print() {
+    char out[20];
+    sprintf(out, "Osc1 Wave ");
+    lcd->send_string(out);
+    lcd->put_cur(1,0);
+    sprintf(out, "Osc2 Wave");
+    lcd->send_string(out);
+    lcd->put_cur(2,0);
+    sprintf(out, "Osc2Semi");
+    lcd->send_string(out);
+    lcd->put_cur(3,0);
+    sprintf(out, "Osc2Tun");
+    lcd->send_string(out);
+}
+void Menu::mixer_menu_print() {
+    char out[20];
+    sprintf(out, "Osc1 Lvl ");
+    lcd->send_string(out);
+    lcd->put_cur(1,0);
+    sprintf(out, "Osc2 Lvl");
+    lcd->send_string(out);
+    lcd->put_cur(2,0);
+    sprintf(out, "Noise Lvl");
+    lcd->send_string(out);
+
+}
+void Menu::filter_menu_print() {
+    char out[20];
+    sprintf(out, "Type ");
+    lcd->send_string(out);
+    lcd->put_cur(1,0);
+    sprintf(out, "Cutoff");
+    lcd->send_string(out);
+    lcd->put_cur(2,0);
+    sprintf(out, "Resonance");
+    lcd->send_string(out);
+    lcd->put_cur(3,0);
+    sprintf(out, "FiltEnvInt");
+    lcd->send_string(out);
+}
+void Menu::filter_env_menu_print() {
+    char out[20];
+    sprintf(out, "Attack ");
+    lcd->send_string(out);
+    lcd->put_cur(1,0);
+    sprintf(out, "Decay");
+    lcd->send_string(out);
+    lcd->put_cur(2,0);
+    sprintf(out, "Sustain");
+    lcd->send_string(out);
+    lcd->put_cur(3,0);
+    sprintf(out, "Release");
+    lcd->send_string(out);
+
+}
+void Menu::amp_menu_print() {
+    char out[20];
+    sprintf(out, "Level ");
+    lcd->send_string(out);
+    lcd->put_cur(1,0);
+    sprintf(out, "PanPot");
+    lcd->send_string(out);
+    lcd->put_cur(2,0);
+    sprintf(out, "Distortion");
+    lcd->send_string(out);
+    lcd->put_cur(3,0);
+    sprintf(out, "KBD Track");
+    lcd->send_string(out);
+}
+void Menu::amp_env_menu_print() {
+    char out[20];
+    sprintf(out, "Attack ");
+    lcd->send_string(out);
+    lcd->put_cur(1,0);
+    sprintf(out, "Decay");
+    lcd->send_string(out);
+    lcd->put_cur(2,0);
+    sprintf(out, "Sustain");
+    lcd->send_string(out);
+    lcd->put_cur(3,0);
+    sprintf(out, "Release");
+    lcd->send_string(out);
+}
+void Menu::lfo1_menu_print() {
+    char out[20];
+    sprintf(out, "Wave ");
+    lcd->send_string(out);
+    lcd->put_cur(1,0);
+    sprintf(out, "Key Sync");
+    lcd->send_string(out);
+    lcd->put_cur(2,0);
+    sprintf(out, "Temp Sync");
+    lcd->send_string(out);
+    lcd->put_cur(3,0);
+    sprintf(out, "Frequency");
+    lcd->send_string(out);
+}
+void Menu::lfo2_menu_print() {
+    char out[20];
+    sprintf(out, "Wave ");
+    lcd->send_string(out);
+    lcd->put_cur(1,0);
+    sprintf(out, "Key Sync");
+    lcd->send_string(out);
+    lcd->put_cur(2,0);
+    sprintf(out, "Temp Sync");
+    lcd->send_string(out);
+    lcd->put_cur(3,0);
+    sprintf(out, "Frequency");
+    lcd->send_string(out);
 }

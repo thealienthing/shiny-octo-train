@@ -17,7 +17,8 @@ enum MenuID {
     AMP,
     AMP_ENV,
     LFO1,
-    LFO2
+    LFO2,
+    MENU_END
 };
 
 class MenuOption {
@@ -61,7 +62,17 @@ public:
     void increment_index(int inc);
     void navigate(int reading, LCDScreen* lcd);
     void select(LCDScreen* lcd);
-    // void init(LCDScreen* _lcd);
+
+    void voice_menu_print();
+    void pitch_menu_print();
+    void oscillator_menu_print();
+    void mixer_menu_print();
+    void filter_menu_print();
+    void filter_env_menu_print();
+    void amp_menu_print();
+    void amp_env_menu_print();
+    void lfo1_menu_print();
+    void lfo2_menu_print();
 };
 
 #endif

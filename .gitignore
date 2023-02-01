@@ -9,3 +9,5 @@ build/startup_stm32h750xx.d
 build/startup_stm32h750xx.lst
 build/startup_stm32h750xx.o
 build/
+Makefile
+test/CursesScreen/curses_test
