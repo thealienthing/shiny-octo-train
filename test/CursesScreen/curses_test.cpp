@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include "CursesScreen.h"
 #include "../../src/Menu.h"
+#include "../../src/PatchParams.h"
 
 Screen *screen;
 Menu menu;
-uint16_t knobs[5] = {0, 0, 0, 0, 0};
+PatchParams patch_params;
+uint16_t knobs[KNOB_COUNT] = {0, 0, 0, 0, 0};
 
 #define INCR 1000
 
@@ -79,7 +81,12 @@ void knob_read(char c) {
             //printf("knob4 ccw\n");
             break;
         }
+        default: {
+            return;
+        }
     }
+    menu.update_knob_readings(knobs);
+    menu.print_menu_params();
 }
 
 bool process(Menu& menu) {
@@ -105,5 +112,8 @@ int main() {
     while(process(menu)) {
         //do nothing
     }
+    echo();
+    endwin();
+    refresh();
     return 0;
 }

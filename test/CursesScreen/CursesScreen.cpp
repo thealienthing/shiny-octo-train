@@ -9,7 +9,7 @@ void CursesScreen::init() {
 }
 
 void CursesScreen::send_string(char *str) {
-    printw(str);
+    printw("%s", str);
 }
 
 void CursesScreen::put_cur(int row, int col) {
