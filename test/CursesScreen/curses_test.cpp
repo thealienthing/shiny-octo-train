@@ -108,12 +108,12 @@ int main() {
     screen = new CursesScreen();
     screen->init();
     menu.init(screen);
+    initscr();
     
     while(process(menu)) {
         //do nothing
     }
-    echo();
-    endwin();
     refresh();
+    endwin();
     return 0;
 }
