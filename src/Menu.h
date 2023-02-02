@@ -16,6 +16,8 @@
 #define KNOB_COUNT 5
 #endif
 
+#define KNOB_RANGE_TO_MS_RANGE(knob_val, ms_range) (knob_val/(UINT16_MAX/ms_range))
+
 class LCDScreen;
 
 enum MenuID {

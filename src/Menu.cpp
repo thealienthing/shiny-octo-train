@@ -119,7 +119,19 @@ void Menu::print_menu_params() {
             break;
         }
         case MenuID::FILTER_ENV: {
-            print_menu_dummy_params();
+            lcd->put_cur(0,10);
+            sprintf(out, "%9d", patch_params.filter_env_attack);
+            lcd->send_string(out);
+            lcd->put_cur(1,10);
+            sprintf(out, "%9d", patch_params.filter_env_decay);
+            lcd->send_string(out);
+            lcd->put_cur(2,10);
+            sprintf(out, "%9.2f", patch_params.filter_env_sustain);
+            lcd->send_string(out);
+            lcd->put_cur(3,10);
+            sprintf(out, "%9d", patch_params.filter_env_release);
+            lcd->send_string(out);
+            break;
             break;
         }
         case MenuID::AMP: {
@@ -192,7 +204,22 @@ void Menu::update_menu_params(int param_num) {
             break;
         }
         case MenuID::FILTER_ENV: {
-            
+            if(param_num == 0)
+                //Divide uint16_t max by 13 to get an approximate increment for a range between 0-5000ms
+                //Add 10 to baseline to remove potential ugly clipping of volume jump at min attack
+                patch_params.filter_env_attack = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+            else if(param_num == 1)
+                //Same thing here for decay time. Max decay time 5000ms
+                patch_params.filter_env_decay = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+            else if(param_num == 2)
+                //Volume range 0-1.0
+                patch_params.filter_env_sustain = knob_readings[param_num]/(float)UINT16_MAX;
+            else if(param_num == 3)
+                //Same thing here as with attack and decay. Max release 5000ms
+                patch_params.filter_env_release = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+            else {
+
+            }
             break;
         }
         case MenuID::AMP: {
@@ -201,13 +228,18 @@ void Menu::update_menu_params(int param_num) {
         }
         case MenuID::AMP_ENV: {
             if(param_num == 0)
-                patch_params.amp_env_attack = knob_readings[param_num]/1000;
+                //Divide uint16_t max by 13 to get an approximate increment for a range between 0-5000ms
+                //Add 10 to baseline to remove potential ugly clipping of volume jump at min attack
+                patch_params.amp_env_attack = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
             else if(param_num == 1)
-                patch_params.amp_env_decay = knob_readings[param_num]/1000;
+                //Same thing here for decay time. Max decay time 5000ms
+                patch_params.amp_env_decay = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
             else if(param_num == 2)
+                //Volume range 0-1.0
                 patch_params.amp_env_sustain = knob_readings[param_num]/(float)UINT16_MAX;
             else if(param_num == 3)
-                patch_params.amp_env_release = knob_readings[param_num]/1000;
+                //Same thing here as with attack and decay. Max release 5000ms
+                patch_params.amp_env_release = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
             else {
 
             }
