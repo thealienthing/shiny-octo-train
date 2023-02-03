@@ -1,6 +1,8 @@
 #ifndef PATCH_PARAMS_H
 #define PATCH_PARAMS_H
 
+#include "Oscillator.h"
+
 struct PatchParams {
     //voice menu
     int oscillator_count = 2;
@@ -14,6 +16,13 @@ struct PatchParams {
     int portamento = 0;
     int bend_range = 2;
     float vibrato_intensity = 0.0;
+
+    //oscillators menu
+    WaveForm osc1_waveform = WaveForm::Saw;
+    WaveForm osc2_waveform = WaveForm::Saw;
+    int osc2_semitone = 0;
+    float osc2_tune = 0.0;
+
 
     //mixer menu
     float oscillator1_level = 0.5;

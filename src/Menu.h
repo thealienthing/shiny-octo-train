@@ -17,6 +17,7 @@
 #endif
 
 #define KNOB_RANGE_TO_MS_RANGE(knob_val, ms_range) (knob_val/(UINT16_MAX/ms_range))
+#define KNOB_RANGE_TO_INT(knob_val, option_range) (knob_val/(UINT16_MAX/option_range))
 
 class LCDScreen;
 

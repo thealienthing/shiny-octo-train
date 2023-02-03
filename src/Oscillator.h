@@ -12,7 +12,8 @@ enum WaveForm {
     Tri,
     Saw,
     Square,
-    WhiteNoise
+    WhiteNoise,
+    WaveFormEnd
 };
 
 class Noise {
