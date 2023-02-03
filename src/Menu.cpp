@@ -4,6 +4,7 @@
 #include "LCDScreen.h"
 
 extern PatchParams patch_params;
+char WaveFormStrings[(int)WaveFormEnd][10] = {"Sin", "Tri", "Saw", "Square"};
 
 MenuOption::MenuOption(const char* _name, MenuID _id) {
     strcpy(name, _name);
@@ -107,7 +108,19 @@ void Menu::print_menu_params() {
             break;
         }
         case MenuID::OSCILLATORS: {
-            print_menu_dummy_params();
+            WaveForm wave_index[] = {WaveForm::Sin, WaveForm::Tri, WaveForm::Saw, WaveForm::Square, WaveForm::WhiteNoise};
+            lcd->put_cur(0,10);
+            sprintf(out, "%9d", patch_params.filter_env_attack);
+            lcd->send_string(out);
+            lcd->put_cur(1,10);
+            sprintf(out, "%9d", patch_params.filter_env_decay);
+            lcd->send_string(out);
+            lcd->put_cur(2,10);
+            sprintf(out, "%9.2f", patch_params.filter_env_sustain);
+            lcd->send_string(out);
+            lcd->put_cur(3,10);
+            sprintf(out, "%9d", patch_params.filter_env_release);
+            lcd->send_string(out);
             break;
         }
         case MenuID::MIXER: {
@@ -131,7 +144,6 @@ void Menu::print_menu_params() {
             lcd->put_cur(3,10);
             sprintf(out, "%9d", patch_params.filter_env_release);
             lcd->send_string(out);
-            break;
             break;
         }
         case MenuID::AMP: {
@@ -192,7 +204,25 @@ void Menu::update_menu_params(int param_num) {
             break;
         }
         case MenuID::OSCILLATORS: {
-            
+            if(param_num == 0){
+                WaveForm wave_index[] = {WaveForm::Sin, WaveForm::Tri, WaveForm::Saw, WaveForm::Square, WaveForm::WhiteNoise};
+                patch_params.osc1_waveform = wave_index[KNOB_RANGE_TO_INT(knob_readings[param_num],(int)WaveForm::WaveFormEnd)];
+            }
+            else if(param_num == 1) {
+                //Same thing here for decay time. Max decay time 5000ms
+                //patch_params.filter_env_decay = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+            }
+            else if(param_num == 2) {
+                //Volume range 0-1.0
+                //patch_params.filter_env_sustain = knob_readings[param_num]/(float)UINT16_MAX;
+            }
+            else if(param_num == 3) {
+                //Same thing here as with attack and decay. Max release 5000ms
+                //patch_params.filter_env_release = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+            }
+            else {
+
+            }
             break;
         }
         case MenuID::MIXER: {
