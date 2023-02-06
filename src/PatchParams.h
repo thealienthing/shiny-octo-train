@@ -2,6 +2,7 @@
 #define PATCH_PARAMS_H
 
 #include "Oscillator.h"
+#include "Filter.h"
 
 struct PatchParams {
     //voice menu
@@ -21,7 +22,7 @@ struct PatchParams {
     WaveForm osc1_waveform = WaveForm::Saw;
     WaveForm osc2_waveform = WaveForm::Saw;
     int osc2_semitone = 0;
-    float osc2_tune = 0.0;
+    int osc2_tune = 0; //hz 
 
 
     //mixer menu
@@ -31,8 +32,8 @@ struct PatchParams {
 
     //filter menu
     int filter_type = 0;
-    int cutoff = 20000;
-    float resonance = 1.0;
+    int filter_cutoff = 100; // Percent of frequencies allowed to pass
+    float filter_resonance = 1.0;
     float filter_env_intensity = 0.5;
 
     //filter envelope menu
