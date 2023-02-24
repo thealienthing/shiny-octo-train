@@ -56,12 +56,12 @@ public:
         MenuOption("LFO 1", MenuID::LFO1),
         MenuOption("LFO 2", MenuID::LFO2)
     };
-    LCDScreen* lcd;
+    // LCDScreen* lcd;
     int menu_index = 0;
     void increment_index(int inc);
-    void navigate(int reading);
-    void select();
-    void init(LCDScreen* _lcd);
+    void navigate(int reading, LCDScreen* lcd);
+    void select(LCDScreen* lcd);
+    // void init(LCDScreen* _lcd);
 };
 
 #endif

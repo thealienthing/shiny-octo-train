@@ -18,7 +18,6 @@ public:
         READY
     };
 
-    Hardware hw;
 
     Envelope() {}
     ~Envelope() {}

@@ -10,8 +10,8 @@ using namespace daisy::seed;
 //static DaisySeed hw;
 //extern DaisySeed synth_seed;
 
-static Synth* synth;
-Hardware hw;
+Synth* synth;
+Hardware* hw;
 
 void AudioCallback( AudioHandle::InputBuffer in,
                     AudioHandle::OutputBuffer out,
@@ -30,10 +30,9 @@ void AudioCallback( AudioHandle::InputBuffer in,
 
 int main(void)
 {
-    hw.synth_hardware_init();
-    synth = new Synth(Hardware::synth_hw.AudioSampleRate());
-    Hardware::synth_hw.StartAudio(AudioCallback);
-    hw.SynthConfig(synth);
+    hw = new Hardware(synth);
+    hw->synth_hardware_init();
+    hw->SynthConfig(synth);
     
     // Initialize the Daisy Seed hardware
     while(1)

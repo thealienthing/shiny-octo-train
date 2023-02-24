@@ -8,12 +8,12 @@ MenuOption::MenuOption(const char* _name, MenuID _id) {
 }
 
 //Gives menu access to LCD screen
-void Menu::init(LCDScreen* _lcd) {
-    lcd = _lcd;
-}
+// void Menu::init(LCDScreen* _lcd) {
+//     lcd = _lcd;
+// }
 
 //When rotary encoder is turned, we're moving options around on the screen
-void Menu::navigate(int reading) {
+void Menu::navigate(int reading, LCDScreen* lcd) {
     char out[20];
     increment_index(reading);
     lcd->clear();
@@ -30,7 +30,7 @@ void Menu::navigate(int reading) {
     lcd->put_cur(1, 10);
 }
 
-void Menu::select() {
+void Menu::select(LCDScreen* lcd) {
     char out[10];
     MenuOption* m = &menu[menu_index];
     lcd->clear();

@@ -134,7 +134,7 @@ void Synth::MidiCCProcess(ControlChangeEvent event) {
 void Synth::MidiNoteOn(NoteOnEvent event) {
     sprintf(_console_str, "Note on: %d %d %d", event.channel, event.note, event.velocity);
     //Hardware::LCD_SetScreen(_console_str);
-    Hardware::synth_hw.PrintLine(_console_str);
+    // Hardware::synth_hw.PrintLine(_console_str);
     uint8_t voice_index = UINT8_MAX;
     for(int i = 0; i < NUM_VOICES; i++) {
         //Note is already actively being played. Ignore this event
@@ -181,13 +181,13 @@ void Synth::MidiNoteOff(NoteOffEvent event) {
 }
 
 void Synth::PrintVoiceMap() {
-    sprintf(Hardware::_console_out, "VoiceMap[%d", _voices[0].note);
+    // sprintf(Hardware::_console_out, "VoiceMap[%d", _voices[0].note);
     //Hardware::SerialDebugWriteString(Hardware::_console_out);
     for(int i = 1; i < NUM_VOICES; i++){
-        sprintf(Hardware::_console_out, ",%d", _voices[i].note);
+        // sprintf(Hardware::_console_out, ",%d", _voices[i].note);
         //Hardware::SerialDebugWriteString(Hardware::_console_out);
     }
-    sprintf(Hardware::_console_out, "]\n");
+    // sprintf(Hardware::_console_out, "]\n");
     //Hardware::SerialDebugWriteString(Hardware::_console_out);
 }
 

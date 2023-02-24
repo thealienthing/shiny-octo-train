@@ -17,6 +17,10 @@ char Hardware::_console_out[];
 bool Hardware::report_amp_env = false;
 Synth* Hardware::synth;
 
+Hardware::Hardware(Synth* s) {
+    synth = s;
+}
+
 void Hardware::Timer5Callback(void* data)
 {
     //timer5_counter = (timer5_counter + 1) % ENV_PROCESS_SPEED_HZ;
@@ -28,10 +32,10 @@ void Hardware::Timer5Callback(void* data)
     menu_knob.Debounce();
     int reading = menu_knob.Increment();
     if(reading) {
-        menu.navigate(reading);
+        menu.navigate(reading, &synth_lcd);
     }
     if(menu_knob.RisingEdge()) {
-        menu.select();
+        menu.select(&synth_lcd);
     }
     
 
@@ -128,6 +132,8 @@ void Hardware::synth_hardware_init() {
     synth_hw.Init();
     synth_hw.Configure();
     synth_hw.StartLog(false);
+
+    synth = new Synth(synth_hw.AudioCallbackRate());
     
     //Set up MIDI DIN connection
     MidiUartHandler::Config midi_config;
@@ -151,7 +157,7 @@ void Hardware::synth_hardware_init() {
     synth_hw.adc.Start();
 
     //Menu knob encoder for navigating options on LCD
-    menu_knob.Init(D1, D2, D0, 0.0f);
+    menu_knob.Init(D2, D3, D1, 0.0f);
 
     //Set up I2C connection for LCD screen
     I2CHandle::Config i2c_conf;
@@ -170,8 +176,8 @@ void Hardware::synth_hardware_init() {
 
     //Then pass lcd to menu initializer
 
-    menu = Menu();
-    menu.init(&synth_lcd);
+    // menu = Menu();
+    // menu.init(&synth_lcd);
 
     /** Setup timer to handle midi events */
     TimerHandle         timer5;

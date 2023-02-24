@@ -18,7 +18,7 @@ class Menu;
 
 class Hardware {
 public:
-    Hardware () {}
+    Hardware (Synth* s);
     ~Hardware () {}
     static Synth* synth;
     //Hardware

@@ -5,6 +5,7 @@
 #include "daisy_seed.h"
 #include "Voice.h"
 #include "Envelope.h"
+#include "Menu.h"
 #include "Oscillator.h"
 #include "hardware.h"
 #include "system_consts.h"
@@ -15,7 +16,6 @@ using namespace daisy::seed;
 class Synth {
 private:
     //Synth component data members
-    Hardware hw;
     WaveForm _osc1_wf = WaveForm::Sin;
     WaveForm _osc2_wf = WaveForm::Saw;
     Voice _voices[NUM_VOICES];
@@ -37,6 +37,7 @@ private:
 public:
     bool led = false;
     Synth(float sample_rate);
+    Menu menu;
     float ProcessAudio();
     // void SerialDebugWriteString(const char txBuffer[],
     //     int bufferSize);
