@@ -15,7 +15,6 @@ public:
     virtual void clear() = 0;
 };
 
-#ifdef MASTERS_CAPSTONE
 #include "daisy.h"
 #include "hardware.h"
 
@@ -47,6 +46,5 @@ private:
     daisy::I2CHandle::Result send_data (char data);  // send data to the lcd
     I2CHandle* i2c;
 };
-#endif
 
 #endif

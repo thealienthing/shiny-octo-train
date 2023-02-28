@@ -39,7 +39,7 @@ public:
     //Report triggers
     static bool report_amp_env;
 private:
-    static int knob_readings[KNOB_COUNT];
+    static uint16_t knob_readings[KNOB_COUNT];
     static int timer5_counter;
     static void Timer5Callback(void* data);
     static void HardwareDebugCallback(void* data);

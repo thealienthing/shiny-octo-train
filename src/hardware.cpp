@@ -12,7 +12,7 @@ LCDScreen Hardware::synth_lcd(&Hardware::i2c);
 Encoder Hardware::menu_knob;
 Menu Hardware::menu;
 int Hardware::timer5_counter = 0;
-int Hardware::knob_readings[];
+uint16_t Hardware::knob_readings[];
 char Hardware::_console_out[];
 bool Hardware::report_amp_env = false;
 Synth* Hardware::synth;
@@ -32,10 +32,10 @@ void Hardware::Timer5Callback(void* data)
     menu_knob.Debounce();
     int reading = menu_knob.Increment();
     if(reading) {
-        menu.navigate(reading, &synth_lcd);
+        menu.navigate(reading);
     }
     if(menu_knob.RisingEdge()) {
-        menu.select(&synth_lcd);
+        menu.select();
     }
     
 
@@ -43,22 +43,9 @@ void Hardware::Timer5Callback(void* data)
         //Read potentiometers
         bool print_knobs = false;
         for(int i = 0; i < KNOB_COUNT; i++){
-            int reading = synth_hw.adc.Get(i)/516;
-            if(reading != knob_readings[i]) {
-                //refresh_screen = true;
-                print_knobs = true;
-                knob_readings[i] = reading;
-            }
+            knob_readings[i] = synth_hw.adc.Get(i);
         }
-        if(print_knobs) {
-            synth_hw.PrintLine("k1=%d k2=%d k3=%d k4=%d k5=%d",
-                knob_readings[0],
-                knob_readings[1],
-                knob_readings[2],
-                knob_readings[3],
-                knob_readings[4]
-            );
-        }
+        menu.update_knob_readings(knob_readings);
         //CpuLoadReport();
     }
     if(report_amp_env) {
@@ -187,8 +174,8 @@ void Hardware::synth_hardware_init() {
 
     //Then pass lcd to menu initializer
 
-    // menu = Menu();
-    // menu.init(&synth_lcd);
+    menu = Menu();
+    menu.init(&synth_lcd, &synth->patch_params);
 
     /** Setup timer to handle midi events */
     TimerHandle         timer5;

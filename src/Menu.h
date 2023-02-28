@@ -71,15 +71,17 @@ public:
         MenuOption("LFO 1", MenuID::LFO1),
         MenuOption("LFO 2", MenuID::LFO2)
     };
-    // LCDScreen* lcd;
+    LCDScreen* lcd;
+    PatchParams* patch_params;
     MenuID selected_menu = MenuID::MENU_END;
     uint16_t knob_readings[KNOB_COUNT];
     int menu_index = 0;
     
     char out[10]; //buffer for printing to LCD
+    void init(LCDScreen* l, PatchParams* p);
     void increment_index(int inc);
-    void navigate(int reading, LCDScreen* lcd);
-    void select(LCDScreen* lcd);
+    void navigate(int reading);
+    void select();
     void update_knob_readings(const uint16_t new_readings[KNOB_COUNT]);
     void update_menu_params(int param_num);
 

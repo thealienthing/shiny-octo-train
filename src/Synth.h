@@ -9,6 +9,7 @@
 #include "Oscillator.h"
 #include "hardware.h"
 #include "system_consts.h"
+#include "PatchParams.h"
 
 using namespace daisy;
 using namespace daisy::seed;
@@ -37,6 +38,8 @@ private:
 public:
     bool led = false;
     Synth(float sample_rate);
+    PatchParams patch_params;
+
     Menu menu;
     float ProcessAudio();
     // void SerialDebugWriteString(const char txBuffer[],
