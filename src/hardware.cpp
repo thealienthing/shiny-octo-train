@@ -12,7 +12,8 @@ LCDScreen Hardware::synth_lcd(&Hardware::i2c);
 Encoder Hardware::menu_knob;
 Menu Hardware::menu;
 int Hardware::timer5_counter = 0;
-uint16_t Hardware::knob_readings[];
+uint16_t Hardware::knob_readings[KNOB_COUNT][ANALOG_SAMPLE_COUNT];
+uint16_t Hardware::analog_sample_index = 0;
 char Hardware::_console_out[];
 bool Hardware::report_amp_env = false;
 Synth* Hardware::synth;
@@ -37,15 +38,31 @@ void Hardware::Timer5Callback(void* data)
     if(menu_knob.RisingEdge()) {
         menu.select();
     }
+
+    //Read potentiometers
+    uint16_t smoothed_readings[KNOB_COUNT];
+    for(int knob = 0; knob < KNOB_COUNT; knob++){
+        Hardware::knob_readings[analog_sample_index][knob] = synth_hw.adc.Get(knob);
+    }
+    analog_sample_index += 1;
+    
+    if(analog_sample_index >= ANALOG_SAMPLE_COUNT){
+        analog_sample_index = 0;
+
+        for(int knob = 0; knob < KNOB_COUNT; knob++) {
+            uint32_t smooth_val = 0;
+            for(int sample = 0; sample < ANALOG_SAMPLE_COUNT; sample++){
+                smooth_val += Hardware::knob_readings[sample][knob];
+            }
+            smoothed_readings[knob] = smooth_val / ANALOG_SAMPLE_COUNT / 64;
+        }
+        synth_hw.PrintLine("%lu | %lu | %lu | %lu | %lu", smoothed_readings[0], smoothed_readings[1], smoothed_readings[2], smoothed_readings[3], smoothed_readings[4]);
+    }
     
 
     if(timer5_counter == 0) {
-        //Read potentiometers
-        bool print_knobs = false;
-        for(int i = 0; i < KNOB_COUNT; i++){
-            knob_readings[i] = synth_hw.adc.Get(i);
-        }
-        menu.update_knob_readings(knob_readings);
+            
+        //menu.update_knob_readings(knob_readings);
         //CpuLoadReport();
     }
     if(report_amp_env) {

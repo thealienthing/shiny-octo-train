@@ -4,6 +4,7 @@
 #define HW_DEBUG_MODE false
 #define ENV_PROCESS_SPEED_HZ 50
 #define KNOB_COUNT 5
+#define ANALOG_SAMPLE_COUNT 4
 
 #include "daisy_seed.h"
 #include "LCDScreen.h"
@@ -39,7 +40,8 @@ public:
     //Report triggers
     static bool report_amp_env;
 private:
-    static uint16_t knob_readings[KNOB_COUNT];
+    static uint16_t knob_readings[KNOB_COUNT][ANALOG_SAMPLE_COUNT];
+    static uint16_t analog_sample_index;
     static int timer5_counter;
     static void Timer5Callback(void* data);
     static void HardwareDebugCallback(void* data);
