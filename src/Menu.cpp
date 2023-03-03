@@ -204,7 +204,7 @@ void Menu::print_menu_params() {
 void Menu::update_knob_readings(const uint16_t new_readings[KNOB_COUNT]) {
     bool refresh_params = false;
     for(int i = 0; i < KNOB_COUNT; i++) {
-        if(new_readings[i] != knob_readings[i]) {
+        if( abs((int32_t)new_readings[i]-(int32_t)knob_readings[i]) > 5){
             knob_readings[i] = new_readings[i];
             update_menu_params(i);
             refresh_params = true;

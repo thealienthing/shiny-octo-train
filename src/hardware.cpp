@@ -40,23 +40,22 @@ void Hardware::Timer5Callback(void* data)
     }
 
     //Read potentiometers
-    uint16_t smoothed_readings[KNOB_COUNT];
+    static uint64_t knob_readings[KNOB_COUNT] = { 0 };
+    static uint16_t smoothed_readings[KNOB_COUNT] = { 0 };
     for(int knob = 0; knob < KNOB_COUNT; knob++){
-        Hardware::knob_readings[analog_sample_index][knob] = synth_hw.adc.Get(knob);
+        knob_readings[knob] += synth_hw.adc.Get(knob);
     }
     analog_sample_index += 1;
     
     if(analog_sample_index >= ANALOG_SAMPLE_COUNT){
         analog_sample_index = 0;
-
         for(int knob = 0; knob < KNOB_COUNT; knob++) {
-            uint32_t smooth_val = 0;
-            for(int sample = 0; sample < ANALOG_SAMPLE_COUNT; sample++){
-                smooth_val += Hardware::knob_readings[sample][knob];
-            }
-            smoothed_readings[knob] = smooth_val / ANALOG_SAMPLE_COUNT / 64;
+            smoothed_readings[knob] = knob_readings[knob] / ANALOG_SAMPLE_COUNT;
+            knob_readings[knob] = 0;
         }
+        menu.update_knob_readings(smoothed_readings);
         synth_hw.PrintLine("%lu | %lu | %lu | %lu | %lu", smoothed_readings[0], smoothed_readings[1], smoothed_readings[2], smoothed_readings[3], smoothed_readings[4]);
+        
     }
     
 

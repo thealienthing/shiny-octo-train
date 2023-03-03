@@ -4,7 +4,7 @@
 #define HW_DEBUG_MODE false
 #define ENV_PROCESS_SPEED_HZ 50
 #define KNOB_COUNT 5
-#define ANALOG_SAMPLE_COUNT 4
+#define ANALOG_SAMPLE_COUNT 8
 
 #include "daisy_seed.h"
 #include "LCDScreen.h"
