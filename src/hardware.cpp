@@ -54,7 +54,7 @@ void Hardware::Timer5Callback(void* data)
             knob_readings[knob] = 0;
         }
         menu.update_knob_readings(smoothed_readings);
-        synth_hw.PrintLine("%lu | %lu | %lu | %lu | %lu", smoothed_readings[0], smoothed_readings[1], smoothed_readings[2], smoothed_readings[3], smoothed_readings[4]);
+        //synth_hw.PrintLine("%lu | %lu | %lu | %lu | %lu", smoothed_readings[0], smoothed_readings[1], smoothed_readings[2], smoothed_readings[3], smoothed_readings[4]);
         
     }
     
@@ -105,6 +105,7 @@ void Hardware::MIDIProcess() {
             case NoteOn:
             {
                 synth_hw.SetLed(true);
+                synth_hw.PrintLine("NoteOn -> %d", msg.AsNoteOn().note);
                 synth->MidiNoteOn(msg.AsNoteOn());
                 //and change the frequency of the oscillator 
                 // auto note_msg = msg.AsNoteOn();
@@ -141,6 +142,21 @@ void Hardware::MIDIProcess() {
     }
 }
 
+void Hardware::AudioCallback( AudioHandle::InputBuffer in,
+                    AudioHandle::OutputBuffer out,
+                    size_t size)
+{
+    //Loop through sample block size and output
+    //cpuLoadMeter.OnBlockStart();
+    float sample = 0.0;
+    for(size_t i = 0; i < size; i++) {
+        sample = synth->ProcessAudio();
+        out[0][i] = sample;
+        out[1][i] = sample;
+    }
+    //cpuLoadMeter.OnBlockEnd();
+}
+
 void Hardware::synth_hardware_init() {
     //Boiler plate hardware setup
     synth_hw.Init();
@@ -148,6 +164,7 @@ void Hardware::synth_hardware_init() {
     synth_hw.StartLog(false);
 
     synth = new Synth(synth_hw.AudioCallbackRate());
+    synth_hw.StartAudio(AudioCallback);
     
     //Set up MIDI DIN connection
     MidiUartHandler::Config midi_config;
@@ -221,3 +238,4 @@ void Hardware::SynthConfig(Synth* s) {
 void Hardware::SerialDebugWriteString(char txBuffer[] ){
     //Hardware::synth_uart.PollTx((uint8_t *)&txBuffer[0],  strlen(txBuffer));
 }
+

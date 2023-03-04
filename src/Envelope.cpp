@@ -1,6 +1,6 @@
 #include "Envelope.h"
 
-float Envelope::_attack = 0.1;
+float Envelope::_attack = 0.5;
 float Envelope::_decay = 0.1;
 float Envelope::_sustain = 0.1;
 float Envelope::_release = 0.1;

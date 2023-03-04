@@ -13,26 +13,11 @@ using namespace daisy::seed;
 Synth* synth;
 Hardware* hw;
 
-void AudioCallback( AudioHandle::InputBuffer in,
-                    AudioHandle::OutputBuffer out,
-                    size_t size)
-{
-    //Loop through sample block size and output
-    //cpuLoadMeter.OnBlockStart();
-    float sample = 0.0;
-    for(size_t i = 0; i < size; i++) {
-        sample = synth->ProcessAudio();
-        out[0][i] = sample;
-        out[1][i] = sample;
-    }
-    //cpuLoadMeter.OnBlockEnd();
-}
-
 int main(void)
 {
     hw = new Hardware(synth);
     hw->synth_hardware_init();
-    hw->SynthConfig(synth);
+    // hw->SynthConfig(synth);
     
     // Initialize the Daisy Seed hardware
     while(1)

@@ -4,7 +4,7 @@
 #define HW_DEBUG_MODE false
 #define ENV_PROCESS_SPEED_HZ 50
 #define KNOB_COUNT 5
-#define ANALOG_SAMPLE_COUNT 8
+#define ANALOG_SAMPLE_COUNT 3
 
 #include "daisy_seed.h"
 #include "LCDScreen.h"
@@ -34,7 +34,9 @@ public:
     static char _console_out[100];
     static void SerialDebugWriteString(char txBuffer[]);
     void synth_hardware_init();
-    
+    static void AudioCallback(AudioHandle::InputBuffer in,
+                    AudioHandle::OutputBuffer out,
+                    size_t size);
     void SynthConfig(Synth* s);
 
     //Report triggers
