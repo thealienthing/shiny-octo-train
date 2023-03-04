@@ -18,7 +18,7 @@ class Synth {
 private:
     //Synth component data members
     WaveForm _osc1_wf = WaveForm::Sin;
-    WaveForm _osc2_wf = WaveForm::Saw;
+    WaveForm _osc2_wf = WaveForm::Sin;
     Voice _voices[NUM_VOICES];
     NoteOnEvent _voice_map[NUM_VOICES];
 

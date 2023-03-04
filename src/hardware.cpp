@@ -163,7 +163,7 @@ void Hardware::synth_hardware_init() {
     synth_hw.Configure();
     synth_hw.StartLog(false);
 
-    synth = new Synth(synth_hw.AudioCallbackRate());
+    synth = new Synth(synth_hw.AudioSampleRate());
     synth_hw.StartAudio(AudioCallback);
     
     //Set up MIDI DIN connection
