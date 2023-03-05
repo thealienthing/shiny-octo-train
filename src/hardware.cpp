@@ -208,7 +208,7 @@ void Hardware::synth_hardware_init() {
     //Then pass lcd to menu initializer
 
     menu = Menu();
-    menu.init(&synth_lcd, &synth->patch_params);
+    menu.init(&synth_lcd, synth);
 
     /** Setup timer to handle midi events */
     TimerHandle         timer5;

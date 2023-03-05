@@ -35,10 +35,10 @@ public:
     static float get_decay();
     static float get_sustain();
     static float get_release();
-    static void set_attack(uint8_t attack);
-    static void set_decay(uint8_t decay);
-    static void set_sustain(uint8_t sustain);
-    static void set_release(uint8_t release);
+    static void set_attack(uint16_t attack);
+    static void set_decay(uint16_t decay);
+    static void set_sustain(uint16_t sustain);
+    static void set_release(uint16_t release);
     
 private:
     //Private setters for these variables since they will trigger a change in other variables

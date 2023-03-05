@@ -58,27 +58,27 @@ float Envelope::process() {
 
 }
 
-void Envelope::set_attack(uint8_t attack) {
+void Envelope::set_attack(uint16_t attack) {
     _attack_ms = (attack/127.0) * ENV_PROCESS_SPEED_HZ*ENVELOPE_MAX_TIME_SEC;
     _attack = 1.0 / _attack_ms;
     //Calculate how much to increase amp volume per millisecond
     //
 }
 
-void Envelope::set_decay(uint8_t decay) {
+void Envelope::set_decay(uint16_t decay) {
     _decay_ms = (decay/127.0) * ENV_PROCESS_SPEED_HZ*ENVELOPE_MAX_TIME_SEC;
     _decay = (1.0-_sustain) / _decay_ms;
     //
 }
 
-void Envelope::set_sustain(uint8_t sustain) {
+void Envelope::set_sustain(uint16_t sustain) {
     _sustain = sustain/127.0;
     //If sustain has changed, we need to update decay time
     set_decay(_decay);
     //
 }
 
-void Envelope::set_release(uint8_t release) {
+void Envelope::set_release(uint16_t release) {
     _release_ms = (release/127.0) * ENV_PROCESS_SPEED_HZ*ENVELOPE_MAX_TIME_SEC;
     _release = _sustain / _release_ms;
     //

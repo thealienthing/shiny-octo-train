@@ -3,6 +3,7 @@
 
 #include "LCDScreen.h"
 #include "PatchParams.h"
+#include "Synth.h"
 #include <cstdint>
 
 #define MENU_LEN 10
@@ -72,13 +73,13 @@ public:
         MenuOption("LFO 2", MenuID::LFO2)
     };
     LCDScreen* lcd;
-    PatchParams* patch_params;
+    Synth* synth;
     MenuID selected_menu = MenuID::MENU_END;
     uint16_t knob_readings[KNOB_COUNT];
     int menu_index = 0;
     
     char out[10]; //buffer for printing to LCD
-    void init(LCDScreen* l, PatchParams* p);
+    void init(LCDScreen* l, Synth* s);
     void increment_index(int inc);
     void navigate(int reading);
     void select();

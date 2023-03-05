@@ -24,7 +24,7 @@ float Synth::ProcessAudio() {
     return sample * _amp;
 }
 
-void Synth::AmpEnvelopeSet(Envelope::Phase phase, uint8_t val) {
+void Synth::AmpEnvelopeSet(Envelope::Phase phase, uint16_t val) {
     for(uint8_t i = 0; i < NUM_VOICES; i++) {
         if(phase == Envelope::Phase::ATTACK)
             Envelope::set_attack(val);

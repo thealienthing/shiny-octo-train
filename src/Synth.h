@@ -40,7 +40,6 @@ public:
     Synth(float sample_rate);
     PatchParams patch_params;
 
-    Menu menu;
     float ProcessAudio();
     // void SerialDebugWriteString(const char txBuffer[],
     //     int bufferSize);
@@ -57,7 +56,7 @@ public:
     void SetVoiceWaveform(Voice::Osc_Number osc, WaveForm waveform);
     void PrintVoiceMap();
     void PrintVoiceInfo(uint8_t voice);
-    void AmpEnvelopeSet(Envelope::Phase phase, uint8_t val);
+    void AmpEnvelopeSet(Envelope::Phase phase, uint16_t val);
     void AmpEnvelopeProcess();
 };
 

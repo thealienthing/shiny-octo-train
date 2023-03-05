@@ -12,9 +12,9 @@ MenuOption::MenuOption(const char* _name, MenuID _id) {
     id = _id;
 }
 
-void Menu::init(LCDScreen* l, PatchParams* p) {
+void Menu::init(LCDScreen* l, Synth* s) {
     lcd = l;
-    patch_params = p;
+    synth = s;
 }
 
 //When rotary encoder is turned, we're moving options around on the screen
@@ -111,60 +111,60 @@ void Menu::print_menu_params() {
         case MenuID::OSCILLATORS: {
             WaveForm wave_index[] = {WaveForm::Sin, WaveForm::Tri, WaveForm::Saw, WaveForm::Square, WaveForm::WhiteNoise};
             lcd->put_cur(0,10);
-            sprintf(out, "%9s", WaveFormStrings[wave_index[patch_params->osc1_waveform]]);
+            sprintf(out, "%9s", WaveFormStrings[wave_index[synth->patch_params.osc1_waveform]]);
             lcd->send_string(out);
             lcd->put_cur(1,10);
-            sprintf(out, "%9s", WaveFormStrings[wave_index[patch_params->osc2_waveform]]);
+            sprintf(out, "%9s", WaveFormStrings[wave_index[synth->patch_params.osc2_waveform]]);
             lcd->send_string(out);
             lcd->put_cur(2,10);
-            sprintf(out, "%9d", patch_params->osc2_semitone);
+            sprintf(out, "%9d", synth->patch_params.osc2_semitone);
             lcd->send_string(out);
             lcd->put_cur(3,10);
-            sprintf(out, "%9d", patch_params->osc2_tune);
+            sprintf(out, "%9d", synth->patch_params.osc2_tune);
             lcd->send_string(out);
             break;
         }
         case MenuID::MIXER: {
             lcd->put_cur(0,10);
-            sprintf(out, "%9.2f", patch_params->oscillator1_level);
+            sprintf(out, "%9.2f", synth->patch_params.oscillator1_level);
             lcd->send_string(out);
             lcd->put_cur(1,10);
-            sprintf(out, "%9.2f", patch_params->oscillator2_level);
+            sprintf(out, "%9.2f", synth->patch_params.oscillator2_level);
             lcd->send_string(out);
             lcd->put_cur(2,10);
-            sprintf(out, "%9.2f", patch_params->noise_level);
+            sprintf(out, "%9.2f", synth->patch_params.noise_level);
             lcd->send_string(out);
             break;
         }
         case MenuID::FILTER: {
             FilterType filter_index[] = {FilterType::LowPass24db, FilterType::LowPass12db, FilterType::BandPass12db, FilterType::HighPass12db};
             lcd->put_cur(0,10);
-            sprintf(out, "%9s", FilterTypeStrings[filter_index[patch_params->filter_type]]);
+            sprintf(out, "%9s", FilterTypeStrings[filter_index[synth->patch_params.filter_type]]);
             lcd->send_string(out);
             lcd->put_cur(1,10);
-            sprintf(out, "%9d", patch_params->filter_cutoff);
+            sprintf(out, "%9d", synth->patch_params.filter_cutoff);
             lcd->send_string(out);
             lcd->put_cur(2,10);
-            sprintf(out, "%9.2f", patch_params->filter_resonance);
+            sprintf(out, "%9.2f", synth->patch_params.filter_resonance);
             lcd->send_string(out);
             lcd->put_cur(3,10);
-            sprintf(out, "%9.2f", patch_params->filter_env_intensity);
+            sprintf(out, "%9.2f", synth->patch_params.filter_env_intensity);
             lcd->send_string(out);
             
             break;
         }
         case MenuID::FILTER_ENV: {
             lcd->put_cur(0,10);
-            sprintf(out, "%9d", patch_params->filter_env_attack);
+            sprintf(out, "%9d", synth->patch_params.filter_env_attack);
             lcd->send_string(out);
             lcd->put_cur(1,10);
-            sprintf(out, "%9d", patch_params->filter_env_decay);
+            sprintf(out, "%9d", synth->patch_params.filter_env_decay);
             lcd->send_string(out);
             lcd->put_cur(2,10);
-            sprintf(out, "%9.2f", patch_params->filter_env_sustain);
+            sprintf(out, "%9.2f", synth->patch_params.filter_env_sustain);
             lcd->send_string(out);
             lcd->put_cur(3,10);
-            sprintf(out, "%9d", patch_params->filter_env_release);
+            sprintf(out, "%9d", synth->patch_params.filter_env_release);
             lcd->send_string(out);
             break;
         }
@@ -174,16 +174,16 @@ void Menu::print_menu_params() {
         }
         case MenuID::AMP_ENV: {
             lcd->put_cur(0,10);
-            sprintf(out, "%9d", patch_params->amp_env_attack);
+            sprintf(out, "%9d", synth->patch_params.amp_env_attack);
             lcd->send_string(out);
             lcd->put_cur(1,10);
-            sprintf(out, "%9d", patch_params->amp_env_decay);
+            sprintf(out, "%9d", synth->patch_params.amp_env_decay);
             lcd->send_string(out);
             lcd->put_cur(2,10);
-            sprintf(out, "%9.2f", patch_params->amp_env_sustain);
+            sprintf(out, "%9.2f", synth->patch_params.amp_env_sustain);
             lcd->send_string(out);
             lcd->put_cur(3,10);
-            sprintf(out, "%9d", patch_params->amp_env_release);
+            sprintf(out, "%9d", synth->patch_params.amp_env_release);
             lcd->send_string(out);
             break;
         }
@@ -229,16 +229,18 @@ void Menu::update_menu_params(int param_num) {
             WaveForm wave_index[] = {WaveForm::Sin, WaveForm::Tri, WaveForm::Saw, WaveForm::Square, WaveForm::WhiteNoise};
             
             if(param_num == 0){
-                patch_params->osc1_waveform = wave_index[KNOB_RANGE_TO_INT(knob_readings[param_num],(int)WaveForm::WhiteNoise)];
+                synth->patch_params.osc1_waveform = wave_index[KNOB_RANGE_TO_INT(knob_readings[param_num],(int)WaveForm::WhiteNoise)];
+                synth->SetVoiceWaveform(Voice::Osc1, synth->patch_params.osc1_waveform);
             }
             else if(param_num == 1) {
-                patch_params->osc2_waveform = wave_index[KNOB_RANGE_TO_INT(knob_readings[param_num],(int)WaveForm::WhiteNoise)];
+                synth->patch_params.osc2_waveform = wave_index[KNOB_RANGE_TO_INT(knob_readings[param_num],(int)WaveForm::WhiteNoise)];
+                synth->SetVoiceWaveform(Voice::Osc2, synth->patch_params.osc2_waveform);
             }
             else if(param_num == 2) {
-                patch_params->osc2_semitone = (knob_readings[param_num]/(UINT16_MAX/48))-24;
+                synth->patch_params.osc2_semitone = (knob_readings[param_num]/(UINT16_MAX/48))-24;
             }
             else if(param_num == 3) {
-                patch_params->osc2_tune = (knob_readings[param_num]/(UINT16_MAX/100))-50;
+                synth->patch_params.osc2_tune = (knob_readings[param_num]/(UINT16_MAX/100))-50;
             }
             else {
 
@@ -247,15 +249,15 @@ void Menu::update_menu_params(int param_num) {
         }
         case MenuID::MIXER: {
             if(param_num == 0){
-                patch_params->oscillator1_level = knob_readings[param_num]/(float)UINT16_MAX;
+                synth->patch_params.oscillator1_level = knob_readings[param_num]/(float)UINT16_MAX;
             }
             else if(param_num == 1){
                 //Same thing here for decay time. Max decay time 5000ms
-                patch_params->oscillator2_level = knob_readings[param_num]/(float)UINT16_MAX;
+                synth->patch_params.oscillator2_level = knob_readings[param_num]/(float)UINT16_MAX;
             }
             else if(param_num == 2){
                 //Volume range 0-1.0
-                patch_params->noise_level = knob_readings[param_num]/(float)UINT16_MAX;
+                synth->patch_params.noise_level = knob_readings[param_num]/(float)UINT16_MAX;
             }
             else {
 
@@ -265,16 +267,16 @@ void Menu::update_menu_params(int param_num) {
         case MenuID::FILTER: {
             FilterType filter_index[] = {FilterType::LowPass24db, FilterType::LowPass12db, FilterType::BandPass12db, FilterType::HighPass12db};
             if(param_num == 0){
-                patch_params->filter_type = filter_index[KNOB_RANGE_TO_INT(knob_readings[param_num],(int)FilterType::HighPass12db)];
+                synth->patch_params.filter_type = filter_index[KNOB_RANGE_TO_INT(knob_readings[param_num],(int)FilterType::HighPass12db)];
             }
             else if(param_num == 1) {
-                patch_params->filter_cutoff = knob_readings[param_num]/(float)UINT16_MAX*100;
+                synth->patch_params.filter_cutoff = knob_readings[param_num]/(float)UINT16_MAX*100;
             }
             else if(param_num == 2) {
-                patch_params->filter_resonance = knob_readings[param_num]/(float)UINT16_MAX*2.0;
+                synth->patch_params.filter_resonance = knob_readings[param_num]/(float)UINT16_MAX*2.0;
             }
             else if(param_num == 3) {
-                patch_params->filter_env_intensity = knob_readings[param_num]/(float)UINT16_MAX;
+                synth->patch_params.filter_env_intensity = knob_readings[param_num]/(float)UINT16_MAX;
             }
             break;
         }
@@ -282,16 +284,16 @@ void Menu::update_menu_params(int param_num) {
             if(param_num == 0)
                 //Divide uint16_t max by 13 to get an approximate increment for a range between 0-5000ms
                 //Add 10 to baseline to remove potential ugly clipping of volume jump at min attack
-                patch_params->filter_env_attack = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+                synth->patch_params.filter_env_attack = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
             else if(param_num == 1)
                 //Same thing here for decay time. Max decay time 5000ms
-                patch_params->filter_env_decay = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+                synth->patch_params.filter_env_decay = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
             else if(param_num == 2)
                 //Volume range 0-1.0
-                patch_params->filter_env_sustain = knob_readings[param_num]/(float)UINT16_MAX;
+                synth->patch_params.filter_env_sustain = knob_readings[param_num]/(float)UINT16_MAX;
             else if(param_num == 3)
                 //Same thing here as with attack and decay. Max release 5000ms
-                patch_params->filter_env_release = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+                synth->patch_params.filter_env_release = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
             else {
 
             }
@@ -302,19 +304,28 @@ void Menu::update_menu_params(int param_num) {
             break;
         }
         case MenuID::AMP_ENV: {
-            if(param_num == 0)
+            if(param_num == 0) {
                 //Divide uint16_t max by 13 to get an approximate increment for a range between 0-5000ms
                 //Add 10 to baseline to remove potential ugly clipping of volume jump at min attack
-                patch_params->amp_env_attack = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
-            else if(param_num == 1)
+                synth->patch_params.amp_env_attack = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+                synth->AmpEnvelopeSet(Envelope::ATTACK, synth->patch_params.amp_env_attack);
+            }
+            else if(param_num == 1){
                 //Same thing here for decay time. Max decay time 5000ms
-                patch_params->amp_env_decay = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
-            else if(param_num == 2)
+                synth->patch_params.amp_env_decay = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+                synth->AmpEnvelopeSet(Envelope::DECAY, synth->patch_params.amp_env_decay);
+            }
+
+            else if(param_num == 2){
                 //Volume range 0-1.0
-                patch_params->amp_env_sustain = knob_readings[param_num]/(float)UINT16_MAX;
-            else if(param_num == 3)
+                synth->patch_params.amp_env_sustain = knob_readings[param_num]/(float)UINT16_MAX;
+                synth->AmpEnvelopeSet(Envelope::SUSTAIN, synth->patch_params.amp_env_sustain);
+            }
+            else if(param_num == 3){
                 //Same thing here as with attack and decay. Max release 5000ms
-                patch_params->amp_env_release = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+                synth->patch_params.amp_env_release = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+                synth->AmpEnvelopeSet(Envelope::RELEASE, synth->patch_params.amp_env_release);
+            }
             else {
 
             }
