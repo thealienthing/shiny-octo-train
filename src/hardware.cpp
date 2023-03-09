@@ -60,9 +60,9 @@ void Hardware::Timer5Callback(void* data)
     
 
     if(timer5_counter == 0) {
-            
-        //menu.update_knob_readings(knob_readings);
-        //CpuLoadReport();
+        double vol = LINEAR_TO_LOG(smoothed_readings[4], UINT16_MAX);
+        //synth_hw.PrintLine("Master = %f", vol);
+        synth->_amp = vol;
     }
     if(report_amp_env) {
         report_amp_env = false;
@@ -219,6 +219,11 @@ void Hardware::synth_hardware_init() {
     auto tim_target_freq = ENV_PROCESS_SPEED_HZ; //Set frequency to 50hz
     auto tim_base_freq   = System::GetPClk2Freq();
     timer5_cfg.period       = tim_base_freq / tim_target_freq;
+    synth_hw.PrintLine("tar_freq=%d | base_freq=%d | period=%d", 
+        tim_target_freq,
+        tim_base_freq,
+        timer5_cfg.period    
+    );
     timer5.Init(timer5_cfg);
     if(!HW_DEBUG_MODE){
         timer5.SetCallback(Timer5Callback);

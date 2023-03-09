@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #ifndef ENV_PROCESS_SPEED_HZ
-#define ENV_PROCESS_SPEED_HZ 50
+#define ENV_PROCESS_SPEED_HZ 100
 #endif
 
 #define ENVELOPE_MAX_TIME_SEC 5

@@ -307,12 +307,18 @@ void Menu::update_menu_params(int param_num) {
             if(param_num == 0) {
                 //Divide uint16_t max by 13 to get an approximate increment for a range between 0-5000ms
                 //Add 10 to baseline to remove potential ugly clipping of volume jump at min attack
-                synth->patch_params.amp_env_attack = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+                int attack = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000);
+                attack = attack*LINEAR_TO_LOG(attack, 5000);
+                attack = (attack < 5) ? 5 : attack;
+                synth->patch_params.amp_env_attack = attack;
                 synth->AmpEnvelopeSet(Envelope::ATTACK, synth->patch_params.amp_env_attack);
             }
             else if(param_num == 1){
                 //Same thing here for decay time. Max decay time 5000ms
-                synth->patch_params.amp_env_decay = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+                int decay = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000);
+                decay = decay*LINEAR_TO_LOG(decay, 5000);
+                decay = (decay < 5) ? 5 : decay;
+                synth->patch_params.amp_env_decay = decay;
                 synth->AmpEnvelopeSet(Envelope::DECAY, synth->patch_params.amp_env_decay);
             }
 
@@ -323,7 +329,10 @@ void Menu::update_menu_params(int param_num) {
             }
             else if(param_num == 3){
                 //Same thing here as with attack and decay. Max release 5000ms
-                synth->patch_params.amp_env_release = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000)+10;
+                int release = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000);
+                release = release*LINEAR_TO_LOG(release, 5000);
+                release = (release < 5) ? 5 : release;
+                synth->patch_params.amp_env_release = release;
                 synth->AmpEnvelopeSet(Envelope::RELEASE, synth->patch_params.amp_env_release);
             }
             else {

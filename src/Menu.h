@@ -5,6 +5,7 @@
 #include "PatchParams.h"
 #include "Synth.h"
 #include <cstdint>
+#include <math.h>
 
 #define MENU_LEN 10
 
@@ -19,6 +20,7 @@
 
 #define KNOB_RANGE_TO_MS_RANGE(knob_val, ms_range) (knob_val/(UINT16_MAX/ms_range))
 #define KNOB_RANGE_TO_INT(knob_val, option_range) (knob_val/(UINT16_MAX/option_range))
+#define LINEAR_TO_LOG(input_val, log_mid_point) (double)(exp(log2(input_val)-log2(log_mid_point)))
 
 class LCDScreen;
 

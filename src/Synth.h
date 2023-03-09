@@ -25,7 +25,7 @@ private:
     uint8_t _voice_count = 0;
     char _console_str[64];
 
-    float _amp = 0.05;
+    
 
     //Audio data
     float _sample_rate = 48000.0;
@@ -37,6 +37,7 @@ private:
     float mtof(int note);
 public:
     bool led = false;
+    double _amp = 0.05;
     Synth(float sample_rate);
     PatchParams patch_params;
 

@@ -2,7 +2,7 @@
 #define HARDWARE_H
 
 #define HW_DEBUG_MODE false
-#define ENV_PROCESS_SPEED_HZ 50
+#define ENV_PROCESS_SPEED_HZ 100
 #define KNOB_COUNT 5
 #define ANALOG_SAMPLE_COUNT 3
 
