@@ -17,11 +17,10 @@ void Voice::init(float sample_rate)
     amp_env.reset();
 }
 
-void Voice::set_pitch(float pitch_hz)
+void Voice::set_pitch(float osc1_pitch_hz, float osc2_pitch_hz)
 {
-    _pitch = pitch_hz;
-    _osc1.set_pitch(pitch_hz);
-    _osc2.set_pitch(pitch_hz);
+    _osc1.set_pitch(osc1_pitch_hz);
+    _osc2.set_pitch(osc2_pitch_hz);
 }
 
 void Voice::set_waveform(Osc_Number osc_num, WaveForm waveform)

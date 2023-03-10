@@ -37,6 +37,12 @@ void Synth::AmpEnvelopeSet(Envelope::Phase phase, uint16_t val) {
     }
 }
 
+void Synth::SetOscillatorLevel(Voice::Osc_Number osc, float level) {
+    for(int i = 0; i < NUM_VOICES; i++) {
+        _voices[i].set_osc_volume(osc, level);
+    }
+}
+
 /*
  * This is a timer callback function that is run triggers at rate ENV_PROCESS_SPEED_HZ
 */
@@ -153,7 +159,9 @@ void Synth::MidiNoteOn(NoteOnEvent event) {
 
     if(voice_index != UINT8_MAX) {
         _voices[voice_index].note = event.note;
-        _voices[voice_index].set_pitch(mtof(event.note));
+        float osc1_pitch = mtof(event.note);
+        float osc2_pitch = mtof(event.note+patch_params.osc2_semitone);
+        _voices[voice_index].set_pitch(osc1_pitch, osc2_pitch);
         _voices[voice_index].amp_env.note_on();
     }
     

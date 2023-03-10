@@ -55,6 +55,7 @@ public:
     void MidiNoteOff(NoteOffEvent event);
     void MidiCCProcess(ControlChangeEvent event);
     void SetVoiceWaveform(Voice::Osc_Number osc, WaveForm waveform);
+    void SetOscillatorLevel(Voice::Osc_Number osc, float level);
     void PrintVoiceMap();
     void PrintVoiceInfo(uint8_t voice);
     void AmpEnvelopeSet(Envelope::Phase phase, uint16_t val);

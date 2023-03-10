@@ -249,10 +249,12 @@ void Menu::update_menu_params(int param_num) {
         }
         case MenuID::MIXER: {
             if(param_num == 0){
+                synth->SetOscillatorLevel(Voice::Osc1, knob_readings[param_num]/(float)UINT16_MAX);
                 synth->patch_params.oscillator1_level = knob_readings[param_num]/(float)UINT16_MAX;
+                
             }
             else if(param_num == 1){
-                //Same thing here for decay time. Max decay time 5000ms
+                synth->SetOscillatorLevel(Voice::Osc2, knob_readings[param_num]/(float)UINT16_MAX);
                 synth->patch_params.oscillator2_level = knob_readings[param_num]/(float)UINT16_MAX;
             }
             else if(param_num == 2){
