@@ -324,8 +324,8 @@ void Menu::update_menu_params(int param_num) {
 
             else if(param_num == 2){
                 //Volume range 0-1.0
-                synth->patch_params.amp_env_sustain = knob_readings[param_num]/(float)UINT16_MAX;
-                synth->AmpEnvelopeSet(Envelope::SUSTAIN, synth->patch_params.amp_env_sustain);
+                synth->patch_params.amp_env_sustain = (float)knob_readings[param_num]/(float)UINT16_MAX;
+                synth->AmpEnvelopeSet(Envelope::SUSTAIN, knob_readings[param_num]);
             }
             else if(param_num == 3){
                 //Same thing here as with attack and decay. Max release 5000ms

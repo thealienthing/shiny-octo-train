@@ -64,8 +64,9 @@ void Hardware::Timer5Callback(void* data)
         //synth_hw.PrintLine("Master = %f", vol);
         synth->_amp = vol;
     }
-    if(report_amp_env) {
-        report_amp_env = false;
+    if(synth->_console_print) {
+        synth->_console_print = false;
+        synth_hw.PrintLine("%s", synth->_console_str);
     }
 
     MIDIProcess();

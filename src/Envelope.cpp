@@ -1,13 +1,5 @@
 #include "Envelope.h"
 
-float Envelope::_attack = 0.1;
-float Envelope::_decay = 0.1;
-float Envelope::_sustain = 1.0;
-float Envelope::_release = 0.1;
-uint16_t Envelope::_attack_ms = 0.1;
-uint16_t Envelope::_decay_ms = 0.1;
-uint16_t Envelope::_release_ms = 0.1;
-
 void Envelope::note_on() {
     phase = Phase::ATTACK;
     val = 0.0;
@@ -16,7 +8,7 @@ void Envelope::note_on() {
 
 void Envelope::note_off() {
     phase = Phase::RELEASE;
-    
+    _release = val / _release_ms;
 }
 
 void Envelope::reset() {
@@ -37,7 +29,6 @@ float Envelope::process() {
         val -= _decay;
         if(val <= _sustain) {
             phase = Phase::SUSTAIN;
-            
         }
     }
     else if(phase == Phase::RELEASE) {
@@ -46,6 +37,10 @@ float Envelope::process() {
             reset();
             
         }
+    }
+    else if(phase == Phase::SUSTAIN) {
+        
+        
     }
     else if(phase == Phase::TAIL_OFF) {
         val -= 0.2;
@@ -60,7 +55,7 @@ float Envelope::process() {
 
 void Envelope::set_attack(uint16_t attack) {
     //_attack_ms = (attack/127.0) * ENV_PROCESS_SPEED_HZ*ENVELOPE_MAX_TIME_SEC;
-    _attack_ms = attack;
+    _attack_ms = attack / 4;
     _attack = 1.0 / _attack_ms;
     //Calculate how much to increase amp volume per millisecond
     //
@@ -68,22 +63,24 @@ void Envelope::set_attack(uint16_t attack) {
 
 void Envelope::set_decay(uint16_t decay) {
     //_decay_ms = (decay/127.0) * ENV_PROCESS_SPEED_HZ*ENVELOPE_MAX_TIME_SEC;
-    _decay_ms = decay;
-    _decay = (1.0-_sustain) / _decay_ms;
+    _decay_ms = decay / 4;
+    _decay = 1.0 / _decay_ms;
     //
 }
 
 void Envelope::set_sustain(uint16_t sustain) {
-    _sustain = sustain;
+    _sustain = (float)sustain / (float)UINT16_MAX;
     //If sustain has changed, we need to update decay time
-    set_decay(_decay);
+    //set_decay(_decay);
     //
 }
 
 void Envelope::set_release(uint16_t release) {
     //_release_ms = (release/127.0) * ENV_PROCESS_SPEED_HZ*ENVELOPE_MAX_TIME_SEC;
-    _release_ms = release;
-    _release = _sustain / _release_ms;
+    _release_ms = release / 4;
+    _release = 1.0 / _release_ms;
+    // _release = 1.0 / _release_ms;
+    // _release = val / _release_ms;
     //
 }
 

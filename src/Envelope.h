@@ -31,22 +31,22 @@ public:
     void note_off();
     void reset();
 
-    static float get_attack();
-    static float get_decay();
-    static float get_sustain();
-    static float get_release();
-    static void set_attack(uint16_t attack);
-    static void set_decay(uint16_t decay);
-    static void set_sustain(uint16_t sustain);
-    static void set_release(uint16_t release);
+    float get_attack();
+    float get_decay();
+    float get_sustain();
+    float get_release();
+    void set_attack(uint16_t attack);
+    void set_decay(uint16_t decay);
+    void set_sustain(uint16_t sustain);
+    void set_release(uint16_t release);
     
 private:
     //Private setters for these variables since they will trigger a change in other variables
-    static uint16_t _attack_ms, _decay_ms, _release_ms;
-    static float _attack;
-    static float _decay;
-    static float _sustain;
-    static float _release;
+    uint16_t _attack_ms, _decay_ms, _release_ms;
+    float _attack;
+    float _decay;
+    float _sustain;
+    float _release;
 
     //Can be reset by hardware interface which will reconfigure the timer
     static uint32_t _sample_rate; //hz

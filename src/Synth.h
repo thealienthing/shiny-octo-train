@@ -23,7 +23,7 @@ private:
     NoteOnEvent _voice_map[NUM_VOICES];
 
     uint8_t _voice_count = 0;
-    char _console_str[64];
+    
 
     
 
@@ -59,6 +59,12 @@ public:
     void PrintVoiceInfo(uint8_t voice);
     void AmpEnvelopeSet(Envelope::Phase phase, uint16_t val);
     void AmpEnvelopeProcess();
+
+    //Buffer that is read by hardware in the timer5 interupt
+    char _console_str[100];
+    bool _console_print = false; //when this is true, timer interupt
+                                 //will print _console_str and set
+                                 //_console_print to false
 };
 
 #endif

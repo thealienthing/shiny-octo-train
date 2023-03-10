@@ -27,13 +27,13 @@ float Synth::ProcessAudio() {
 void Synth::AmpEnvelopeSet(Envelope::Phase phase, uint16_t val) {
     for(uint8_t i = 0; i < NUM_VOICES; i++) {
         if(phase == Envelope::Phase::ATTACK)
-            Envelope::set_attack(val);
+            _voices[i].amp_env.set_attack(val);
         else if(phase == Envelope::Phase::DECAY)
-            Envelope::set_decay(val);
+            _voices[i].amp_env.set_decay(val);
         else if(phase == Envelope::Phase::SUSTAIN)
-            Envelope::set_sustain(val);
+            _voices[i].amp_env.set_sustain(val);
         else if(phase == Envelope::Phase::RELEASE)
-            Envelope::set_release(val);
+            _voices[i].amp_env.set_release(val);
     }
 }
 
@@ -42,11 +42,14 @@ void Synth::AmpEnvelopeSet(Envelope::Phase phase, uint16_t val) {
 */
 void Synth::AmpEnvelopeProcess() {
     for(uint8_t i = 0; i < NUM_VOICES; i++) {
-        if(_voices[i].amp_env.phase != Envelope::Phase::READY) {
-            _voices[i].amp_env.process();
-            if(_voices[i].amp_env.phase == Envelope::Phase::READY)
-                _voices[i].note = 0;
-        }
+        _voices[i].amp_env.process();
+        if(_voices[i].amp_env.phase == Envelope::Phase::READY)
+            _voices[i].note = 0;
+        // if(_voices[i].amp_env.phase != Envelope::Phase::READY) {
+        //     _voices[i].amp_env.process();
+        //     if(_voices[i].amp_env.phase == Envelope::Phase::READY)
+        //         _voices[i].note = 0;
+        // }
     }
 }
 
@@ -181,13 +184,25 @@ void Synth::MidiNoteOff(NoteOffEvent event) {
 }
 
 void Synth::PrintVoiceMap() {
-    // sprintf(Hardware::_console_out, "VoiceMap[%d", _voices[0].note);
+    //sprintf(_console_str, "VoiceMap[%d", _voices[0].note);
     //Hardware::SerialDebugWriteString(Hardware::_console_out);
     for(int i = 1; i < NUM_VOICES; i++){
-        // sprintf(Hardware::_console_out, ",%d", _voices[i].note);
+        //sprintf(_console_str, ",%d", _voices[i].note);
         //Hardware::SerialDebugWriteString(Hardware::_console_out);
     }
-    // sprintf(Hardware::_console_out, "]\n");
+    //sprintf(_console_str, "]\n");
+    sprintf(_console_str, "[%d-%d, %d-%d, %d-%d, %d-%d, %d-%d, %d-%d, %d-%d, %d-%d]",
+        _voices[0].note, _voices[0].amp_env.phase,
+        _voices[1].note, _voices[1].amp_env.phase,
+        _voices[2].note, _voices[2].amp_env.phase,
+        _voices[3].note, _voices[3].amp_env.phase,
+        _voices[4].note, _voices[4].amp_env.phase,
+        _voices[5].note, _voices[5].amp_env.phase,
+        _voices[6].note, _voices[6].amp_env.phase,
+        _voices[7].note, _voices[7].amp_env.phase  
+    );
+        
+    _console_print = true;
     //Hardware::SerialDebugWriteString(Hardware::_console_out);
 }
 
