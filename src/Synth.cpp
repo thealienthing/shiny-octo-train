@@ -159,9 +159,9 @@ void Synth::MidiNoteOn(NoteOnEvent event) {
 
     if(voice_index != UINT8_MAX) {
         _voices[voice_index].note = event.note;
-        float osc1_pitch = mtof(event.note);
-        float osc2_pitch = mtof(event.note+patch_params.osc2_semitone);
-        _voices[voice_index].set_pitch(osc1_pitch, osc2_pitch);
+        // float osc1_pitch = mtof(event.note);
+        // float osc2_pitch = mtof(event.note);
+        _voices[voice_index].set_pitch(event.note);
         _voices[voice_index].amp_env.note_on();
     }
     
@@ -220,6 +220,25 @@ void Synth::SetVoiceWaveform(Voice::Osc_Number osc, WaveForm waveform) {
     }
 }
 
-float Synth::mtof(int note) {
-    return 440.0 * powf(2.0, (( (float)(note-69) )/12.0));
+void Synth::SetOscillator2Pitch(int osc2_semitone, int osc2_tune) {
+    for(int i = 0; i < NUM_VOICES; i++){
+        _voices[i].set_osc2_offsets(osc2_semitone, osc2_tune);
+    }
+}
+
+void Synth::ApplyPatch() {
+    //Set waveforms from patch params
+    SetVoiceWaveform(Voice::Osc1, patch_params.osc1_waveform);
+    SetVoiceWaveform(Voice::Osc2, patch_params.osc2_waveform);
+    SetOscillator2Pitch(patch_params.osc2_semitone, patch_params.osc2_tune);
+
+    //Set oscillator levels from patch params
+    SetOscillatorLevel(Voice::Osc1, patch_params.oscillator1_level);
+    SetOscillatorLevel(Voice::Osc2, patch_params.oscillator2_level);
+
+    //Setup amp envelope according to patch params
+    AmpEnvelopeSet(Envelope::ATTACK, patch_params.amp_env_attack);
+    AmpEnvelopeSet(Envelope::DECAY, patch_params.amp_env_decay);
+    AmpEnvelopeSet(Envelope::SUSTAIN, patch_params.amp_env_sustain);
+    AmpEnvelopeSet(Envelope::RELEASE, patch_params.amp_env_release);
 }

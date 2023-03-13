@@ -238,9 +238,17 @@ void Menu::update_menu_params(int param_num) {
             }
             else if(param_num == 2) {
                 synth->patch_params.osc2_semitone = (knob_readings[param_num]/(UINT16_MAX/48))-24;
+                synth->SetOscillator2Pitch(
+                    synth->patch_params.osc2_semitone,
+                    synth->patch_params.osc2_tune
+                );
             }
             else if(param_num == 3) {
                 synth->patch_params.osc2_tune = (knob_readings[param_num]/(UINT16_MAX/100))-50;
+                synth->SetOscillator2Pitch(
+                    synth->patch_params.osc2_semitone,
+                    synth->patch_params.osc2_tune
+                );
             }
             else {
 

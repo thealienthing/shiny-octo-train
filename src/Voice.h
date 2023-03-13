@@ -12,9 +12,11 @@ public:
         Osc2
     };
     Envelope amp_env;
-    void set_pitch(float osc1_pitch_hz, float osc2_pitch_hz);
+    // void set_pitch(float osc1_pitch_hz, float osc2_pitch_hz);
+    void set_pitch(int note);
     void set_waveform(Osc_Number osc_num, WaveForm waveform);
     void set_osc_volume(Osc_Number osc_num, float amp);
+    void set_osc2_offsets(int osc2_smitone, int osc2_tune);
     void init(float sample_rate);
     float get_sample();
     uint8_t note;

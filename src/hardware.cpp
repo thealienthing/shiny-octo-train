@@ -26,6 +26,8 @@ void Hardware::Timer5Callback(void* data)
 {
     //timer5_counter = (timer5_counter + 1) % ENV_PROCESS_SPEED_HZ;
     timer5_counter = (timer5_counter + 1) % 10;
+    static int midi_note_exec_counter = 0;
+    midi_note_exec_counter = (midi_note_exec_counter + 1) % 100;
     synth_cpu.OnBlockStart();
 
 
@@ -69,7 +71,18 @@ void Hardware::Timer5Callback(void* data)
         synth_hw.PrintLine("%s", synth->_console_str);
     }
 
-    MIDIProcess();
+    if(MIDI_TEST_MODE) {
+        static bool led_on = true;
+        if(midi_note_exec_counter == 0){
+            led_on = !led_on;
+            PushTestMIDI();
+            synth_hw.SetLed(led_on);
+        }
+    }
+    else {
+        MIDIProcess();
+    }
+    
     synth->AmpEnvelopeProcess();
     synth_cpu.OnBlockEnd();
     //CpuLoadReport();
@@ -234,6 +247,8 @@ void Hardware::synth_hardware_init() {
     }
     
     timer5.Start();
+    load_patch1(&(synth->patch_params));
+    synth->ApplyPatch();
 }
 
 void Hardware::SynthConfig(Synth* s) {
@@ -243,5 +258,18 @@ void Hardware::SynthConfig(Synth* s) {
 
 void Hardware::SerialDebugWriteString(char txBuffer[] ){
     //Hardware::synth_uart.PollTx((uint8_t *)&txBuffer[0],  strlen(txBuffer));
+}
+
+void Hardware::PushTestMIDI() {
+    uint8_t midi_notes[] = {69, 73, 76, 71, 74, 78, 73, 76, 80, 68, 71, 76};
+    uint8_t sequence_len = sizeof(midi_notes)/sizeof(uint8_t);
+    static uint8_t index = 0;
+    NoteOffEvent noteOff;
+    NoteOnEvent noteOn;
+    noteOff.note = midi_notes[index];
+    noteOn.note = midi_notes[(index + 1) % sequence_len];
+    synth->MidiNoteOff(noteOff);
+    synth->MidiNoteOn(noteOn);
+    index = (index + 1) % sequence_len;
 }
 

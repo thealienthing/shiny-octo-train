@@ -17,10 +17,15 @@ void Voice::init(float sample_rate)
     amp_env.reset();
 }
 
-void Voice::set_pitch(float osc1_pitch_hz, float osc2_pitch_hz)
+void Voice::set_pitch(int note)
 {
-    _osc1.set_pitch(osc1_pitch_hz);
-    _osc2.set_pitch(osc2_pitch_hz);
+    _osc1.set_pitch(mtof(note));
+    _osc2.set_pitch(mtof(note+_osc2.semitone_offset));
+}
+
+void Voice::set_osc2_offsets(int osc2_semitone, int osc2_tune) {
+    _osc2.semitone_offset = osc2_semitone;
+    _osc2.tune_offset = osc2_tune;
 }
 
 void Voice::set_waveform(Osc_Number osc_num, WaveForm waveform)

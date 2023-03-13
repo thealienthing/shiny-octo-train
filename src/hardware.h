@@ -5,6 +5,7 @@
 #define ENV_PROCESS_SPEED_HZ 100
 #define KNOB_COUNT 5
 #define ANALOG_SAMPLE_COUNT 3
+#define MIDI_TEST_MODE true
 
 #include "daisy_seed.h"
 #include "LCDScreen.h"
@@ -49,6 +50,7 @@ private:
     static void HardwareDebugCallback(void* data);
     static void MIDIProcess();
     static void CpuLoadReport();
+    static void PushTestMIDI();
 };
 
 #endif

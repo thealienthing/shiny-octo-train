@@ -67,4 +67,67 @@ struct PatchParams {
     int lfo2_frequency = 100; //hz. should be a beat division if tempsync is true
 };
 
+inline void load_patch1(PatchParams* params) {
+    //voice menu
+    params->oscillator_count = 2;
+    params->voice_assign = 0;
+    params->trigger_mode = 0;
+    params->unison_detune = 0;
+
+    //pitch menu
+    params->transpose = 0;
+    params->tune = 0.0;
+    params->portamento = 0;
+    params->bend_range = 2;
+    params->vibrato_intensity = 0.0;
+
+    //oscillators menu
+    params->osc1_waveform = WaveForm::Sin;
+    params->osc2_waveform = WaveForm::Square;
+    params->osc2_semitone = 0;
+    params->osc2_tune = 0; //hz 
+
+
+    //mixer menu
+    params->oscillator1_level = 0.5;
+    params->oscillator2_level = 0.5;
+    params->noise_level = 0.0;
+
+    //filter menu
+    params->filter_type = 0;
+    params->filter_cutoff = 100; // Percent of frequencies allowed to pass
+    params->filter_resonance = 1.0;
+    params->filter_env_intensity = 0.5;
+
+    //filter envelope menu
+    params->filter_env_attack = 10; //ms
+    params->filter_env_decay = 100; //ms
+    params->filter_env_sustain = 1.0; //how open filter after decay
+    params->filter_env_release = 100; //ms
+
+    //amp menu
+    params->level = 0.5; //master volume out
+    params->panpot = 0; //idk what this is look at microKorg lol
+    params->distortion = 0.0; //gain
+    params->kdb_track = 0; //also have no idea what this is
+
+    //amp env menu
+    params->amp_env_attack = 50; //ms
+    params->amp_env_decay = 100; //ms
+    params->amp_env_sustain = 1.0; //how high gain after decay
+    params->amp_env_release = 500; //ms
+
+    //lfo1 menu
+    params->lfo1_wave = 0; //lfo waveform
+    params->lfo1_keysync = false; //lfo syncs with gate from keyboard
+    params->lfo1_tempsync = false; //lfo frequency will sync with internal metronome
+    params->lfo1_frequency = 100; //hz. should be a beat division if tempsync is true
+
+    //lfo2 menu
+    params->lfo2_wave = 0; //lfo waveform
+    params->lfo2_keysync = false; //lfo syncs with gate from keyboard
+    params->lfo2_tempsync = false; //lfo frequency will sync with internal metronome
+    params->lfo2_frequency = 100; //hz. should be a beat division if tempsync is true
+}
+
 #endif

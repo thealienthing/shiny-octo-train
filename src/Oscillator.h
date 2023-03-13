@@ -35,6 +35,8 @@ public:
     void set_waveform(WaveForm waveform);
     float get_sample();
     Noise noise;
+    int semitone_offset = 0;
+    int tune_offset = 0; //hz
 
     
     

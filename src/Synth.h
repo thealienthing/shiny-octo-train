@@ -34,7 +34,6 @@ private:
     void AudioCallback( AudioHandle::InputBuffer in,
                         AudioHandle::OutputBuffer out,
                         size_t size);
-    float mtof(int note);
 public:
     bool led = false;
     double _amp = 0.05;
@@ -56,10 +55,12 @@ public:
     void MidiCCProcess(ControlChangeEvent event);
     void SetVoiceWaveform(Voice::Osc_Number osc, WaveForm waveform);
     void SetOscillatorLevel(Voice::Osc_Number osc, float level);
+    void SetOscillator2Pitch(int osc2_semitone, int osc2_tune);
     void PrintVoiceMap();
     void PrintVoiceInfo(uint8_t voice);
     void AmpEnvelopeSet(Envelope::Phase phase, uint16_t val);
     void AmpEnvelopeProcess();
+    void ApplyPatch();
 
     //Buffer that is read by hardware in the timer5 interupt
     char _console_str[100];
