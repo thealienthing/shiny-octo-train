@@ -5,7 +5,7 @@
 #define ENV_PROCESS_SPEED_HZ 100
 #define KNOB_COUNT 5
 #define ANALOG_SAMPLE_COUNT 3
-#define MIDI_TEST_MODE true
+#define MIDI_TEST_MODE false
 
 #include "daisy_seed.h"
 #include "LCDScreen.h"

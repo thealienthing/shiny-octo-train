@@ -10,7 +10,7 @@ Synth::Synth(float sample_rate) {
         _voices[i].set_waveform(Voice::Osc_Number::Osc1, _osc1_wf);
         _voices[i].set_waveform(Voice::Osc_Number::Osc2, _osc2_wf);
     }
-    
+    filter = LowPassFilter(sample_rate, 400.0, 1.0);
 }
 
 float Synth::ProcessAudio() {
@@ -21,7 +21,12 @@ float Synth::ProcessAudio() {
             sample += _voices[i].get_sample();// * voice_balance;
         }
     }
+    sample = filter.process(sample);
     return sample * _amp;
+}
+
+void Synth::SetFilterCutoff(uint32_t freq_hz) {
+    filter.set_cutoff(freq_hz);
 }
 
 void Synth::AmpEnvelopeSet(Envelope::Phase phase, uint16_t val) {

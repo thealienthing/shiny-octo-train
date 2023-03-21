@@ -38,7 +38,6 @@ void Menu::navigate(int reading) {
 }
 
 void Menu::select() {
-    char out[10];
     selected_menu = menu[menu_index].id;
     lcd->clear();
     lcd->put_cur(0, 0);
@@ -142,7 +141,7 @@ void Menu::print_menu_params() {
             sprintf(out, "%9s", FilterTypeStrings[filter_index[synth->patch_params.filter_type]]);
             lcd->send_string(out);
             lcd->put_cur(1,10);
-            sprintf(out, "%9d", synth->patch_params.filter_cutoff);
+            sprintf(out, "%9ld", synth->patch_params.filter_cutoff);
             lcd->send_string(out);
             lcd->put_cur(2,10);
             sprintf(out, "%9.2f", synth->patch_params.filter_resonance);
@@ -280,7 +279,8 @@ void Menu::update_menu_params(int param_num) {
                 synth->patch_params.filter_type = filter_index[KNOB_RANGE_TO_INT(knob_readings[param_num],(int)FilterType::HighPass12db)];
             }
             else if(param_num == 1) {
-                synth->patch_params.filter_cutoff = knob_readings[param_num]/(float)UINT16_MAX*100;
+                synth->patch_params.filter_cutoff = knob_readings[param_num]/(float)UINT16_MAX*20000;
+                synth->SetFilterCutoff(synth->patch_params.filter_cutoff);
             }
             else if(param_num == 2) {
                 synth->patch_params.filter_resonance = knob_readings[param_num]/(float)UINT16_MAX*2.0;

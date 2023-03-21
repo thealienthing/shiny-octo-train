@@ -5,11 +5,12 @@
 #include "daisy_seed.h"
 #include "Voice.h"
 #include "Envelope.h"
+#include "Filter.h"
 #include "Menu.h"
 #include "Oscillator.h"
+#include "PatchParams.h"
 #include "hardware.h"
 #include "system_consts.h"
-#include "PatchParams.h"
 
 using namespace daisy;
 using namespace daisy::seed;
@@ -38,6 +39,7 @@ public:
     bool led = false;
     double _amp = 0.05;
     Synth(float sample_rate);
+    LowPassFilter filter;
     PatchParams patch_params;
 
     float ProcessAudio();
@@ -56,6 +58,7 @@ public:
     void SetVoiceWaveform(Voice::Osc_Number osc, WaveForm waveform);
     void SetOscillatorLevel(Voice::Osc_Number osc, float level);
     void SetOscillator2Pitch(int osc2_semitone, int osc2_tune);
+    void SetFilterCutoff(uint32_t freq_hz);
     void PrintVoiceMap();
     void PrintVoiceInfo(uint8_t voice);
     void AmpEnvelopeSet(Envelope::Phase phase, uint16_t val);

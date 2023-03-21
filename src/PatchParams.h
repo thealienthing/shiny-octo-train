@@ -32,7 +32,7 @@ struct PatchParams {
 
     //filter menu
     int filter_type = 0;
-    int filter_cutoff = 100; // Percent of frequencies allowed to pass
+    uint32_t filter_cutoff = 100; // Percent of frequencies allowed to pass
     float filter_resonance = 1.0;
     float filter_env_intensity = 0.5;
 
@@ -95,7 +95,7 @@ inline void load_patch1(PatchParams* params) {
 
     //filter menu
     params->filter_type = 0;
-    params->filter_cutoff = 100; // Percent of frequencies allowed to pass
+    params->filter_cutoff = 1000; // Percent of frequencies allowed to pass
     params->filter_resonance = 1.0;
     params->filter_env_intensity = 0.5;
 
