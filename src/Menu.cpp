@@ -283,7 +283,8 @@ void Menu::update_menu_params(int param_num) {
                 synth->SetFilterCutoff(synth->patch_params.filter_cutoff);
             }
             else if(param_num == 2) {
-                synth->patch_params.filter_resonance = knob_readings[param_num]/(float)UINT16_MAX*2.0;
+                synth->patch_params.filter_resonance = knob_readings[param_num]/(float)UINT16_MAX*8.0 + 1.0;
+                synth->SetFilterResonance(synth->patch_params.filter_resonance);
             }
             else if(param_num == 3) {
                 synth->patch_params.filter_env_intensity = knob_readings[param_num]/(float)UINT16_MAX;

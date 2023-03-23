@@ -59,6 +59,7 @@ public:
     void SetOscillatorLevel(Voice::Osc_Number osc, float level);
     void SetOscillator2Pitch(int osc2_semitone, int osc2_tune);
     void SetFilterCutoff(uint32_t freq_hz);
+    void SetFilterResonance(float resonance);
     void PrintVoiceMap();
     void PrintVoiceInfo(uint8_t voice);
     void AmpEnvelopeSet(Envelope::Phase phase, uint16_t val);

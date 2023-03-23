@@ -29,6 +29,10 @@ void Synth::SetFilterCutoff(uint32_t freq_hz) {
     filter.set_cutoff(freq_hz);
 }
 
+void Synth::SetFilterResonance(float resonance) {
+    filter.set_resonance(resonance);
+}
+
 void Synth::AmpEnvelopeSet(Envelope::Phase phase, uint16_t val) {
     for(uint8_t i = 0; i < NUM_VOICES; i++) {
         if(phase == Envelope::Phase::ATTACK)
