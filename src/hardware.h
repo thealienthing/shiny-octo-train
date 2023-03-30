@@ -6,6 +6,7 @@
 #define KNOB_COUNT 5
 #define ANALOG_SAMPLE_COUNT 3
 #define MIDI_TEST_MODE false
+#define PATCH_STORAGE_SIZE 2560
 
 #include "daisy_seed.h"
 #include "LCDScreen.h"
@@ -17,6 +18,9 @@ using namespace daisy::seed;
 class Synth;
 class LCDScreen;
 class Menu;
+
+static float DSY_QSPI_BSS flash_buffer[PATCH_STORAGE_SIZE];
+
 
 class Hardware {
 public:
@@ -51,6 +55,9 @@ private:
     static void MIDIProcess();
     static void CpuLoadReport();
     static void PushTestMIDI();
+    
+    static void initialize_flash();
+
 };
 
 #endif

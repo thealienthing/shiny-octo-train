@@ -10,7 +10,7 @@ Synth::Synth(float sample_rate) {
         _voices[i].set_waveform(Voice::Osc_Number::Osc1, _osc1_wf);
         _voices[i].set_waveform(Voice::Osc_Number::Osc2, _osc2_wf);
     }
-    filter = LowPassFilter(sample_rate, 400.0, 1.0);
+    filter = new LowPassFilter(sample_rate, patch_params.filter_cutoff, patch_params.filter_resonance);
 }
 
 float Synth::ProcessAudio() {
@@ -21,16 +21,44 @@ float Synth::ProcessAudio() {
             sample += _voices[i].get_sample();// * voice_balance;
         }
     }
-    sample = filter.process(sample);
+    sample = filter->process(sample);
     return sample * _amp;
 }
 
+void Synth::SetFilterType(FilterType filter_type) {
+    /*
+    if(filter != nullptr) {
+        delete filter;
+        if(patch_params.filter_type == FilterType::LowPass){
+            filter = new LowPassFilter(_sample_rate,
+                patch_params.filter_cutoff,
+                patch_params.filter_resonance
+            );
+        }
+        else if(patch_params.filter_type == FilterType::HighPass){
+            filter = new HighPassFilter(_sample_rate,
+                patch_params.filter_cutoff,
+                patch_params.filter_resonance
+            );
+        }
+        else {
+            filter = new LowPassFilter(_sample_rate,
+                patch_params.filter_cutoff,
+                patch_params.filter_resonance
+            );
+        }
+    }
+    */
+}
+
 void Synth::SetFilterCutoff(uint32_t freq_hz) {
-    filter.set_cutoff(freq_hz);
+    patch_params.filter_cutoff = freq_hz;
+    filter->set_cutoff(patch_params.filter_cutoff);
 }
 
 void Synth::SetFilterResonance(float resonance) {
-    filter.set_resonance(resonance);
+    patch_params.filter_resonance = resonance;
+    filter->set_resonance(patch_params.filter_resonance);
 }
 
 void Synth::AmpEnvelopeSet(Envelope::Phase phase, uint16_t val) {
@@ -244,6 +272,11 @@ void Synth::ApplyPatch() {
     //Set oscillator levels from patch params
     SetOscillatorLevel(Voice::Osc1, patch_params.oscillator1_level);
     SetOscillatorLevel(Voice::Osc2, patch_params.oscillator2_level);
+
+    //Set Filter params
+    //SetFilterType(patch_params.filter_type);
+    SetFilterCutoff(patch_params.filter_cutoff);
+    SetFilterResonance(patch_params.filter_resonance);
 
     //Setup amp envelope according to patch params
     AmpEnvelopeSet(Envelope::ATTACK, patch_params.amp_env_attack);

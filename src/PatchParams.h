@@ -4,6 +4,39 @@
 #include "Oscillator.h"
 #include "Filter.h"
 
+
+#define PATCH_TAG               0xD00DF00D
+#define PATCH_SIZE              0xFF
+#define OSC1_WAVEFORM           0x00
+#define OSC2_WAVEFORM           0x01
+#define OSC2_SEMITONE           0x02
+#define OSC2_TUNE               0x03
+
+#define OSC1_LEVEL              0x04
+#define OSC2_LEVEL              0x05
+#define NOISE_LEVEL             0x06
+
+#define FILTER_TYPE             0x07
+#define FILTER_CUTOFF           0x08
+#define FILTER_RESONANCE        0x09
+#define FILTER_ENV_INTENSITY    0x10
+
+#define AMP_ENV_ATTACK          0x11
+#define AMP_ENV_DECAY           0x12
+#define AMP_ENV_SUSTAIN         0x13
+#define AMP_ENV_RELEASE         0x14
+
+#define LFO1_WAVE               0x15
+#define LFO1_KEYSYNC            0x16
+#define LFO1_TEMPSYNC           0x17
+#define LFO1_FREQUENCY          0x18
+
+#define LFO2_WAVE               0x19
+#define LFO2_KEYSYNC            0x20
+#define LFO2_TEMPSYNC           0x21
+#define LFO2_FREQUENCY          0x22
+
+
 struct PatchParams {
     //voice menu
     int oscillator_count = 2;
@@ -66,6 +99,14 @@ struct PatchParams {
     bool lfo2_tempsync = false; //lfo frequency will sync with internal metronome
     int lfo2_frequency = 100; //hz. should be a beat division if tempsync is true
 };
+
+inline void load_patch(PatchParams* params, void* mem_ptr) {
+    //Check for bad pointers
+    if(params == nullptr)
+        return;
+    if(mem_ptr == nullptr)
+        return;
+}
 
 inline void load_patch1(PatchParams* params) {
     //voice menu

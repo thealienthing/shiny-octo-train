@@ -175,7 +175,7 @@ void Hardware::synth_hardware_init() {
     //Boiler plate hardware setup
     synth_hw.Init();
     synth_hw.Configure();
-    synth_hw.StartLog(false);
+    synth_hw.StartLog(true);
 
     synth = new Synth(synth_hw.AudioSampleRate());
     synth_hw.StartAudio(AudioCallback);
@@ -249,6 +249,34 @@ void Hardware::synth_hardware_init() {
     timer5.Start();
     load_patch1(&(synth->patch_params));
     synth->ApplyPatch();
+
+    synth_hw.PrintLine("Initializing patchbay...");
+    initialize_flash();
+    synth_hw.PrintLine("Done initializing patchbay...");
+
+    
+}
+
+void Hardware::initialize_flash() {
+    size_t address = (size_t)flash_buffer;
+    auto flash_ptr = synth_hw.qspi.GetData(address);
+    if(flash_ptr == nullptr)
+        return;
+
+    synth_hw.PrintLine("2");
+    uint8_t tag = PATCH_TAG;
+    for(int i = 0; i < 16; i++) {
+        if(*(uint32_t*) flash_ptr != PATCH_TAG) {
+            synth_hw.PrintLine("Writing tag to patch %d", i);
+            synth_hw.qspi.Write(flash_ptr, __SIZEOF_INT__, &tag);
+            
+        }
+        else {
+            synth_hw.PrintLine("Tag already written to patch %d", i);
+        }
+        flash_ptr += PATCH_SIZE;
+        address += PATCH_SIZE;
+    }
 }
 
 void Hardware::SynthConfig(Synth* s) {

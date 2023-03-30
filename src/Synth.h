@@ -24,9 +24,6 @@ private:
     NoteOnEvent _voice_map[NUM_VOICES];
 
     uint8_t _voice_count = 0;
-    
-
-    
 
     //Audio data
     float _sample_rate = 48000.0;
@@ -39,7 +36,7 @@ public:
     bool led = false;
     double _amp = 0.05;
     Synth(float sample_rate);
-    LowPassFilter filter;
+    Filter* filter;
     PatchParams patch_params;
 
     float ProcessAudio();
@@ -58,6 +55,7 @@ public:
     void SetVoiceWaveform(Voice::Osc_Number osc, WaveForm waveform);
     void SetOscillatorLevel(Voice::Osc_Number osc, float level);
     void SetOscillator2Pitch(int osc2_semitone, int osc2_tune);
+    void SetFilterType(FilterType filter_type);
     void SetFilterCutoff(uint32_t freq_hz);
     void SetFilterResonance(float resonance);
     void PrintVoiceMap();
