@@ -19,7 +19,7 @@ class Synth;
 class LCDScreen;
 class Menu;
 
-static float DSY_QSPI_BSS flash_buffer[PATCH_STORAGE_SIZE];
+//static float DSY_QSPI_BSS flash_buffer[PATCH_STORAGE_SIZE];
 
 
 class Hardware {
@@ -31,6 +31,7 @@ public:
     static DaisySeed synth_hw;
     static UartHandler synth_uart;
     static MidiUartHandler synth_midi;
+    static UartHandler synth_console;
     static CpuLoadMeter synth_cpu;
     static LCDScreen synth_lcd;
     static I2CHandle i2c;
@@ -42,6 +43,7 @@ public:
     static void AudioCallback(AudioHandle::InputBuffer in,
                     AudioHandle::OutputBuffer out,
                     size_t size);
+    void ProcessSerial(uint8_t* buff);
     void SynthConfig(Synth* s);
 
     //Report triggers
@@ -51,6 +53,7 @@ private:
     static uint16_t analog_sample_index;
     static int timer5_counter;
     static void Timer5Callback(void* data);
+    static void UartCallback(void* data);
     static void HardwareDebugCallback(void* data);
     static void MIDIProcess();
     static void CpuLoadReport();

@@ -22,11 +22,12 @@ int main(void)
     // Initialize the Daisy Seed hardware
     while(1)
     {
-        // hw.synth_hw.DelayMs(500);
-        // hw.LCD_SetScreen("Hello");
-        // hw.synth_hw.PrintLine("Log Hello");
-        // hw.synth_hw.DelayMs(500);
-        // hw.LCD_SetScreen("Goodbye");
-        // hw.synth_hw.PrintLine("Log Goodbye");
+        uint8_t buff[50];
+        hw->synth_console.BlockingReceive(buff, 50, 10);
+        if(strlen((char*)buff) > 0) {
+            // synth_hw.PrintLine("%s", buff);
+            //Process the string
+            hw->ProcessSerial(buff);
+        }  
     }
 }

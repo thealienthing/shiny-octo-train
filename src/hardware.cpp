@@ -4,6 +4,7 @@
 
 //MidiUsbHandler Hardware::synth_midi;
 MidiUartHandler Hardware::synth_midi;
+UartHandler Hardware::synth_console;
 DaisySeed Hardware::synth_hw;
 //UartHandler Hardware::synth_uart;
 CpuLoadMeter Hardware::synth_cpu;
@@ -29,6 +30,7 @@ void Hardware::Timer5Callback(void* data)
     static int midi_note_exec_counter = 0;
     midi_note_exec_counter = (midi_note_exec_counter + 1) % 100;
     synth_cpu.OnBlockStart();
+    static bool led_on = false;
 
 
     //Read rotary encoder
@@ -36,6 +38,8 @@ void Hardware::Timer5Callback(void* data)
     int reading = menu_knob.Increment();
     if(reading) {
         menu.navigate(reading);
+        led_on = !led_on;
+        synth_hw.SetLed(led_on);
     }
     if(menu_knob.RisingEdge()) {
         menu.select();
@@ -86,6 +90,13 @@ void Hardware::Timer5Callback(void* data)
     synth->AmpEnvelopeProcess();
     synth_cpu.OnBlockEnd();
     //CpuLoadReport();
+}
+
+void Hardware::ProcessSerial(uint8_t* buff) {
+    if(*(uint32_t*)buff == 0xdeadbeef) {
+        synth_hw.PrintLine("%x | val: %f", *(uint32_t*)(buff+4), *(float*)(buff+8));
+    }
+    buff[0] = '\0';
 }
 
 void Hardware::HardwareDebugCallback(void* data) {
@@ -175,7 +186,7 @@ void Hardware::synth_hardware_init() {
     //Boiler plate hardware setup
     synth_hw.Init();
     synth_hw.Configure();
-    synth_hw.StartLog(true);
+    synth_hw.StartLog(false);
 
     synth = new Synth(synth_hw.AudioSampleRate());
     synth_hw.StartAudio(AudioCallback);
@@ -187,6 +198,14 @@ void Hardware::synth_hardware_init() {
     midi_config.transport_config.rx = {DSY_GPIOB, 7}; // (USART_6 RX)
     synth_midi.Init(midi_config);
     synth_midi.StartReceive();
+
+    UartHandler::Config console_config;
+    console_config.pin_config.tx = daisy::seed::D6;
+    console_config.pin_config.rx = daisy::seed::D5;
+    console_config.mode = UartHandler::Config::Mode::TX_RX;
+    console_config.periph = UartHandler::Config::Peripheral::UART_5;
+    console_config.baudrate = 115200;
+    synth_console.Init(console_config);
 
     //Set up CPU monitor
     synth_cpu.Init(synth_hw.AudioSampleRate(), synth_hw.AudioBlockSize());
@@ -247,36 +266,38 @@ void Hardware::synth_hardware_init() {
     }
     
     timer5.Start();
-    load_patch1(&(synth->patch_params));
-    synth->ApplyPatch();
+
+    //load_patch1(&(synth->patch_params));
+    //synth->ApplyPatch();
 
     synth_hw.PrintLine("Initializing patchbay...");
-    initialize_flash();
+    //initialize_flash();
     synth_hw.PrintLine("Done initializing patchbay...");
 
     
 }
 
 void Hardware::initialize_flash() {
-    size_t address = (size_t)flash_buffer;
-    auto flash_ptr = synth_hw.qspi.GetData(address);
-    if(flash_ptr == nullptr)
-        return;
 
-    synth_hw.PrintLine("2");
-    uint8_t tag = PATCH_TAG;
-    for(int i = 0; i < 16; i++) {
-        if(*(uint32_t*) flash_ptr != PATCH_TAG) {
-            synth_hw.PrintLine("Writing tag to patch %d", i);
-            synth_hw.qspi.Write(flash_ptr, __SIZEOF_INT__, &tag);
+    // size_t address = (size_t)flash_buffer;
+    // auto flash_ptr = synth_hw.qspi.GetData(address);
+    // if(flash_ptr == nullptr)
+    //     return;
+
+    // synth_hw.PrintLine("2");
+    // uint8_t tag = PATCH_TAG;
+    // for(int i = 0; i < 16; i++) {
+    //     if(*(uint32_t*) flash_ptr != PATCH_TAG) {
+    //         synth_hw.PrintLine("Writing tag to patch %d", i);
+    //         synth_hw.qspi.Write(flash_ptr, __SIZEOF_INT__, &tag);
             
-        }
-        else {
-            synth_hw.PrintLine("Tag already written to patch %d", i);
-        }
-        flash_ptr += PATCH_SIZE;
-        address += PATCH_SIZE;
-    }
+    //     }
+    //     else {
+    //         synth_hw.PrintLine("Tag already written to patch %d", i);
+    //     }
+    //     flash_ptr += PATCH_SIZE;
+    //     address += PATCH_SIZE;
+    // }
 }
 
 void Hardware::SynthConfig(Synth* s) {
