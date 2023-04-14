@@ -267,8 +267,8 @@ void Hardware::synth_hardware_init() {
     
     timer5.Start();
 
-    //load_patch1(&(synth->patch_params));
-    //synth->ApplyPatch();
+    load_patch1(&(synth->patch_params));
+    synth->ApplyPatch();
 
     synth_hw.PrintLine("Initializing patchbay...");
     //initialize_flash();
