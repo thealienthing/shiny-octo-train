@@ -5,36 +5,65 @@
 #include "Filter.h"
 
 
-#define PATCH_TAG               0xD00DF00D
-#define PATCH_SIZE              0xFF
-#define OSC1_WAVEFORM           0x00
-#define OSC2_WAVEFORM           0x01
-#define OSC2_SEMITONE           0x02
-#define OSC2_TUNE               0x03
+// #define PATCH_TAG               0xD00DF00D
+// #define PATCH_SIZE              0xFF
+// #define OSC1_WAVEFORM           0x00
+// #define OSC2_WAVEFORM           0x01
+// #define OSC2_SEMITONE           0x02
+// #define OSC2_TUNE               0x03
 
-#define OSC1_LEVEL              0x04
-#define OSC2_LEVEL              0x05
-#define NOISE_LEVEL             0x06
+// #define OSC1_LEVEL              0x04
+// #define OSC2_LEVEL              0x05
+// #define NOISE_LEVEL             0x06
 
-#define FILTER_TYPE             0x07
-#define FILTER_CUTOFF           0x08
-#define FILTER_RESONANCE        0x09
-#define FILTER_ENV_INTENSITY    0x10
+// #define FILTER_TYPE             0x07
+// #define FILTER_CUTOFF           0x08
+// #define FILTER_RESONANCE        0x09
+// #define FILTER_ENV_INTENSITY    0x10
 
-#define AMP_ENV_ATTACK          0x11
-#define AMP_ENV_DECAY           0x12
-#define AMP_ENV_SUSTAIN         0x13
-#define AMP_ENV_RELEASE         0x14
+// #define AMP_ENV_ATTACK          0x11
+// #define AMP_ENV_DECAY           0x12
+// #define AMP_ENV_SUSTAIN         0x13
+// #define AMP_ENV_RELEASE         0x14
 
-#define LFO1_WAVE               0x15
-#define LFO1_KEYSYNC            0x16
-#define LFO1_TEMPSYNC           0x17
-#define LFO1_FREQUENCY          0x18
+// #define LFO1_WAVE               0x15
+// #define LFO1_KEYSYNC            0x16
+// #define LFO1_TEMPSYNC           0x17
+// #define LFO1_FREQUENCY          0x18
 
-#define LFO2_WAVE               0x19
-#define LFO2_KEYSYNC            0x20
-#define LFO2_TEMPSYNC           0x21
-#define LFO2_FREQUENCY          0x22
+// #define LFO2_WAVE               0x19
+// #define LFO2_KEYSYNC            0x20
+// #define LFO2_TEMPSYNC           0x21
+// #define LFO2_FREQUENCY          0x22
+
+/*PARAM TAGS FOR SERIAL COMS INTERFACE*/
+#define OSC1_WAVEFORM_SIN 0xA0
+#define OSC1_WAVEFORM_SAW 0xA1
+#define OSC1_WAVEFORM_SQUARE 0xA2
+#define OSC1_WAVEFORM_TRI 0xA3
+#define OSC1_WAVEFORM_NOISE 0xA4
+#define OSC2_WAVEFORM_SIN 0xA5
+#define OSC2_WAVEFORM_SAW 0xA6
+#define OSC2_WAVEFORM_SQUARE 0xA7
+#define OSC2_WAVEFORM_TRI 0xA8
+#define OSC2_WAVEFORM_NOISE 0xA9
+#define OSC2_SEMITONE 0xAA
+#define OSC2_TUNE 0xAB
+#define OSC1_GAIN 0xAC
+#define OSC2_GAIN 0xAD
+#define AMP_ENV_ATTACK 0xAE
+#define AMP_ENV_DECAY 0xAF
+#define AMP_ENV_SUSTAIN 0xB0
+#define AMP_ENV_RELEASE 0xB1
+#define FILTER_ENV_ATTACK 0xB2
+#define FILTER_ENV_DECAY 0xB3
+#define FILTER_ENV_SUSTAIN 0xB4
+#define FILTER_ENV_RELEASE 0xB5
+#define FILTER_LOWPASS 0xB6
+#define FILTER_HIGHPASS 0xB7
+#define FILTER_CUTOFF 0xB8
+#define FILTER_RESONANCE 0xB9
+#define FILTER_ENV_INTENSITY 0xBA
 
 
 struct PatchParams {

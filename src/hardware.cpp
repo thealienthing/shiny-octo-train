@@ -26,7 +26,7 @@ Hardware::Hardware(Synth* s) {
 void Hardware::Timer5Callback(void* data)
 {
     //timer5_counter = (timer5_counter + 1) % ENV_PROCESS_SPEED_HZ;
-    timer5_counter = (timer5_counter + 1) % 10;
+    timer5_counter++;
     static int midi_note_exec_counter = 0;
     midi_note_exec_counter = (midi_note_exec_counter + 1) % 100;
     synth_cpu.OnBlockStart();
@@ -63,9 +63,14 @@ void Hardware::Timer5Callback(void* data)
         //synth_hw.PrintLine("%lu | %lu | %lu | %lu | %lu", smoothed_readings[0], smoothed_readings[1], smoothed_readings[2], smoothed_readings[3], smoothed_readings[4]);
         
     }
+
+    if(timer5_counter % 100 == 0) {
+        //synth_hw.PrintLine("Updating menu print... %d", timer5_counter);
+        menu.print_menu_params();
+    }
     
 
-    if(timer5_counter == 0) {
+    if(timer5_counter % 10 == 0) {
         double vol = LINEAR_TO_LOG(smoothed_readings[4], UINT16_MAX);
         //synth_hw.PrintLine("Master = %f", vol);
         synth->_amp = vol;
@@ -93,8 +98,74 @@ void Hardware::Timer5Callback(void* data)
 }
 
 void Hardware::ProcessSerial(uint8_t* buff) {
+    //Valid Data Captured
     if(*(uint32_t*)buff == 0xdeadbeef) {
-        synth_hw.PrintLine("%x | val: %f", *(uint32_t*)(buff+4), *(float*)(buff+8));
+        uint32_t param_tag = *(uint32_t*)(buff+4);
+        //synth_hw.PrintLine("%x | val: %f", *(uint32_t*)(buff+4), *(float*)(buff+8));
+
+        switch (param_tag) {            
+            case OSC1_WAVEFORM_SIN: {
+                synth_hw.PrintLine("OSC1 SIN");
+                synth->patch_params.osc1_waveform = WaveForm::Sin;
+                synth->SetVoiceWaveform(Voice::Osc1, synth->patch_params.osc1_waveform);
+                break;
+            }
+            case OSC1_WAVEFORM_SAW: {
+                synth_hw.PrintLine("OSC1 SAW");
+                synth->patch_params.osc1_waveform = WaveForm::Saw;
+                synth->SetVoiceWaveform(Voice::Osc1, synth->patch_params.osc1_waveform);
+                break;
+            }
+            case OSC1_WAVEFORM_SQUARE: {
+                synth_hw.PrintLine("OSC1 SQUARE");
+                synth->patch_params.osc1_waveform = WaveForm::Square;
+                synth->SetVoiceWaveform(Voice::Osc1, synth->patch_params.osc1_waveform);
+                break;
+            }
+            case OSC1_WAVEFORM_TRI: {
+                synth_hw.PrintLine("OSC1 TRI");
+                synth->patch_params.osc1_waveform = WaveForm::Tri;
+                synth->SetVoiceWaveform(Voice::Osc1, synth->patch_params.osc1_waveform);
+                break;
+            }
+            case OSC1_WAVEFORM_NOISE: {
+                synth_hw.PrintLine("OSC1 NOISE");
+                synth->patch_params.osc1_waveform = WaveForm::WhiteNoise;
+                synth->SetVoiceWaveform(Voice::Osc1, synth->patch_params.osc1_waveform);
+                break;
+            }
+            case OSC2_WAVEFORM_SIN: {
+                synth_hw.PrintLine("OSC2 SIN");
+                synth->patch_params.osc2_waveform = WaveForm::Sin;
+                synth->SetVoiceWaveform(Voice::Osc2, synth->patch_params.osc2_waveform);
+                break;
+            }
+            case OSC2_WAVEFORM_SAW: {
+                synth_hw.PrintLine("OSC2 SAW");
+                synth->patch_params.osc2_waveform = WaveForm::Saw;
+                synth->SetVoiceWaveform(Voice::Osc2, synth->patch_params.osc2_waveform);
+                break;
+            }
+            case OSC2_WAVEFORM_SQUARE: {
+                synth_hw.PrintLine("OSC2 SQUARE");
+                synth->patch_params.osc2_waveform = WaveForm::Square;
+                synth->SetVoiceWaveform(Voice::Osc2, synth->patch_params.osc2_waveform);
+                break;
+            }
+            case OSC2_WAVEFORM_TRI: {
+                synth_hw.PrintLine("OSC2 TRI");
+                synth->patch_params.osc2_waveform = WaveForm::Tri;
+                synth->SetVoiceWaveform(Voice::Osc2, synth->patch_params.osc2_waveform);
+                break;
+            }
+            case OSC2_WAVEFORM_NOISE: {
+                synth_hw.PrintLine("OSC2 NOISE");
+                synth->patch_params.osc2_waveform = WaveForm::WhiteNoise;
+                synth->SetVoiceWaveform(Voice::Osc2, synth->patch_params.osc2_waveform);
+                break;
+            }
+        }
+        // synth->ApplyPatch();
     }
     buff[0] = '\0';
 }
