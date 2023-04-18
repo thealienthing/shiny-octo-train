@@ -16,6 +16,7 @@ Synth *-- Filter
 Synth *-- PatchParams
 Voice *-- Oscillator : Osc1
 Voice *-- Oscillator : Osc2
+Voice *-- Envelope : AmpEnv
 Menu *-- LCDScreen
 
 class Synth{
@@ -42,6 +43,14 @@ class Voice{
     +void set_osc_volume(Osc_Number, float amp)
     void set_osc2_offsetts(int note)
     +float get_sample()
+}
+
+class Envelope{
+    +Phase phase = Phase::READY;
+    +float process();
+    +void note_on();
+    +void note_off();
+    +void reset();
 }
 
 class Oscillator{
