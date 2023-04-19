@@ -26,21 +26,12 @@ void Oscillator::set_pitch(float pitch_hz)
 void Oscillator::set_waveform(WaveForm waveform)
 {
     _waveform = waveform;
-    //hw.PrintLine("Waveform: %d", (int)waveform);
 }
 
 float Oscillator::get_sample()
 {
     float sample = 0.0;
     float t = 0.0;
-    // if(_changing_pitch) {
-    //     if(((_phase >= 0.0) && (_phase <= START_OF_CYCLE))) {
-    //         _changing_pitch = false;
-    //         _pitch = _pitch_pending;
-    //         //_phase = 0.0;
-    //         hw.PrintLine("Pitch changed");
-    //     }
-    // }
     switch (_waveform)
     {
         case WaveForm::Sin: {

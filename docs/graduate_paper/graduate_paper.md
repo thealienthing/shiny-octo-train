@@ -107,11 +107,11 @@ General purpose pins were configured to setup UART, I2C and ADC communications. 
 
 ## Software
 
-This section goes into depth of the various software components that make up the actual audio synthesis and processing. I will address the software components in the order that they were implemented over the course of the project, as it will also help to highlight the process of generating audio from the initial press of the eventual output of the audio to a speaker.
+This section goes into depth of the various software components that make up the actual audio synthesis and processing. I will address the software components in the order that they were implemented over the course of the project, as it will also help to highlight the process of generating audio from the initial press of the eventual output of the audio to a speaker. I will cover the topics of Oscillators, Voices, Envelopes and Filters completely as these comprise the critical components of the actual synthesis aspects of the project. I will only very briefly discuss other features in a few sentences as they have less to do with audio synthesis and more to do with overall system cohesion and functionality.
 
 ### Oscillators
 
-The most fundamental part of any subtractive synthesizer is the oscillator. Generally speaking, an oscillator is simply a function generator. The oscillator will maintain a variable representing the phase of the function cycle.
+The most fundamental part of any subtractive synthesizer is the oscillator. Generally speaking, an oscillator is simply a function generator. The oscillator will maintain a variable representing the phase of the function cycle. The sequence chart below illustrates how audio samples are generated from the oscillator and then placed into the output buffer of the DAC when it triggers an ISR.
 
 ```mermaid
 sequenceDiagram
@@ -129,9 +129,87 @@ sequenceDiagram
     AudioCallback->>+DAC: Sample place in DAC<br/> output buffer
     Note over DAC: Sample is played out speaker
     end
-    
 ```
 
+Note: The diagram above will generate a 1hz sin wave which isn't actually audible and we'd like to hear our music if possible. So the oscillator must maintain a variable containing the desired frequency and calculate our phase delta so we can actually generate the function at the desired frequency. **Phase delta** is a value by which we increment the phase in order to get the next sample of our waveform. To generate a wave at 1hz with a sample rate of 44.1kz, we simply need to divide two pi by 44100. Starting with our phase at zero, if we add our phase_delta to phase 44,100 times, we will have a value of two pi. Two change the pitch, we just need to multiply the phase delta by our desired frequency. If our pitch is set to 100hz, our calculated phase delta will allow our oscillator function to cycle 100 times in a second.
+
+### What about other waveforms? Sin waves are boring.
+
+This is true. Sin waves generally lack harmonic complexity and will generally produce very mellow tones. The oscillator class also maintains an enum describing what *kind* of oscillator it is. The oscillator wave form can bet set with the set_waveform method. Next time get_sample is called, the cooresponding waveform function will be called returning a sample from your fancy new harmonically rich waveform. For more information about this functions, the snippet below is a good start. Also see Oscillator.cpp for full source.
+
+```c++
+//Oscillator.h
+enum WaveForm {
+    Sin,
+    Tri,
+    Saw,
+    Square,
+    WhiteNoise,
+    WaveFormEnd
+};
+
+//Oscillator.cpp
+void Oscillator::set_waveform(WaveForm waveform)
+{
+    _waveform = waveform;
+}
+
+float Oscillator::get_sample()
+{
+    //Some context of this function removed for brevity
+    switch (_waveform)
+    {
+        case WaveForm::Sin: {
+            sample = sinf(_phase);
+            break;
+        }
+        case WaveForm::Tri: {
+            t   = -1.0f + (2.0f * _phase * TWO_PI_RECIP);
+            sample = 2.0f * (fabsf(t) - 0.5f);
+            break;
+        }
+        case WaveForm::Saw: {
+            sample = ((_phase * TWO_PI_RECIP * 2.0f) * -1.0f) * -1.0f;
+            break;
+        }
+        case WaveForm::Square: {
+            sample = (_phase < _half_cycle) ? 1.0f: -1.0f;
+            break;
+        }
+        case WaveForm::WhiteNoise: {
+            sample = noise.process();
+            break;
+        }
+        default: {
+            sample = 0.0;
+            break;
+        }
+    }
+    //More context removed here for brevity
+    return sample;
+}
+```
+
+When the basic oscillator was set up and I was able to statically compile and upload code to make my little daisy output a continue 440hz sin wave, I felt a rush of excitement. It was incredibly gratifying to **hear** my code working instead of just seeing it in a terminal or GUI. I played around, writing little loops and time delays to change the pitch and hear the pitch change in real time and play scales. After that, I figured out the functions to generate the square function: a simple on/off function the sets the sample to 1.0 during the first half of the phase and the flipping it to -1.0 during the second half. Writing sawtooth and white noise functions was easy. I never was satisfied with the triangle waveform. Its supposed to stradle the line between a smooth sin wave and a choppy sawtooth in terms of complexity but it always sounded more like a slightly droopy sawtooth.
+
+## Voices
+
+## Envelopes
+
+## Filters
+
+## The little big software features
+
+These are features that I would say are overlooked when they work, but utterly infuriating when they're broken. Some features were so important that they couldn't be ignored but sucked away a critical amount of time from the actual audio processing.
+
+**The LCD Screen**
+I setup I2C and wrote a driver to interface that allowed me to quickly print menu information to the screen. This was a tediously long process with a lot of trial and error and sucked up about 2-3 weeks of my time. But it works very well and was critical in implementing the menu system.
+
+**The Hardware Timer**
+I setup a hardware timer that triggered an ISR for reading peripherals. This effectively is a polling mechanism because of the lack of support for GPIO interupts in libDaisy. This timer callback would read the analog potentiometers, the rotary encoder, the MIDI UART line and respond to any inputs on these peripherals. This timer was also used to advance the state of the Amp Envelope (See envelope section for details).
+
+**The Menu**
+Running with the driver code for the LCD screen, I built up a class that will display the menu and their corresponding contexts.
 
 
 
