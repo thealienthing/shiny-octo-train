@@ -60,6 +60,8 @@ I'll start the explanation fo my design first with the things that were complete
 
 ## Hardware
 
+This section covers the hardware was successfully integrated into the project
+
 ### MIDI
 There is a 5 pin MIDI input circuit that allows the user to connect a standard MIDI cable between the MIDI out of a standard keyboard and my synthesizer. This functionality is plug and play. By plugging in the MIDI cable and powering on the device, you can immediately start playing notes and making music which you can hear by pluggin in headphones or a speaker into the 1/8" audio jack. 
 
@@ -70,7 +72,7 @@ There is a 5 pin MIDI input circuit that allows the user to connect a standard M
 
 The MIDI circuit implements a standard of device safety for receiving incoming signals. An optocoupler receives signals and converts the incoming electrical signal from the MIDI line into an optical signal which can be read and converted to an electrical signal that is safe for the device. This safety precaution is meant to handle cases where the connected keyboard is malfunctioning or outputing an electical signal that is to high voltage for the pins on the MCU. It also acts as a much easier to replace component in the circuit. If there the keyboard is outputing voltage dangerously outside the expected voltage range, the optocoupler will fry and can be easily replaced instead of frying the MCU. 
 
-### Analog Potentiometers
+### Analog Potentiometers and Screen
 
 For adjusting parameters, I took a design philosophy of the Korg microKorg and setup an array of 5 analog potentiometers that had contextual control over various synth parameters which were determined by the internal state of the synthesizer. The internal state of the synthesizer is communicated to the user with a 20x4 character LCD display that shows the user the current mutable context of the system. 
 
@@ -86,7 +88,49 @@ For example, if the menu is displaying the oscillator control context, you can u
     <img src="placeholder_duck.png" alt="Daisy" height=100 title=Duck>
 </div>
 
+### Power
+
 The 20x4 LCD screen and the optocoupler on the MIDI input circuit require 5v, which Daisy does not put out (another frustrating aspect of the device since there is 5v power available on the USB jack of the daisy); so I added a standard breadboard power supply to the circuit accepts a barel jack input with voltages between 5v and 12v. This voltage is fed into the VIN pin on Daisy and is used to power the entire circuit and all its peripherals. A 1/8" inch stereo audio jack in connected to the left and right DAC pins on the MCU and outputs a signal at line level gain out of the box without the need of an amplifier (a very nice feature). Finally, there is a USB to Uart converter breakout board connected to a set of RX/TX UART pins on the MCU which allows two way communication between a computer and the synthesizer via a remote control GUI a wrote in Python.
+
+### Audio DAC
+
+Daisy has a built in high resolution digital to analog converter capable of outputting audio samples at rates up to 96khz and 24 bit depth which goes well beyond the industry standard quality of 44.1khz and 16 bit depth. There are four DAC channels: two for stereo input and two for stereo output. In this project, I only use the stereo output as processing audio input is beyond the scope of this project.
+
+### UART, I2C and 16-bit input ADC
+
+General purpose pins were configured to setup UART, I2C and ADC communications. Two separate UART lines were used for setting up MIDI input and plain serial communication for controlling the system remotely. The ADCs were used for reading the potentiometers. Some GPIO pins were used to read the digital rotary encoder for menu navigation.
+
+<div style="text-align:center">
+    <p>Diagram showing wiring of peripherals</p>
+    <img src="placeholder_duck.png" alt="Daisy" height=100 title=Duck>
+</div>
+
+## Software
+
+This section goes into depth of the various software components that make up the actual audio synthesis and processing. I will address the software components in the order that they were implemented over the course of the project, as it will also help to highlight the process of generating audio from the initial press of the eventual output of the audio to a speaker.
+
+### Oscillators
+
+The most fundamental part of any subtractive synthesizer is the oscillator. Generally speaking, an oscillator is simply a function generator. The oscillator will maintain a variable representing the phase of the function cycle.
+
+```mermaid
+sequenceDiagram
+    title Oscillator generating audio sample
+
+    participant DAC
+    loop
+    AudioCallback->>+Oscillator: Interupt trigger: osc.get_sample() -> float
+    Note over Oscillator: sample = sin(phase)<br/>phase += phase_delta<br/>return sample
+    alt phase > TWO_PI
+        Note over Oscillator: //Cycle complete, reset delta<br/>phase -= TWO_PI
+    end 
+
+    Oscillator->>+AudioCallback: Sample
+    AudioCallback->>+DAC: Sample place in DAC<br/> output buffer
+    Note over DAC: Sample is played out speaker
+    end
+    
+```
 
 
 
