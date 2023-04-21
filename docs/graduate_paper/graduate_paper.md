@@ -192,7 +192,44 @@ float Oscillator::get_sample()
 
 When the basic oscillator was set up and I was able to statically compile and upload code to make my little daisy output a continue 440hz sin wave, I felt a rush of excitement. It was incredibly gratifying to **hear** my code working instead of just seeing it in a terminal or GUI. I played around, writing little loops and time delays to change the pitch and hear the pitch change in real time and play scales. After that, I figured out the functions to generate the square function: a simple on/off function the sets the sample to 1.0 during the first half of the phase and the flipping it to -1.0 during the second half. Writing sawtooth and white noise functions was easy. I never was satisfied with the triangle waveform. Its supposed to stradle the line between a smooth sin wave and a choppy sawtooth in terms of complexity but it always sounded more like a slightly droopy sawtooth.
 
+After the oscillators were properly implemented, I added the MIDI message processing through the MIDI UART connection. As MIDI messages came through the data line, the pitch data was parsed and converted into the note frequency in hz and the pitch was set on the oscillator. If a MIDI event message came through indicating that the note was released on the keyboard, the pitch of the oscillator was set to 0hz to silence the oscillator. At this point, I had the most bare minimum definition of a synthesizer. The user could play notes on the keyboard, and the configured oscillator waveform playing the cooresponding frequency would play out the speakers. But at this point, I could only play one note at a time and could not generate any signals more complex than the 5 basic oscillator functions. Adding polyphony and oscillator mixing was the next feature to add.
+
 ## Voices
+
+In the world of synthesizers, single discrete note playing a certain pitch is called a voice. When your synth is monophonic, it means it only has one voice and can therefore only play one pitch at a time. Most modern synthesizers, whether analog or digital, have polyphonic capabilities. Many analog synthesizers can play four to eight notes at once, because adding more voices requires more discrete hardware oscillators and can make the system more complex, expensive and heavy. Digital synthesizers are able to accomodate more notes quite easily and will often support at least eight voices with options to play as many as 128 (the maximum number of discrete notes available in the MIDI protocol) which is quite overkill. I did a little bit of playing on a synthesizer of my own and payed attention to how many notes I needed at my most advanced and complex playing. I decided that eight would suffice with the option to add more if needed.
+
+I wrote a class intended to capture the functionality of a voice. The class would contain two separate oscillators that can be set to any fundamental waveform. It would also contain separate gain parameters for attenuating or amplifying each individual oscillator. At the end of the processing chain for the voice, the attenuated oscillators would combined into one sample and passed to the classes output. Also included in the class is the option to configure a pitch offset to the second oscillator; another common synth feature in synthesizers. By detuning one oscillator from another, you can generate even more complex waveforms with frequency beating, added intensity or even complete disonance if desired.
+
+```mermaid
+classDiagram
+
+    class Voice{
+        +Oscillator osc1
+        +Oscillator osc2
+        +Envelope amp_env
+        +void set_pitch(int note)
+        +void set_waveform(Osc_Number osc_num, Waveform waveform)
+        +void set_osc_volume(Osc_Number, float amp)
+        void set_osc2_offsets(int note)
+        +float get_sample()
+    }
+
+    class Oscillator{
+        +Waveform waveform
+        +void init(float sample_rate)
+        +void set_pitch(float pitch_hz)
+        +void set_waveform(Waveform waveform)
+        +float get_sample()
+    }
+```
+
+Once this class was implemented, I wrote a larger class called synthesizer that would own a group of voice instances. As keys on the keyboard were pressed and released, the synthesizer would take a voice that didn't have a pitch set to 0hz and set the pitch to that note. Some optimization was made to ensure that if a voice wasn't in use, the synth class would bother telling the voice to generate a sample and waste resources on calculating the outputs of the oscillator functions. Implementing this opens a hole can of worms. What data structure should be used to hold these voices? There are many considerations to be made but first I just focused on making it work. For this project, I decided to avoid any C++ features other than simple classes and subclassing, as there would be performance and memory usage overhead prices to pay that would add up over time. I chose to use a primitive array. My approach was relatively simple. As a new note was played, I would iterate through the voices until I found a voice without a pitch set to 0, and set its pitch to the new note. When note off events come in, iterate over the array until the voice with a pitch matching the note off event is found and set it to 0. That was pretty easy. This was even quick to process. Most of the time you wouldn't have to iterate close to the end of the array.
+
+The real rub was to handle when all voices were active and more note on events occurred. Should the synth just ignore that note, or should it drop some other note and replace it with the newest one? Most synths will change the pitch of the oldest voice in the sequence to be dropped from the note combination and use that voice to play the new incoming note. I decided to stay true to convention and implement this policy. Well the obvious first choice that came to mind was to use a stack. Push notes on to the stack and they're already sorted by the time they occured. So if there are too many notes being play, pop that voice off the back and push the new one Easy! Well it seems easy when you're just considering handling note on messages. But when note off messages occur, its very likely that the the voice that needs to turned off will be in the middle of the stack
+
+Handling note off events was something I didn't expect would require so much work for the synth class to have to perform. When a note off event occurred, the synth would have to iterate over the voices in the array and find the voice playing the pitch that matched the note off event and deactivate the voice so it would stop generating a signal. At the time, I debated over using a modern C++ data structure like a map.  A map would have made short and easy work in managing this; but under the hood, I figured the STL library would have to be performing some form of iteration to locate the keys. The added memory usage and potential performance hit that could potentially stop samples from making it to the output buffer wasn't worth risking. 
+
+A tricky part of this class was handling when more notes were being played by the keyboard than the synth had voices to play them.  As I implemented this functionality, I considered several methods. At first, I tried to keep the array sorted so that the first element in the array would be the note that has been present the longest. This required me to shuffle the voices in the array. This meant that if a ninth note was played, the first note would be popped off the front of the array, and the new note would be placed on the back of the array. Old notes at the front and youngest at the back. Seems simple right? Just use a stack, don't fuss with arrays! Well, the problem was that notes
 
 ## Envelopes
 
@@ -210,11 +247,6 @@ I setup a hardware timer that triggered an ISR for reading peripherals. This eff
 
 **The Menu**
 Running with the driver code for the LCD screen, I built up a class that will display the menu and their corresponding contexts.
-
-
-
-
-
 
 
 
