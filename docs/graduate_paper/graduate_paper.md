@@ -223,17 +223,174 @@ classDiagram
     }
 ```
 
-Once this class was implemented, I wrote a larger class called synthesizer that would own a group of voice instances. As keys on the keyboard were pressed and released, the synthesizer would take a voice that didn't have a pitch set to 0hz and set the pitch to that note. Some optimization was made to ensure that if a voice wasn't in use, the synth class would bother telling the voice to generate a sample and waste resources on calculating the outputs of the oscillator functions. Implementing this opens a hole can of worms. What data structure should be used to hold these voices? There are many considerations to be made but first I just focused on making it work. For this project, I decided to avoid any C++ features other than simple classes and subclassing, as there would be performance and memory usage overhead prices to pay that would add up over time. I chose to use a primitive array. My approach was relatively simple. As a new note was played, I would iterate through the voices until I found a voice without a pitch set to 0, and set its pitch to the new note. When note off events come in, iterate over the array until the voice with a pitch matching the note off event is found and set it to 0. That was pretty easy. This was even quick to process. Most of the time you wouldn't have to iterate close to the end of the array.
+Once this class was implemented, I wrote a larger class called synthesizer that would own a group of voice instances. As keys on the keyboard were pressed and released, the synthesizer would take a voice that didn't have a pitch set to 0hz and set the pitch to that note. Some optimization was made to ensure that if a voice wasn't in use, the synth class wouldn't bother telling the voice to generate a sample and waste time on calculating the outputs of the oscillator functions. Implementing this opens a hole can of worms. What data structure should be used to hold these voices? There are many considerations to be made but first I just focused on making it work. For this project, I decided to avoid any C++ features other than simple classes and subclassing, as there would be performance and memory usage overhead prices to pay that would add up over time. I chose to use a primitive array. My approach was relatively simple. As a new note was played, I would iterate through the voices until I found a voice without a pitch set to 0, and set its pitch to the new note. When note off events come in, iterate over the array until the voice with a pitch matching the note off event is found and set it to 0 to make it inactive. That was pretty easy. This was even quick to process. Most of the time you wouldn't have to iterate close to the end of the array.
 
-The real rub was to handle when all voices were active and more note on events occurred. Should the synth just ignore that note, or should it drop some other note and replace it with the newest one? Most synths will change the pitch of the oldest voice in the sequence to be dropped from the note combination and use that voice to play the new incoming note. I decided to stay true to convention and implement this policy. Well the obvious first choice that came to mind was to use a stack. Push notes on to the stack and they're already sorted by the time they occured. So if there are too many notes being play, pop that voice off the back and push the new one Easy! Well it seems easy when you're just considering handling note on messages. But when note off messages occur, its very likely that the the voice that needs to turned off will be in the middle of the stack
+The real rub was to handle when all voices were active and more note on events occurred. Should the synth just ignore that note, or should it drop some other note and replace it with the newest one? Most synths will change the pitch of the oldest voice in the sequence to be dropped from the note combination and use that voice to play the new incoming note. I decided to stay true to convention and implement this policy. So how do I indicate the oldest note in the sequence? My first approach to this was honestly a poor choice. It involved a rather clunky policy of making sure the voices in the array were sorted according to the order in which the pitches were played on the keyboard. Every time a note off event occured, I would have to shuffle around the voices to make them preserve the order in which they occured shuffle the deactivate voice to the back of the array. In hindsight, this approach was so bad, it's mind boggling. I never experienced any break down in the audio output because of time spent sorting, but eventually cracks started to appear when many notes were being played and released in quick succession. Sometimes, the sorting could take long enough that midi events would miss being consumed or some bug in my logic resulted in not off events not being registered; and that voice would play forever until I found the note that was stuck and then played the key again so that the note off event would clear the voice.
 
-Handling note off events was something I didn't expect would require so much work for the synth class to have to perform. When a note off event occurred, the synth would have to iterate over the voices in the array and find the voice playing the pitch that matched the note off event and deactivate the voice so it would stop generating a signal. At the time, I debated over using a modern C++ data structure like a map.  A map would have made short and easy work in managing this; but under the hood, I figured the STL library would have to be performing some form of iteration to locate the keys. The added memory usage and potential performance hit that could potentially stop samples from making it to the output buffer wasn't worth risking. 
+In the end, I reverted my voice organization to simply iterating through the array to turn voices on and off and just ignore events when too many notes were being played. The contrived sorting strategy was dropped and the system instantly became more stable. As I've reflected on this experience, I suspect that the best approach to handle dropping moments when too many notes are being played is to implement a doubly linked list to make it easier to maintain a sorted list that can move arbitrary voices to the back of list when they go inactivate without needing to sort.
 
-A tricky part of this class was handling when more notes were being played by the keyboard than the synth had voices to play them.  As I implemented this functionality, I considered several methods. At first, I tried to keep the array sorted so that the first element in the array would be the note that has been present the longest. This required me to shuffle the voices in the array. This meant that if a ninth note was played, the first note would be popped off the front of the array, and the new note would be placed on the back of the array. Old notes at the front and youngest at the back. Seems simple right? Just use a stack, don't fuss with arrays! Well, the problem was that notes
+At this point in the system, my software architecture looked like this:
+
+```mermaid
+graph TB
+    Hardware --> |processes MIDI, sets pitch for voices<br/>and uses synth to get sample for<br/> next callback| Synth
+
+    subgraph Synth
+        subgraph VoiceArray
+            V1
+            V2
+            V3
+            V4
+            V5
+            V6
+            V7
+            V8
+        end
+    end
+
+    subgraph Voice
+        Oscillator1
+        Oscillator2
+    end
+
+    V1 --- |instance of| Voice
+    V2 --- |instance of| Voice
+    V3 --- |instance of| Voice
+    V4 --- |instance of| Voice
+    V5 --- |instance of| Voice
+    V6 --- |instance of| Voice
+    V7 --- |instance of| Voice
+    V8 --- |instance of| Voice
+
+```
 
 ## Envelopes
 
+The next step in fleshing out the synth was to add some dynamic control of the volume voices. Different instruments get louder and quieter over time in different ways. A percussive instrument like a drum or piano will instantly play at maximum volume and the loudness will diminish over time. A bell when struck will right out for a long time until the user mutes the bell. A snare drum will go quiet almost immediately after its reached its maximum volume. Conversely, a violin will ramp up its volume a bit slower and can play at the same volume indefinitely. Synthesizers are able to have this kind of dynamic control through a component called an envelope. Envelopes are a signal that can be used to modulate a signal over time and often have four phases in which the signal gain increases and decreases. These phases are known as Attack, Decay, Sustain and Release.
+
+### Attack
+The phase where the signal starts at 0 and increases to its maximum gain. The attack phase indicates how **how long** it takes for the gain to reach max.
+
+### Decay
+The phase occuring immediately after attack where the signal gain decreases overtime until it reaches **sustain** gain. Like attack, the decay phase indicates **how long** it takes for the gain to decrease sustain.
+
+### Sustain
+The phase occuring immediately after decay where the signal will remain at its configure sustain gain. Unlike attack and sustain, sustain does not relate to time, but simply the gain that the signal will remain at after the gain has hit its max. As long as the note is held down on the keyboard, the envelope will remain in the sustain phase indefinitely.
+
+### Release
+The final phase of the envelope, the release phase occurs immediately after the key is released on the keyboard. The envelope can enter the release phase from all of the previously mentioned phases. Release refers to **how long** it takes for the envelope gain to return to 0 after the key released.
+
+Envelopes can be used generically to modulate any kind of signal such as volume, filter cutoff frequency or gain on an audio effect like reverb or distortion. The application of envelopes is limited to your imagination. The application of an envelope to volume is known as an Amp Envelope and is the most common. In order to make the synthesizer capable of emulating the volume dynamics of many instruments, the next step was to add an Amp Envelope. In a polyphonic synthesizer, every voice (see previous section) must have its own Amp Envelope so that each note can grow and diminish in volume as real life instruments do.
+
+A new class called Envelope was implemented with a state machine emulating the phases of the Envelope:
+
+```c++
+//Envelope.h
+class Envelope {
+public:
+    //Enum for tracking what phase the envelope is in
+    enum Phase {
+        ATTACK,
+        DECAY,
+        SUSTAIN,
+        RELEASE,
+        READY //This became the new way of knowing if a voice was available for use
+    };
+
+    float val = 0.0; //the current signal gain of the envelope
+    Phase phase = Phase::READY;
+    float process(); //called periodically by timer event callback to advance the gain according to envelope phase state
+    void note_on();
+    void note_off();
+    void reset();
+    //Some setters and getters for accessing the private variables not included in this snippet
+    
+private:
+    uint16_t _attack_ms, _decay_ms, _release_ms;
+    float _sustain;
+};
+```
+
+The voice class was refactored to have its own instance of the Envelope class so each voice grow in volume independently depending on when the voice becomes active. Every time the audio callback happens and the synth calls get_sample on a voice, the voice will return the product of its generated audio sample and the gain of the envelope.
+
+```c++
+//Envelope.cpp
+float Voice::get_sample()
+{   
+    //each oscillator has its own gain for mixing the two waveforms
+    //the sample outputs would be divided by the number of playing voices to prevent blowing out speakers and deafening user
+    float sample1 = (_osc1.get_sample() * _osc1_amp)/NUM_VOICES; 
+    float sample2 = (_osc2.get_sample() * _osc2_amp)/NUM_VOICES;
+    return (sample1 + sample2) * amp_env.val;
+}
+```
+
+Because the envelope does not actually produce any sound, the process method does not need to be called during the audio callback. The hardware timer callback would call the process method and the envelope would change its gain according to its current phase. The configuration of the timer is used to make sure the various time based phases affect the envelope gain correctly according to time (Ex. If attack is set to 100 milliseconds, the gain should increase by .001 every millisecond)
+
+| Envelope States | Explanation |
+| ------ | ------ |
+| Ready | Indicates to synth owning voice that its available to play note |
+| Attack | Gain increases up to 1.0 according to attack rate |
+| Decay | Gain decreases to sustain level according to decay rate |
+| Sustain | Gain remains at level according to sustain |
+| Release | Gain decreases to 0.0 according to release |
+
+```mermaid
+---
+title: Envelope State Machine
+---
+stateDiagram-v2
+    Ready
+    Attack
+    Decay
+    Sustain
+    Release
+
+    [*] --> Ready: Envelope instance created
+    Ready --> Attack: Key pressed
+    Attack --> Decay: Gain at max
+    Decay --> Sustain: Gain at sustain level
+    Sustain --> Release: Key released
+    Release --> Ready: Gain at 0
+
+    Attack --> Release: Key released
+    Decay --> Release: Key release
+```
 ## Filters
+
+The last of the core functions to be implemented in the synth was signal filtering. Up until this point, the control of the harmonic qualities of the signals was fairly limited. You could combine different fundamental waveforms and alter pitch to introduce *some* complexity, but the subtractive aspect of this subtractive synthesizer was conspicuously missing. Filters make up the subtractive nature of the system and allow the user to selectively chop frequency bands from the final signal to emulate real life instruments. An audio filter typically presents two main parameters: Frequency cutoff and resonance. Cutoff determines what frequencies in the spectrum will be filtered out. Resonance is a gain boost that can be applied around the cutoff frequency that will accentuate a certain range of frequencies in the spectrum.
+
+The most common filters used in subtractive synthesis are low pass, high pass and band pass filters. Applying a low pass filter to a harmonically rich signal has the effect of removing the harsher upper harmonic frequencies and make the signal more mellow and deep. This kind of filter is effective in producing sounds like a bass guitar, base drum or cello. Applying a high pass filter will cut out the low frequencies in the signal. This is useful for creating a lead instrument intended to cut through the spectrum without sounding muddy from the lower range of frequencies. Usually a high pass filter will be used to produce sounds like a flute, violin or snare drum. A band pass filter is a combination of low and high pass filters, where a small frequency band somewhere in between is desired.
+
+I wrote a generic filter class that could be subclassed into the different types of filters. 
+
+```c++
+//Filter.h
+class Filter {
+public:
+    Filter() {};
+    Filter(float sampleRate, float cutoffFrequency, float q);
+    virtual float process(float input) = 0;
+    void set_cutoff(uint32_t freq_hz);
+    void set_resonance(uint32_t gain);
+    virtual void update_coefs() = 0;
+
+    float cutoffFreq;
+    float resonance;
+    
+protected:
+    float sampleRate;
+    float b0, b1, b2, a0, a1, a2;
+    float x1, x2, y1, y2;
+};
+
+//Filter.cpp
+//Subclasses override process and update_coefs functions according to their functions
+class LowPassFilter : public Filter;
+class HighPassFilter : public Filter;
+```
+
+This part of the synthesizer was the biggest unknown to me at the time of implementation as I needed to learn more about digital signal processing to understand the math.
 
 ## The little big software features
 

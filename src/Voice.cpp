@@ -52,7 +52,6 @@ float Voice::get_sample()
     else {
         return 0.0;
     }
-    
 }
 
 void Voice::set_osc_volume(Osc_Number osc_num, float amp) {
