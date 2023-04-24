@@ -476,9 +476,18 @@ I setup I2C and wrote a driver to interface that allowed me to quickly print men
 I setup a hardware timer that triggered an ISR for reading peripherals. This effectively is a polling mechanism because of the lack of support for GPIO interupts in libDaisy. This timer callback would read the analog potentiometers, the rotary encoder, the MIDI UART line and respond to any inputs on these peripherals. This timer was also used to advance the state of the Amp Envelope (See envelope section for details).
 
 **The Menu**
-Running with the driver code for the LCD screen, I built up a class that will display the menu and their corresponding contexts.
+Running with the driver code for the LCD screen, I built up a class that will display the menu and their corresponding contexts. The Menu maintains a structure of configurable parameters for the synthesizer such ass oscillator waveforms and filters. The general purpose potentiometers to adaptively manipulate menu parameters under the hood according to the currently selected menu context.
 
+**Remote Control GUI Application**
+A simple GUI control panel was written in python using the QT framework to be able to remotely change parameters without the need of physically interacting with the synthesizer beyond simply playing keys on the keyboard to generate sound. This was accomplished using a secondary USB cable to communicate via USB Serial to tell the synth what parameters to change. This GUI also allows the user to save custom patches to a file on the host PC's disk, which can be loaded at will to instantly reconfigure the system. This feature is still in development but mostly complete with the ability to change change a few parameters. The USB Serial driver provided by daisy is succeptable to crashing when too much data is sent down the line to quickly.
 
+## Project Results
+
+Overall the project was a mixed bag of successes and ongoing struggles to implement.
+
+| Feature | Description | Status |
+| ------- | ----------- | ------ |
+| Oscillators | Sin/Saw/Square/Triangle/Noise | Complete |
 
 
 
