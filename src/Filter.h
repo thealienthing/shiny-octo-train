@@ -12,6 +12,10 @@ enum FilterType {
     FilterTypeEnd
 };
 
+/*
+    This filter class is an implementation of a second order filter using the difference equation.
+*/
+
 class Filter {
 public:
     Filter() {};
@@ -26,8 +30,9 @@ public:
     
 protected:
     float sampleRate;
-    float b0, b1, b2, a0, a1, a2;
-    float x1, x2, y1, y2;
+    float b0, b1, b2, a0, a1, a2; // Filter coeficients are recalculated everytime the cutoff or resonance are changes to the filter
+    float x1, x2, y1, y2;   // x1 and x2 represent the input signal from one and two process cycles previous
+                            //y1 and y2 represent the output signal from one and two precess cycles previous
 };
 
 class LowPassFilter : public Filter {

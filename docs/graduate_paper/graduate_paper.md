@@ -390,7 +390,76 @@ class LowPassFilter : public Filter;
 class HighPassFilter : public Filter;
 ```
 
-This part of the synthesizer was the biggest unknown to me at the time of implementation as I needed to learn more about digital signal processing to understand the math.
+This part of the synthesizer was the biggest unknown to me at the time of implementation as I needed to learn more about digital signal processing to understand the math. I did a little research, and came across the concept of filtering audio signals using the difference equation. Since my system works by generating audio one sample at a time, it made sense use to filter with discrete time samples. I was able to grasp the concept with a little extra effort. The process of designing a filter using the difference equation is as follows:
+1. Based upon your desired filter, you must choose a method of generating appropriate filter coefficients. Some methods include Bilinear Transform, Chebyshev, Finite Impulse Response (FIR), Butterworth etc.
+2. Using your chosen filter method, generate coefficients to be used in your difference equation. You may generate an arbitrary amount of coefficients but it will not necessarily make your filter **better**. It will make it more computationally costly and therefore you must generate an amount of coefficients appropriate to the filter design you choose to implement.
+3. Implement the difference equation to operate on your samples with your generated coefficients.
+
+After some research I decided to use the bilinear transform to generate my filter coefficients for my low pass and high pass filters. The filter coefficients are generated performing the bilinear transform on the cutoff frequency divided by the sample rate of the system. The alpha portion of the filter represents how steep the attenuation of the signal is around the cutoff frequency of the filter. Resonance plays a part in the alpha coefficients as the resonance will factor into how much gain is applied around the cutoff frequency of the filter.
+
+Following is my code implementation of the low and high pass filters in my project with a sequence diagram to help visualize the flow of data through the filter and how previously generated values are stored for use on the next filter cycle.
+
+```c++
+//Filter.cpp
+void LowPassFilter::update_coefs() {
+    float w0 = 2.0f * M_PI * cutoffFreq / sampleRate;
+    float cosw0 = std::cos(w0);
+    float alpha = std::sin(w0) / (2.0f * resonance);
+
+    b0 = (1.0f - cosw0) / 2.0f;
+    b1 = 1.0f - cosw0;
+    b2 = (1.0f - cosw0) / 2.0f;
+    a0 = 1.0f + alpha;
+    a1 = -2.0f * cosw0;
+    a2 = 1.0f - alpha;
+}
+
+void HighPassFilter::update_coefs() {
+    float w0 = 2.0f * M_PI * cutoffFreq / sampleRate;
+    float alpha = sin(w0) / (2.0f * resonance);
+
+    b0 = (1.0f + cos(w0)) / 2.0f;
+    b1 = -(1.0f + cos(w0));
+    b2 = (1.0f + cos(w0)) / 2.0f;
+    a0 = 1.0f + alpha;
+    a1 = -2.0f * cos(w0);
+    a2 = 1.0f - alpha;
+}
+
+//The second-order difference equation showing how the output is generated based off previous inputs. The input and output at time of process are preserved and saved to x1 and y1 and the input/ouput values from the previous process cycle are saved to x2 and y2.
+float LowPassFilter::process(float input) {
+    float output = b0 / a0 * input + b1 / a0 * x1 + b2 / a0 * x2
+                     - a1 / a0 * y1 - a2 / a0 * y2;
+
+    x2 = x1;
+    x1 = input;
+    y2 = y1;
+    y1 = output;
+
+    return output;
+}
+```
+
+```mermaid
+sequenceDiagram
+    Synth->>+Filter: input n
+    activate Filter
+    note right of Filter: output = filter(input)<br/>input and output are stored as x1 and y1<br/>output is returned
+    Filter->>+Synth: output n
+    deactivate Filter
+    Synth->>+Filter: input n+1
+    activate Filter
+    note right of Filter: output = filter(input)<br/>x1 and y1 are stored as x2 and y2<br/>input and output are stored as x1 and y1<br/>output is returned
+    Filter->>+Synth: output n+1
+    deactivate Filter
+    Synth->>+Filter: input n+2
+    activate Filter
+    note right of Filter: output = filter(input)<br/>x1 and y1 are stored as x2 and y2<br/> input and output are stored as x1 and y1<br/>output is returned
+    Filter->>+Synth: output n+2
+    deactivate Filter
+```
+
+Adding filters to the project was a difficult concept to grasp. Some concepts had to be taken with a bit of faith and proven by seeing the in action. This first naive attempt at filtering resulted in some stable low and high pass filters and some gained confidence. I believe now I can move forward and be able to do some deeper research into filters and implement more complex and capable filtering in the future.
 
 ## The little big software features
 
