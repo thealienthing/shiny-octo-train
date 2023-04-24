@@ -280,7 +280,11 @@ The phase occuring immediately after decay where the signal will remain at its c
 ### Release
 The final phase of the envelope, the release phase occurs immediately after the key is released on the keyboard. The envelope can enter the release phase from all of the previously mentioned phases. Release refers to **how long** it takes for the envelope gain to return to 0 after the key released.
 
+<img src="amp_envelope_visual.png" alt="Amp Env" height=400 title="Amp Env Visualed">
+
 Envelopes can be used generically to modulate any kind of signal such as volume, filter cutoff frequency or gain on an audio effect like reverb or distortion. The application of envelopes is limited to your imagination. The application of an envelope to volume is known as an Amp Envelope and is the most common. In order to make the synthesizer capable of emulating the volume dynamics of many instruments, the next step was to add an Amp Envelope. In a polyphonic synthesizer, every voice (see previous section) must have its own Amp Envelope so that each note can grow and diminish in volume as real life instruments do.
+
+
 
 A new class called Envelope was implemented with a state machine emulating the phases of the Envelope:
 
