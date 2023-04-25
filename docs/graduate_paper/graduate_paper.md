@@ -271,7 +271,24 @@ Because the envelope does not produce any sound, the process method does not nee
 | Sustain | Gain remains at a set level according to sustain |
 | Release | Gain decreases to 0.0 according to release |
 
-<img src="images/envelope_state_diagram.png" alt="Envelope State Diagram" width=400 title="Envelope State Diagram">
+```mermaid
+stateDiagram-v2
+    Ready
+    Attack
+    Decay
+    Sustain
+    Release
+
+    [*] --> Ready: Envelope instance created
+    Ready --> Attack: Key pressed
+    Attack --> Decay: Gain at max
+    Decay --> Sustain: Gain at sustain level
+    Sustain --> Release: Key released
+    Release --> Ready: Gain at 0
+
+Attack --> Release: Key released
+Decay --> Release: Key release
+```
 
 ## Filters
 
