@@ -99,8 +99,4 @@ class MIDIUart{
     +bool HasEvents()
     +MidiEvent PopEvent()
 }
-
-
-
-
 ```

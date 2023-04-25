@@ -1,0 +1,21 @@
+```mermaid
+classDiagram
+    class Voice{
+        +Oscillator osc1
+        +Oscillator osc2
+        +Envelope amp_env
+        +void set_pitch(int note)
+        +void set_waveform(Osc_Number osc_num, Waveform waveform)
+        +void set_osc_volume(Osc_Number, float amp)
+        void set_osc2_offsets(int note)
+        +float get_sample()
+    }
+
+    class Oscillator{
+        +Waveform waveform
+        +void init(float sample_rate)
+        +void set_pitch(float pitch_hz)
+        +void set_waveform(Waveform waveform)
+        +float get_sample()
+    }
+```
