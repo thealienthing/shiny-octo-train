@@ -99,7 +99,7 @@
 %%
 %% Keywords. The author(s) should pick words that accurately describe
 %% the work being presented. Separate the keywords with commas.
-\keywords{audio, synthesis, embedded, microcontroller, real-time, midi, hardware, filters, envelopes, DSP}
+\keywords{audio, synthesis, embedded, microcontroller, real-time, midi, hardware, oscillator, filter, envelope, DSP}
 
 %%
 %% This command processes the author and affiliation and title
@@ -107,36 +107,61 @@
 \maketitle
 
 \section{Introduction}
-Begin with a proper thesis statement, which may be several paragraphs. A proper thesis statement
-answers the following 4 questions:
-\begin{enumerate}
-      \item What problem are you trying to solve?
-      \item why is it interesting?
-      \item What are your major results?
-      \item What are your conclusions?
-\end{enumerate}
-This is a technical paper, so you need to provide background and evidence for any claims you
-make about your work and others' work, with citations.
+\subsection{Purpose}
+	The acquisition of musical gear is a common obsession that plagues millions of musicians around the world. The cost of gear for performance or music production presents a major financial struggle to musicians who already must work within a tight budget. A common thought occurs to musicians: "What if I just make my own X? Maybe I can save some money." This discussion occurs frequently within online and offline forums. Often times, musicians who have experience in making their own digital or analog instruments will give the same answer: "Yes. You can just make your own X. But no. You won't save any money. You will spend more and you should just save up some cash to buy your gear from a compony like Roland, Yamaha, Korg, etc." Over the years, I've researched this very topic and found this conclusion to be true but with a small caveat: You can in fact save money by making your audio production tool as a \textbf{digital system}. You can write as much software as you want. You can refactor and rebuild you software tool as much as you want, and never spend a dime. When physical electronic components are removed from the equation, if you have a system to run your software, you can make all your music production gear for free. This caveat has a caveat of its own: This takes substaintial time. Time is money. Therefore, every hour spent in implementing your system is implicitly adding to the price tag of your system.
+	
+	I've known these facts for a long time and have seen them in action as my education has had me walk through the process of making \textit{yet another} database management system, and \textit{yet another} virtual machine. Unsurprisingly, my database hasn't replaced MySQL and my virtual machine has not replaced the Java Virtual Machine. Reinventing the proverbial wheel did not make the effort fruitless. Valuable wisdom and knowledge of how computers work was gained from these experiences. I applied this same principle to my experience as a musician with the goal of my master's project: Make \textit{yet another} digital synthesizer on an embedded microcontroller. \textbf{The endgame of this project was the journey itself: to learn how to implement a complex real-time embedded system, develop a digital audio pipeline, make a hardware interface to control it and see what invaluable knowledge can be extracted from the experience.} There is also the intrinsic side benefit of indulging my personal fantasy of making a piece of musical gear that is wholly mine. The aim of this project was to accomplish the task of creating this device and documenting the process and lessons learned: What is a valid working architecture to making such a system? Where does one begin? What kind of failure and setbacks should be expected? Can it be done within a reasonable amount of time without substantial reliance on previously existing frameworks and libraries? What sort of mathematical and technical knowledge is required?
 
-It is helpful to your advisory committee if you also address these
-two questions briefly. You will say more about these topics in other sections of the paper.
-\begin{enumerate}
-      \item What did you learn?
-      \item How many lines of code is your project?
-      \item If not lines of code, what makes your project complex?
-\end{enumerate}
+\subsection{Project Criteria}
 
-The size and scope of your project should be large enough to require 
-5000 lines of code and take 10-20 pages to document. If you need help with writing, 
-contact the UVU Writing Center.
+	\subsubsection{Minimum Requirements}
+	In order to meet the definition of a hardware subtractive synthesizer it must meet the following minimum requirements (see Concepts for definitions):
+	\begin{enumerate}
+		\item The device must produce audio at a minimum quality of 44.1khz and 16 bit-depth (CD Audio Quality)
+		\item Notes can be played by way of any generic MIDI keyboard.
+		\item An \textbf{oscillator} component must be implemented. It must generate the most common wave forms: Sin, sawtooth, square, triangle and white noise
+		\item The synthesizer (hereafter referred to as synth), but be polyphonic, capable of playing up to 8 discrete notes at a time.
+		\item A \textbf{voice} component allowing mixing of multiple oscillator waveforms must be implemented.
+		\item An \textbf{envelope} component must be implemented to dynamically attenuate the gain of each voice over time.
+		\item A \textbf{filter} component must be implemented to be able to selectively cut frequencies from the final signal. It should support lowpass, highpass and bandpass filtering. Filter frequency cutoff and resonance must be adjustable in real-time.
+		\item A \textbf{low-frequency oscillator (LFO)} component must be implemented which the user may configure to modulate arbitrary signals within the system.
+		\item Custom "patch" saving. Users can save their current configuration to a patch bank, and recall their saved a previous.
+		\item A \textbf{hardware interface} allowing personal interaction between the user and the system must be implemented. A MIDI input jack must be included for plugging in a keyboard. A 1/8" audio output jack should allow the user to hear playback with headphones or speakers. It should have a series of knobs and a screen communicate the system state to the user. The knobs should allow the user to navigate a menu to select a variety of parameters they wish to manipulate. The knobs should adapt to the context of the menu to adjust parameters appropriately.
+	\end{enumerate}
 
-You may use any editing software you want to produce your paper, but you must follow this 
-template, and the final version you submit must be a PDF. In case you're interested, this template 
-is a customized version of the ACM Sample Manuscript Template. We recommend using either 
-MSWord or LaTeX for writing.
-
-The last paragraph of a good Introduction outlines the sections in the
-rest of the paper: One sentence per section. Guide the reader, don't surprise them.
+	\subsubsection{Additional Features}
+	Mentioned above is the absolute bare minimum representation of what would constitute a common subtractive synthesizer. A series of other common but not required features were planned for the project:
+	\begin{itemize}
+		\item Additional generic envelope for modulating arbitrary signals on system
+		\item MIDI Pitch and Modulation wheel support
+		\item Additional audio FX: Delay, reverb, overdrive, etc.
+		\item 3D printed enclosure box
+		\item Expand synthesis options: Frequency Modulation (FM Synthesis), Sample based synthesis
+	\end{itemize}
+	
+	\subsubsection{Constraints}
+	To maximize the learning potential of this project and focus on the process rather than the final destination, I decided to set a few restrictions:
+	\begin{enumerate}
+		\item Language: The firmware must be implemented in a low-level programming language such as C/C++.
+		\item Libraries: Only the standard C/C++ libraries may be used. A Hardware Abstraction Layer to minimize hardware peripheral set up time may be used. Other than that exception, all software must be written from scratch. This includes digital signal processing (DSP) libraries; However, every audio processing function is handcrafted.
+		\item References: Referencing and reading other implementations is not explicitly restricted. Every effort must be put forth to understand the mathematical concepts of DSP and implement them without reliance on existing implementations.
+	\end{enumerate}
+	
+\subsection{Results}
+	The final state of project met most of the minimum requirements but failed to fulfill every feature: There was not enough time to implement LFOs info the system, and HAL library issues involving writing and reading from flash memory space got in the way of fully implementing a user patch bank. The system is able to perform its function as a versatile musical instrument. It is relatively stable, but needs a few revisions before it can be a reliable studio or stage performance-ready instrument.
+	
+	\subsubsection{What was learned?}
+	
+	\paragraph{The device platform must be chosen carefully} I chose the audio development board Daisy by Electro-Smith. It is marketed as an attractive option for musicians to implement their dream systems because of its high resolution digital to analog (DAC) converter and painless hardware peripheral abstractions. It turned out to not be as mature and stable as I hoped and had many issues with drivers, pin connections and lacking support for certain interrupt service routines. At the time, it was difficult to see that Daisy may not have been the best option for implementing system scoped beyond a hobbyist project. The platform was designed for musicians to implement simpler systems with highly abstracted development libraries and programming languages/frameworks like MaxMSP, Puredata and Arduino. It appears more attention and care was put into supporting these tools and making them work well while some lower level capabilities were sidelined. The Daisy platform is very popular and is used commercially but still has yet to reach a highly stable and mature state.
+	
+	\paragraph{Hardware prototyping must be incremental} After I had spent several months setting up my hardware peripherals on a breadboard and implementing core functionality, I felt the need to migrate the system off a breadboard to a more permanent and stable home. It was at this point I tried to do too much at once. I tried to design a soldered circuit board able to be embedded in a hardware enclosure that was yet to be designed. My thought was that it may take several revisions of the enclosure before I knew where all my knobs, encoders, inputs, outputs and screen needed to be for ease of use and optimal functionality. I built up flying wire harnesses for all peripherals so that they could be moved around to test out different enclosure layouts. The result was an absolute mess of wires that were susceptible to interference. My first step in taking the system off the breadboard should have been simply solder my components into logical sections on perf board and make the system work as it did on the breadboard. It would not have been optimal or have fit into an easy enclosure. I would still have to design a final enclosure and migrate the system to its final home, but I would have saved so much time soldering and troubleshooting my sloppy design. I could have allocated more time to software design and would have been able to complete more features like the LFO and patch bank mechanic.
+	
+	\paragraph{Pure software functions should be decoupled from hardware and tested independent of the hardware} My workflow for the entirety of the project was \textbf{write code, compile, flash, test, repeat}. 
+	
+	
+	
+	\subsubsection{Complexity}
+	
 
 \section{Related Works}
 For each reference in your paper, write a two- or three-sentence paragraph 
