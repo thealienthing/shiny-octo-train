@@ -204,6 +204,12 @@ fit naturally in other sections.
 
 \subsection{Hardware Platform}
 	\paragraph{A big decision in implementing this project was choosing the right microcontroller platform} I considered several options but settled on a popular and relatively new audio development ecosystem by Electro-Smith known as Daisy. Daisy is an Arm Cortex-M7 based development board that provides all the necessary processing power and peripherals necessary for audio processing. Daisy's core processor clocks at 480Mz and includeds extremely high-resolution digital-to-analog converter (DAC). In addition to the DAC, it supports the expected communication protocols such as I2C, UART, USB, Timers, etc. The biggest benefit to choosing Daisy as my platform was Electro-Smith's libDaisy library. libDaisy acts as an abstraction on top of the standard HAL libraries for the Cortex M7 and is designed to relieve the user of complications with hardware set up so they can focus on audio development. This made Daisy an attractive option. Audio processing was a completely foreign domain in programming, and Daisy coupled with its easy to use HAL seemed like a promising option that would give me the time I need to learn the ropes of audio development.
+	
+	\begin{figure}[H]
+		\includegraphics[width=8cm]{daisy_promo_pic}
+		\caption{Daisy Seed by Electro-Smith. The microcontroller platform for this project}
+		\centering
+	\end{figure}
 
 	\paragraph{Daisy seemed to be a great choice at the time} Within minutes of connecting Daisy to my machine, I was able to set up an audio callback. I used a random number generator to play white noise out the DAC. After a few minutes of soldering some wires to an audio jack and connecting them to the DAC pins, I could hear static playing out my headphones. Hello world! It was exhilarating to write only a few lines of code and hear it come to life after a few minutes. I felt very strongly that Daisy was the right choice. What I was not aware of was the relative newness of the platform. Daisy originally was a Kickstarter-funded project which received incredible amounts of success and support. The platform was designed with musicians in mind, and the developers put a lot of work into supporting much more user-friendly development languages and frameworks like MaxMSP, Puredata, and Arduino. This made the system highly accessible to musicians with little to know experience in audio development. These layers of abstraction seems to have some unintended side effects. It meant that a lot of time put into customer accessibility, and full support for utilizing all hardware to its fullest capabilities was put off and is still in current development.
 
@@ -276,174 +282,197 @@ fit naturally in other sections.
 	\paragraph{This section goes into depth about the various software components that make up the actual audio synthesis and processing} I will address the software components in the order that they were implemented throughout the project. This will help to highlight the process of generating audio from the initial keyboard input to eventual output of the audio to a speaker. I will cover the topics of \textbf{Oscillators, Voices, Envelopes, and Filters} in depth as these are the critical components of the actual synthesis aspects of the project. I will only very briefly discuss other features in a few sentences as they have less to do with audio synthesis and more to do with overall system cohesion and functionality. \textit{See concepts for definitions and background info}
 
 	\subsubsection{Oscillators}
-	\paragraph{The most fundamental component of any subtractive synthesizer is the oscillator} Generally speaking, an oscillator is a function generator. It will generate a repeating signal at a specified frequency much like the function generator of an oscilloscope. A digital oscillator maintains a variable representing the phase of the function cycle. Everytime an audio callback occurs, the current phase will be passed into the oscillator function, advance the phase by a delta value determined by the desired output frequency. The sequence chart below illustrates how audio samples are generated from the oscillator and then placed into the output buffer of the DAC when it triggers an ISR.
+	\paragraph{The most fundamental component of any subtractive synthesizer is the oscillator} Generally speaking, an oscillator is a function generator. It will generate a repeating signal at a specified frequency much like the function generator of an oscilloscope. A digital oscillator maintains a variable representing the phase of the function cycle. It also maintains a phase delta variable for how much the phase should be incremented to achieve the desired frequency. Every time an audio callback occurs, the sample is generated using the oscillator function with the current phase as input. Phase is incremented according to the phase delta. Finally the sample is returned and can be placed in the audio output buffer for playback. The sequence chart below illustrates how audio samples are generated by the oscillator and then placed into the output buffer of the DAC.
 	
 	\begin{figure}[H]
 		\includegraphics[width=4cm]{placeholder_duck}
-		\caption{Placeholder ducker: Oscillator sequence diagram needs to be exported}
+		\caption{Placeholder duck: Oscillator sequence diagram needs to be exported}
 		\centering
 	\end{figure}
 
-	\paragraph{Note: The diagram above will generate a 1hz sin wave which isn't audible and music sounds best when you can hear it} So the oscillator must maintain a variable containing the desired frequency and calculate our phase delta so we can generate the function at the desired frequency. Phase delta is a value by which we increment the phase to get the next sample of our waveform. To generate a wave at 1hz with a sample rate of 44.1kz, we simply need to divide two pi by 44100. Starting with our phase at zero, if we add phase\_delta to the oscillator phase 44,100 times, we will have a value of two pi. Two change the pitch, we only need to multiply the phase delta by our desired frequency. If we want our pitch to be 100hz, our calculated phase delta will cause the oscillator function to cycle 100 times in a second.
+	\paragraph{Note: The diagram above will generate a 1hz sin wave which isn't audible and music sounds best when you can hear it} So the oscillator must maintain a variable containing the desired frequency and use it to calculate the phase delta. Now the oscillator can generate the function at the desired frequency. Phase delta is a value by which we increment the phase to get the next sample of the waveform. To generate a wave at 1hz with a sample rate of 44.1kz, we simply need to divide two pi by 44100. Starting with our phase at zero, if we add phase\_delta to the oscillator phase 44,100 times, we will have a value of two pi which is a complete cycle complete in one second. To change the pitch, we only need to multiply this base phase delta by our desired frequency. If we want our pitch to be 100hz, our calculated phase delta will cause the oscillator function to cycle 100 times in a second. 
+	
+	\paragraph{\textbf{Nyquist's theory} must be taken into account when dealing with oscillators} Nyquists theory states that a signal must be sampled more than twice its highest potential frequency to be accurately represented. When this requirement is not met, \textbf{aliasing} will occur on the undersampled frequencies. The highest frequencies perceivable to human ears is 22khz, which is why the industry standard sample rate is 44.1khz. This ensures that the highest signal frequencies within human hearing are accurately represented.
 
-	\paragraph{What about other waveforms? Sin waves are boring} This is true. Sin waves tend to lack harmonic complexity and will generally produce very mellow tones. The oscillator class also maintains an enum describing what \textit{kind} of oscillator it is (i.e. what function does it use). The oscillator waveform can be set with the set\_waveform method. S next time get\_sample is called, the oscillators corresponding waveform function will be called returning a sample from your fancy new harmonically rich waveform. Beautiful! For more information about these functions, the snippet below is a good start. Also, see Oscillator.cpp for the full source.
+	\paragraph{What about other waveforms? Sin waves are boring!} This is true. Sin waves lack harmonic complexity and will generally produce very mellow tones. The oscillator class also maintains an enum describing what \textit{kind} of oscillator it is (i.e. what function does it use). The oscillator waveform can be set with the set\_waveform method. When get\_sample is called, the oscillator's corresponding waveform function will be called returning a sample from your fancy new harmonically rich waveform. Beautiful! For more information about these functions, the snippet below is a good start. Also, see Oscillator.cpp for the full source.
 
-\begin{minted}{c}
-//Oscillator.h
-enum WaveForm {
-	Sin,
-	Tri,
-	Saw,
-	Square,
-	WhiteNoise,
-	WaveFormEnd
-};
-
-//Oscillator.cpp
-void Oscillator::set_waveform(WaveForm waveform)
-{
-	_waveform = waveform;
-}
-
-float Oscillator::get_sample()
-{
-	//Some context of this function removed for brevity
-	switch (_waveform)
-	{
-		case WaveForm::Sin: {
-			sample = sinf(_phase);
-			break;
-		}
-		case WaveForm::Tri: {
-			t   = -1.0f + (2.0f * _phase * TWO_PI_RECIP);
-			sample = 2.0f * (fabsf(t) - 0.5f);
-			break;
-		}
-		case WaveForm::Saw: {
-			sample = ((_phase * TWO_PI_RECIP * 2.0f) * -1.0f) * -1.0f;
-			break;
-		}
-		case WaveForm::Square: {
-			sample = (_phase < _half_cycle) ? 1.0f: -1.0f;
-			break;
-		}
-		case WaveForm::WhiteNoise: {
-			sample = noise.process();
-			break;
-		}
-		default: {
-			sample = 0.0;
-			break;
-		}
-	}
-	//More context removed here for brevity
-	return sample;
-}
-\end{minted}
-
-\section{\textbf{FRANK: THIS IS THE END OF REVISED AND TYPESET CONTENT. I WILL CONTINUE MY REVISIONS LATER TONIGHT}}
-
-When the basic oscillator was set up and I was able to statically compile and upload code to make my little daisy output a continuous 440hz sin wave, I felt a rush of excitement. It was incredibly gratifying to hear my code working instead of just seeing it in a terminal or GUI. I played around, writing little loops and time delays to change the pitch and hear the pitch change in real-time and play scales. After that, I figured out the functions to generate the square function: a simple on/off function that sets the sample to 1.0 during the first half of the phase and the flipping it to -1.0 during the second half. Writing sawtooth and white noise functions was easy. I never was satisfied with the triangle waveform. It is supposed to straddle the line between a smooth sin wave and a choppy sawtooth in terms of complexity but it always sounded more like a slightly droopy sawtooth.
-
-After the oscillators were properly implemented, I added the MIDI message processing through the MIDI UART connection. As MIDI messages came through the data line, the pitch data was parsed and converted into the note frequency in hertz and the pitch was set on the oscillator. If a MIDI event message came through indicating that the note was released on the keyboard, the pitch of the oscillator was set to 0hz to silence the oscillator. At this point, I had the bare minimum definition of a synthesizer. The user could play notes on the keyboard, and the configured oscillator waveform playing the corresponding frequency would play out the speakers. But at this point, I could only play one note at a time and could not generate any signals more complex than the 5 basic oscillator functions. Adding polyphony and oscillator mixing was the next feature to add.
-
-Voices
-In the world of synthesizers, a single discrete note playing a certain pitch is called a voice. When your synth is monophonic, it means it only has one voice and can therefore only play one pitch at a time. Most modern synthesizers, whether analog or digital, have polyphonic capabilities. Many analog synthesizers can play four to eight notes at once because adding more voices requires more discrete hardware oscillators and can make the system more complex, expensive, and heavy. Digital synthesizers can accommodate more notes quite easily and will often support at least eight voices with options to play as many as 128 (the maximum number of discrete notes available in the MIDI protocol) which is overkill. I did a little bit of playing on a synthesizer of my own and I paid attention to how many notes I needed at my most advanced and complex playing. I decided that eight would suffice with the option to add more if needed.
-
-I wrote a class intended to capture the functionality of a voice. The class would contain two separate oscillators that can be set to any fundamental waveform. It would also contain separate gain parameters for attenuating or amplifying each oscillator. At the end of the processing chain for the voice, the attenuated oscillators would be combined into one sample and passed to the class's output. Also included in the class is the option to configure a pitch offset to the second oscillator; another common synth feature in synthesizers. By detuning one oscillator from another, you can generate even more complex waveforms with frequency beating, added intensity, or even complete dissonance if desired.
-
-Daisy
-Once this class was implemented, I wrote a larger class called Synthesizer that would own a group of voice instances. As keys on the keyboard were pressed and released, the synthesizer would take a voice that didn't have a pitch set to 0hz and set the pitch to that note. Some optimization was made to ensure that if a voice wasn't in use, the synth class wouldn't bother telling the voice to generate a sample and waste time calculating the outputs of the oscillator functions. Implementing this opens a whole can of worms. What data structure should be used to hold these voices? There are many considerations to be made but first I just focused on making it work. For this project, I decided to avoid any C++ features other than simple classes and subclassing, as there would be performance and memory usage overhead prices to pay that would add up over time. I chose to use a primitive array. My approach was relatively simple. As a new note was played, I would iterate through the voices until I found a voice without a pitch set to 0, and set its pitch to the new note. When note-off events come in, iterate over the array until the voice with a pitch matching the note-off event is found, and set it to 0 to make it inactive. That was pretty easy. This was even quick to process. Most of the time you wouldn't have to iterate close to the end of the array.
-
-The real rub was to handle when all voices were active and more note-on events occurred. Should the synth just ignore that note, or should it drop some other note and replace it with the newest one? Most synths will change the pitch of the oldest voice in the sequence to be dropped from the note combination and use that voice to play the new incoming note. I decided to stay true to convention and implement this policy. So how do I indicate the oldest note in the sequence? My first approach to this was honestly a poor choice. It involved a rather clunky policy of making sure the voices in the array were sorted according to the order in which the pitches were played on the keyboard. Every time a note-off event occurred, I would have to shuffle around the voices to make them preserve the order in which they occurred. In hindsight, this approach was so bad, it's mind-boggling. I never experienced any breakdown in the audio output because of the time spent sorting, but eventually, cracks started to appear when many notes were being played and released in quick succession. Sometimes, the sorting could take long enough that midi events would miss being consumed or some bug in my logic resulted in not off events not being registered; and that voice would play forever until I found the note that was stuck and then played the key again so that the note off event would clear the voice.
-
-In the end, I reverted my voice organization to simply iterating through the array to turn voices on and off and just ignore events when too many notes were being played. The contrived sorting strategy was dropped and the system instantly became more stable. As I've reflected on this experience, I suspect that the best approach to handle dropping moments when too many notes are being played is to implement a doubly linked list to make it easier to maintain a sorted list that can move arbitrary voices to the back of list when they go inactivate without needing to sort.
-
-At this point in the system, my software architecture looked like this:
-
-Daisy
-Envelopes
-The next step in fleshing out the synth was to add some dynamic control of the volume voices. Different instruments get louder and quieter over time in different ways. A percussive instrument like a drum or piano will instantly play at maximum volume and the loudness will diminish over time. A bell when struck will right out for a long time until the user mutes the bell. A snare drum will go quiet almost immediately after it reached its maximum volume. Conversely, a violin will ramp up its volume a bit slower and can play at the same volume indefinitely. Synthesizers can have this kind of dynamic control through a component called an envelope. Envelopes are a signal that can be used to modulate a signal over time and often have four phases in which the signal gain increases and decreases. These phases are known as Attack, Decay, Sustain, and Release.
-
-Attack
-The phase where the signal starts at 0 and increases to its maximum gain. The attack phase indicates how how long it takes for the gain to reach max.
-
-Decay
-This phase occurs immediately after the attack phase where the signal gain decreases over time until it reaches sustain gain. Like attack, the decay phase indicates how long it takes for the gain to decrease sustain.
-
-Sustain
-This phase occurs immediately after the decay phase where the signal will remain at its configure sustain gain. Unlike attack and sustain, sustain does not relate to time, but simply the gain that the signal will remain at after the gain has hit its max. As long as the note is held down on the keyboard, the envelope will remain in the sustain phase indefinitely.
-
-Release
-The final phase of the envelope, the release phase occurs immediately after the key is released on the keyboard. The envelope can enter the release phase from all of the previously mentioned phases. Release refers to how long it takes for the envelope gain to return to 0 after the key is released.
-
-Amp Env
-Envelopes can be used generically to modulate any kind of signal such as volume, filter cutoff frequency, or gain on an audio effect like reverb or distortion. The application of envelopes is limited to your imagination. The application of an envelope to volume is known as an Amp Envelope and is the most common. To make the synthesizer capable of emulating the volume dynamics of many instruments, the next step was to add an Amp Envelope. In a polyphonic synthesizer, every voice (see previous section) must have its own Amp Envelope so that each note can grow and diminish in volume as real-life instruments do.
-
-A new class called Envelope was implemented with a state machine emulating the phases of the Envelope:
-
-\begin{lstlisting}{language=C++}
-//Envelope.h
-class Envelope {
-	public:
-	//Enum for tracking what phase the envelope is in
-	enum Phase {
-		ATTACK,
-		DECAY,
-		SUSTAIN,
-		RELEASE,
-		READY //This became the new way of knowing if a voice was available for use
+	\begin{minted}{c}
+	//Oscillator.h
+	enum WaveForm {
+		Sin,
+		Tri,
+		Saw,
+		Square,
+		WhiteNoise,
+		WaveFormEnd
 	};
 	
-	float val = 0.0; //the current signal gain of the envelope
-	Phase phase = Phase::READY;
-	float process(); //called periodically by timer event callback to advance the gain according to envelope phase state
-	void note_on();
-	void note_off();
-	void reset();
-	//Some setters and getters for accessing the private variables not included in this snippet
+	//Oscillator.cpp
+	void Oscillator::set_waveform(WaveForm waveform)
+	{
+		_waveform = waveform;
+	}
 	
-	private:
-	uint16_t _attack_ms, _decay_ms, _release_ms;
-	float _sustain;
-};
-\end{lstlisting}
+	float Oscillator::get_sample()
+	{
+		//Some context of this function removed for brevity
+		switch (_waveform)
+		{
+			//Plain old sin wave. Simple and easy to generate
+			case WaveForm::Sin: {
+				sample = sinf(_phase);
+				break;
+			}
+			//A triangle wave!. It's like a sin wave but pointy! That's neat.
+			case WaveForm::Tri: {
+				t   = -1.0f + (2.0f * _phase * TWO_PI_RECIP);
+				sample = 2.0f * (fabsf(t) - 0.5f);
+				break;
+			}
+			//Sawtooth. Sharp and full of harmonics that make it fat and sassy
+			case WaveForm::Saw: {
+				sample = ((_phase * TWO_PI_RECIP * 2.0f) * -1.0f) * -1.0f;
+				break;
+			}
+			//The good old square wave. The classic sound of the 8-bit video game era
+			//Chock full of vitamins and harmonic flavor!
+			case WaveForm::Square: {
+				sample = (_phase < _half_cycle) ? 1.0f: -1.0f;
+				break;
+			}
+			//TV static. Believe it or not, noise is used a lot in synthesis. It's
+			//the most harmonically complex and is used for creating noisy instruments
+			//like drums and sound effects
+			case WaveForm::WhiteNoise: {
+				sample = noise.process();
+				break;
+			}
+			//What happened? This is nothing.
+			default: {
+				sample = 0.0;
+				break;
+			}
+		}
+		//More context removed here for brevity
+		return sample;
+	}
+	\end{minted}
+	
+	\paragraph{When the basic oscillator was set up, I quickly compiled some firmware with a statically configured sin wave oscillator.} I uploaded code and heard by little daisy sing out a 440hz sin wave through my headphones! Boyish excitement was in my countenance as I felt a rush of excitement. It was incredibly gratifying to hear \textbf{my code} produce sound. It wasn't just text in a terminal or GUI widget saying hello world. And I made it \textit{from scratch}. I played around, writing loops and time delays to change the pitch and play scales and melodies. After that, I figured out the functions to generate the square function: a simple on/off function that returns 1.0 during the first half of the phase -1.0 during the second half. Writing the sawtooth and white noise functions was easy. I never was satisfied with the triangle waveform. It is supposed to straddle the line between a smooth sin mellow wave and the choppy sawtooth in terms of complexity but it always sounded more like a plain sawtooth but with less sass.
+	
+	\paragraph{After the oscillators were properly implemented, I added the MIDI message processing} I looked through some blog posts about consuming MIDI data through a UART connection and found the optocoupler circuit. I ordered the parts and got it working quick and easy. As data arrived on the UART line, I parsed the bytes into MIDI messages. MIDI note\_on messages were received when a note was pressed on the keyboard. MIDI note\_off messages were received when the key was released. Both message types contain a 7 bit number indicating the key that was pressed and a 7 bit number indicating the velocity (\textit{how hard} the key was pressed). When note\_on messages arrived, I converted the integers to the correct floating point frequency values and set the oscillators pitch. The oscillator would play the new pitch out the speakers. When note\_off messages arrived, the pitch of the oscillator was set to 0hz to silence the oscillator. At this point, I had the absolute bare minimum definition of a synthesizer. It could play a note sent from the keyboard, and the oscillator would respond by playing the correct pitch with its configured waveform. It could only play one note at a time and could not generate any signals more complex than the 5 basic oscillator functions, but nevertheless, it was a big step in the right direction. Adding polyphony and waveform mixing was the next logical step.
 
-The voice class was refactored to have its own instance of the Envelope class so each voice grows in volume independently depending on when the voice becomes active. Every time the audio callback happens and the synth calls get\_sample on a voice, the voice will return the product of its generated audio sample and the gain of the envelope.
+	\subsubsection{Voices}
+	\paragraph{In the world of synthesizers, a single discrete note playing a certain pitch is called a voice} When a synth is \textbf{monophonic}, it means it only has one voice and can therefore only play one pitch at a time. Conversely, a \textbf{polyphonic} synth can play two or more discrete notes at a time. Most modern synthesizers, whether analog or digital, have polyphonic capabilities. Many analog synthesizers can only play four to eight notes at once because adding more voices requires adding more discrete hardware oscillators. Adding more voices to an analog system makes it more complex, expensive, and heavy. Digital synthesizers can accommodate more notes quite easily and will often support at least eight voices with options to play as many as 128 (the maximum number of notes available in the MIDI 1.0 protocol) which is overkill. I did a little bit of playing on a synthesizer of my own and I paid attention to how many notes I needed at my most advanced and complex playing. I decided that eight would suffice with the option to add more if needed.
+	
+	\paragraph{I wrote a class contain the functionality of a voice} The class would contain two separate oscillator class instances that can be set to any fundamental waveform. Each oscillator would also have a separate gain parameter to mix up some more complex hybrid waveforms. At the end of the processing chain for the voice, the oscillator samples would be summed into one sample and passed to the class's output. The voice class can optionally configure a pitch offset to the second oscillator; another common synth feature in synthesizers. By detuning one oscillator from another, you can generate even more complex waveforms with frequency beating, added intensity, or even complete dissonance if desired.
 
-\begin{lstlisting}
-//Envelope.cpp
-float Voice::get_sample()
-{   
-	//each oscillator has its own gain for mixing the two waveforms
-	//the sample outputs would be divided by the number of playing voices to prevent blowing out speakers and deafening user
-	float sample1 = (_osc1.get_sample() * _osc1_amp)/NUM_VOICES; 
-	float sample2 = (_osc2.get_sample() * _osc2_amp)/NUM_VOICES;
-	return (sample1 + sample2) * amp_env.val;
-}
-\end{lstlisting}
-Because the envelope does not produce any sound, the process method does not need to be called during the audio callback. The hardware timer callback would call the process method and the envelope would change its gain according to its current phase. The configuration of the timer is used to make sure the various time-based phases affect the envelope gain correctly according to time (Ex. If attack is set to 100 milliseconds, the gain should increase by .01 every millisecond)
+	\begin{figure}[H]
+		\includegraphics[width=4cm]{placeholder_duck}
+		\caption{Placeholder duck: Voice class diagram goes here}
+		\centering
+	\end{figure}
 
-Envelope States	Explanation
-Ready	Indicates to the synth owning the voice that it's available to play a note
-Attack	Gain increases up to 1.0 according to attack rate
-Decay	Gain decreases to sustain level according to decay rate
-Sustain	Gain remains at a set level according to sustain
-Release	Gain decreases to 0.0 according to release
-Envelope instance created
-Key pressed
-Gain at max
-Gain at sustain level
-Key released
-Gain at 0
-Key released
-Key release
-Ready
-Attack
-Decay
-Sustain
-Release
-Filters
+	\paragraph{Once the voice class was implemented, I wrote a larger class called Synthesizer that would own a group of voice instances} Each voice would start with 0hz for its pitch to indicate it was currently inactive and available to play a note. As keys on the keyboard were pressed, the synthesizer would find an inactive voice and activate it by setting the pitch to that note. Some optimization was made to ensure that if a voice wasn't in use, the synth class wouldn't bother asking the voice to generate a sample and waste time calculating a sample for 0hz. 
+	
+	\paragraph{Implementing this voice collection opened a whole can of worms} What data structure should be used to hold these voices? There are many considerations to be made. But first, I was just focused on making it work. For this project, I decided to avoid any C++ features other than simple classes and subclassing, as there would be performance and memory usage overhead prices to pay that would add up over time. I started by using a primitive array. My approach was relatively simple. As a new note was played, the Synth class would iterate through the voice array until it found an inactive voice (pitch set to 0hz), and activate it by setting its pitch to the new note. When note-off events came in, the synth would iterate over the array until the voice playing the pitch matching the note-off event is found. The voice would then be deactivated by setting the pitch to 0. That was pretty easy. This was even quick to process. Most of the time you wouldn't have to iterate close to the end of the array and the time domain in which humans input notes is so much slower than the speed that the MCU is running at. So overwhelming the MCU with MIDI event processing just wasn't possible
+
+	\paragraph{The real rub was to handle when all voices were active and more note-on events occurred} Should the synth just ignore that note, or should it drop some other note and replace it with the newest one? I have observed that most synths seem to employ a policy of dropping the pitch that has been played the longest. That voice is then used to play the new incoming note. I decided to follow this policy. So how do I indicate the oldest note in the sequence?  My first approach to this was a poor choice. It involved a rather clunky method of making sure the voices in the array were sorted according to the order in which the pitches were played on the keyboard. Every time a note-off event occurred, I would have to shuffle voices around to make them preserve the order in which played their current pitch. In hindsight, this approach was so bad, it's mind-boggling. I never experienced any breakdown in the audio output because of the time spent sorting, but eventually, cracks started to appear when many notes were being played and released in quick succession. Sometimes, the sorting action would take long enough that midi events were missed on the UART bus, or some bug in my logic resulted voices failed to be turned off. When that happens, the voice will just play forever until the note that was stuck pressed and released again to give the synth a chance to turn it off
+
+	\paragraph{In the end, I reverted my voice organization to simply iterating through the array to turn voices on and off} For now, in this relatively rare event when too many notes were being played, it just ignores new notes. The contrived sorting strategy was dropped and the system instantly became more stable. Upon reflection, I suspect their is an easy solution to this problem. Perhaps the synth could have a data member like a uint64 called note\_count. note\_count would count how many note on events occured since startup. Each voice could be given an additional data member called sequence\_num. Every time a note\_on event occurs, the voiced assigned the new note would have its sequence\_num data member updated to the current value of note\_count to indicate when it was activated. The voice with the lowest number is the oldest and should be dropped when more than the max number of notes occurs. And a uint64 is so outrageously large it would take the user playing billions of notes per second for over a hundred years before it overflows. I don't think it's fair to expect my little synth to be ready to handle integer overflow of such biblical proportions.
+
+	\begin{figure}[H]
+		\includegraphics[width=4cm]{placeholder_duck}
+		\caption{Placeholder duck: At this point in the system, my software architecture looks like this:}
+		%Voice graph diagram goes here
+		\centering
+	\end{figure}
+
+	
+	\subsubsection{Envelopes}
+	\paragraph{The next step in fleshing out the synth was to add some dynamic control to the voices} Musical instruments get louder and quieter over time in different ways. A percussive instrument like a drum or piano will instantly play at maximum volume. The loudness will diminish over time depending on the instrument. A bell, when struck, will ring out for a long time unless the player mutes the bell. A snare drum will go quiet almost immediately after it reached its maximum volume. Conversely, a violin can increase in volume a bit slower and can play at the same volume indefinitely. Synthesizers can have a way of emulating this kind of dynamic control through a component called an envelope. Envelopes are a multiphase signal that can be used to modulate other signals over time. and often have four phases in which the signal gain increases and decreases. These phases are known as Attack, Decay, Sustain, and Release.
+	
+	Attack
+	The phase where the signal starts at 0 and increases to its maximum gain. The attack phase indicates how how long it takes for the gain to reach max.
+	
+	Decay
+	This phase occurs immediately after the attack phase where the signal gain decreases over time until it reaches sustain gain. Like attack, the decay phase indicates how long it takes for the gain to decrease sustain.
+	
+	Sustain
+	This phase occurs immediately after the decay phase where the signal will remain at its configure sustain gain. Unlike attack and sustain, sustain does not relate to time, but simply the gain that the signal will remain at after the gain has hit its max. As long as the note is held down on the keyboard, the envelope will remain in the sustain phase indefinitely.
+	
+	Release
+	The final phase of the envelope, the release phase occurs immediately after the key is released on the keyboard. The envelope can enter the release phase from all of the previously mentioned phases. Release refers to how long it takes for the envelope gain to return to 0 after the key is released.
+	
+	Amp Env
+	Envelopes can be used generically to modulate any kind of signal such as volume, filter cutoff frequency, or gain on an audio effect like reverb or distortion. The application of envelopes is limited to your imagination. The application of an envelope to volume is known as an Amp Envelope and is the most common. To make the synthesizer capable of emulating the volume dynamics of many instruments, the next step was to add an Amp Envelope. In a polyphonic synthesizer, every voice (see previous section) must have its own Amp Envelope so that each note can grow and diminish in volume as real-life instruments do.
+	
+	A new class called Envelope was implemented with a state machine emulating the phases of the Envelope:
+	
+	\begin{lstlisting}{language=C++}
+	//Envelope.h
+	class Envelope {
+		public:
+		//Enum for tracking what phase the envelope is in
+		enum Phase {
+			ATTACK,
+			DECAY,
+			SUSTAIN,
+			RELEASE,
+			READY //This became the new way of knowing if a voice was available for use
+		};
+		
+		float val = 0.0; //the current signal gain of the envelope
+		Phase phase = Phase::READY;
+		float process(); //called periodically by timer event callback to advance the gain according to envelope phase state
+		void note_on();
+		void note_off();
+		void reset();
+		//Some setters and getters for accessing the private variables not included in this snippet
+		
+		private:
+		uint16_t _attack_ms, _decay_ms, _release_ms;
+		float _sustain;
+	};
+	\end{lstlisting}
+	
+	The voice class was refactored to have its own instance of the Envelope class so each voice grows in volume independently depending on when the voice becomes active. Every time the audio callback happens and the synth calls get\_sample on a voice, the voice will return the product of its generated audio sample and the gain of the envelope.
+	
+	\begin{lstlisting}
+	//Envelope.cpp
+	float Voice::get_sample()
+	{   
+		//each oscillator has its own gain for mixing the two waveforms
+		//the sample outputs would be divided by the number of playing voices to prevent blowing out speakers and deafening user
+		float sample1 = (_osc1.get_sample() * _osc1_amp)/NUM_VOICES; 
+		float sample2 = (_osc2.get_sample() * _osc2_amp)/NUM_VOICES;
+		return (sample1 + sample2) * amp_env.val;
+	}
+	\end{lstlisting}
+	Because the envelope does not produce any sound, the process method does not need to be called during the audio callback. The hardware timer callback would call the process method and the envelope would change its gain according to its current phase. The configuration of the timer is used to make sure the various time-based phases affect the envelope gain correctly according to time (Ex. If attack is set to 100 milliseconds, the gain should increase by .01 every millisecond)
+	
+	Envelope States	Explanation
+	Ready	Indicates to the synth owning the voice that it's available to play a note
+	Attack	Gain increases up to 1.0 according to attack rate
+	Decay	Gain decreases to sustain level according to decay rate
+	Sustain	Gain remains at a set level according to sustain
+	Release	Gain decreases to 0.0 according to release
+	Envelope instance created
+	Key pressed
+	Gain at max
+	Gain at sustain level
+	Key released
+	Gain at 0
+	Key released
+	Key release
+	Ready
+	Attack
+	Decay
+	Sustain
+	Release
+	Filters
+	
+	
 The last of the core functions to be implemented in the synth was signal filtering. Up until this point, the control of the harmonic qualities of the signals was fairly limited. You could combine different fundamental waveforms and alter pitch to introduce some complexity, but the subtractive aspect of this subtractive synthesizer was conspicuously missing. Filters make up the subtractive nature of the system and allow the user to selectively chop frequency bands from the final signal to emulate real-life instruments. An audio filter typically presents two main parameters: Frequency cutoff and resonance. Cutoff determines what frequencies in the spectrum will be filtered out. Resonance is a gain boost that can be applied around the cutoff frequency that will accentuate a certain range of frequencies in the spectrum.
 
 The most common filters used in subtractive synthesis are low pass, high pass, and band pass filters. Applying a low pass filter to a harmonically rich signal has the effect of removing the harsher upper harmonic frequencies and making the signal more mellow and deep. This type of filter is effective in producing sounds like a bass guitar, bass drum, or cello. Applying a high pass filter will cut out the low frequencies in the signal. This is useful for creating a lead instrument intended to cut through the spectrum without sounding muddy from the lower range of frequencies. Usually, a high pass filter will be used to produce sounds like a flute, violin, or snare drum. A band pass filter is a combination of low and high pass filters, where a small frequency band somewhere in between is desired.
