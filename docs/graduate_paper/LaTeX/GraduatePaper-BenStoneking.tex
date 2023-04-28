@@ -1,3 +1,4 @@
+% !TeX document-id = {55487e37-df6e-4d5b-af2f-b0275db5df41}
 %%
 %% This is file `sample-manuscript.tex',
 %% generated with the docstrip utility.
@@ -27,6 +28,7 @@
 
 %%%% Large single column format, used for IMWUT, JOCCH, PACMPL, POMACS, TAP, PACMHCI
 \documentclass[acmlarge,screen]{acmart}
+% !TeX TXS-program:compile = txs:///pdflatex/[--shell-escape]
 
 %%%% Large double column format, used for TOG
 %\documentclass[acmtog, authorversion]{acmart}
@@ -41,6 +43,11 @@
     \normalfont B\kern-0.5em{\scshape i\kern-0.25em b}\kern-0.8em\TeX}}}
 
 \usepackage{listings}
+\usepackage{minted} 
+\usepackage{subcaption}
+\usemintedstyle{friendly}
+\graphicspath{ {../images/} }
+
 
 
 %%
@@ -195,64 +202,93 @@ fit naturally in other sections.
 
 \section{Software Architecture and Implementation}
 
-A big decision in implementing this project was choosing the right microcontroller platform. I considered several options but settled on a popular and relatively new audio development ecosystem by Electro-Smith known as Daisy. Daisy is an Arm Cortex-M7 based development board that provides all the necessary processing power and peripherals necessary for audio processing and then some. The Cortex M7 clocks at 480Mz peripheral support for an extremely high-resolution digital-to-analog converter (DAC). In addition to the DAC, it has support for expected devices such as I2C, UART, USB, Timers, etc. The biggest plus (at the time) to choosing Daisy as my platform was Electro-Smith's libDaisy library which acts as an abstraction on top of the standard HAL libraries for the Cortex M7. This was an attractive option as it would allow me to set up hardware quickly and allow me to focus primarily on the audio and signal processing aspects of the project.
+\subsection{Hardware Platform}
+	\paragraph{A big decision in implementing this project was choosing the right microcontroller platform} I considered several options but settled on a popular and relatively new audio development ecosystem by Electro-Smith known as Daisy. Daisy is an Arm Cortex-M7 based development board that provides all the necessary processing power and peripherals necessary for audio processing. Daisy's core processor clocks at 480Mz and includeds extremely high-resolution digital-to-analog converter (DAC). In addition to the DAC, it supports the expected communication protocols such as I2C, UART, USB, Timers, etc. The biggest benefit to choosing Daisy as my platform was Electro-Smith's libDaisy library. libDaisy acts as an abstraction on top of the standard HAL libraries for the Cortex M7 and is designed to relieve the user of complications with hardware set up so they can focus on audio development. This made Daisy an attractive option. Audio processing was a completely foreign domain in programming, and Daisy coupled with its easy to use HAL seemed like a promising option that would give me the time I need to learn the ropes of audio development.
 
-Daisy
-They also provide a DSP library which I chose to not use as an established requirement was not to use a DSP library and instead do all my audio processing from scratch. As I mentioned before, Daisy seemed to be a great choice at the time and freed up time in the initial hardware setup. What I was not aware of was the relative newness of the platform. Daisy originally was a Kickstarter-funded project which receive incredible amounts of success and support from customers. The platform was designed with musicians in mind, and they put a lot of work into supporting much more user-friendly development languages and frameworks like MaxMSP, Puredata, and Arduino to assist new developers in making their projects and forgetting about all the gory details. Because of this additional layer of abstraction, it meant that a lot of time put into customer accessibility, and full support for utilizing all hardware to its fullest capabilities was put off and is still in current development. This had the following consequences for my project:
+	\paragraph{Daisy seemed to be a great choice at the time} Within minutes of connecting Daisy to my machine, I was able to set up an audio callback. I used a random number generator to play white noise out the DAC. After a few minutes of soldering some wires to an audio jack and connecting them to the DAC pins, I could hear static playing out my headphones. Hello world! It was exhilarating to write only a few lines of code and hear it come to life after a few minutes. I felt very strongly that Daisy was the right choice. What I was not aware of was the relative newness of the platform. Daisy originally was a Kickstarter-funded project which received incredible amounts of success and support. The platform was designed with musicians in mind, and the developers put a lot of work into supporting much more user-friendly development languages and frameworks like MaxMSP, Puredata, and Arduino. This made the system highly accessible to musicians with little to know experience in audio development. These layers of abstraction seems to have some unintended side effects. It meant that a lot of time put into customer accessibility, and full support for utilizing all hardware to its fullest capabilities was put off and is still in current development.
 
-Some HAL library functions did not work as they were supposed to. a. One of the biggest disappointments was a lack of support for two-way USB communication outside of the bootloader. When I was implementing my serial interfacing GUI application for remote control of my project, I discovered that the USB software support extended to either a dedicated interface for the device to either receive or transmit data over USB but not both. My choices were to either hack a software solution involving handing off control between the host computer and device, adding the two USB communication support to the libDaisy library (something that I did not have time or sufficient knowledge of USB to tackle) or simply add a USB-UART converter chip and connect it to some UART pins on the devices. I opted for the last option as I was severely lacking in time. b. Another severely lacking feature was support for hardware interrupts. Some of the HAL libraries provided support for hardware interrupts for USB receive (this felt insulting as I could not talk back on the USB line). But also, there was no support for UART and GPIO interrupt service routines (ISR). This is the reason why MIDI data events are handled via periodic polling during timer ISRs. I believe this polling method yielded imperfect MIDI data consumption. c. A last gripe I have with the platform is the datasheet claiming the availability of certain I2C and UART lines on the board's pins, but they are not completely wired up in the MCU's current revision. This was not documented and instead made known to me via community forums. This lack of complete availability of hardware made adding all my peripherals rather difficult because of pin conflicts. This whole experience soured me a bit about the Daisy platform in general. While I admire the ambition of the project to support programming in a variety of languages that opens up audio development to new developers, I feel it would have been best to fully flesh out all hardware support in basic C before moving on to supporting things like Object Oriented Programming, visual programming languages, and Arduino.
+	\paragraph{This decision had unexpected consequences for my project} Some HAL library functions were not adaquately tested and did not work as they were supposed to.
 
-My original vision for the project was, as the master's capstone prompt recommends, very ambitious. My vision was to implement a near clone of my first synthesizer, the Korg microKorg, but as a headless unit that could be used by plugging in any standard MIDI keyboard (In my original design drawing, you can even see an array of buttons that represented a very limited keyboard which would allow the user to play notes without connecting an external keyboard. I truly was a bright-eyed summer child when I first envisioned this project).
+	\begin{enumerate}
+	\item One of the biggest disappointments was a lack of support for two-way USB communication outside of the bootloader. Toward the end of my project, I implemented a serial interfacing GUI application for remote control of my system. I discovered that the USB software support extended to either a dedicated interface for the device to either receive or transmit data over USB but not both. I had a choice to either hack a software solution involving handing off control between the host computer and device, or fix the USB configuration in the libDaisy library myself. A quicker option was to simply add a USB-UART converter chip and connect it to some generic UART pins on the device. I opted for the last option as I did not have extra time to waste at the end of my project.
+	\item Another severely lacking feature was support for hardware interrupts. Some of the HAL libraries provided satisfactory support for hardware interrupts for USB receive (this was insultingly frustrating as I could not talk back on the USB line). Additionally, there was no support for UART and GPIO interrupt service routines (ISR). This is the reason why MIDI data events processed with hardware timer driven polling. I believe this polling method resulted in MIDI data consumption that was not completely reliable.
+	\item A last gripe I have with the platform is the datasheet claiming the availability of certain I2C and UART lines on the board's pins. It turned out that they are not all completely wired up in the board's current revision. This was not officially documented and instead made known through obscure forum posts on community forums. This lack of transparency and hardware support made hardware prototyping rather difficult.
+	\end{enumerate}
 
-I'll start with the explanation of my design first with the things that were complete, and then address the absent hardware and software features.
+	This whole experience soured me a bit about the Daisy platform in general. While I admire the ambition of the project to support programming in a variety of accessible languages that opens up audio development to new developers, I feel it would have been best to fully flesh out system in plain C before moving on to supporting things like Object Oriented Programming, visual programming languages, and Arduino. I \textbf{do} however relate to these developers biting off more than they could chew in their enthusiasm to implement these features. I made this same mistake in this very project (more on that later).
 
-Hardware
-This section covers the hardware that was successfully integrated into the project
+	\paragraph{My original vision for the project was, as the master's capstone prompt recommends, very ambitious} My goal was to implement a near clone of \textit{my} first synthesizer, the Korg microKorg. The microKorg is a small but very powerful analog synthesizer with a minimalist interface. It has a small array of buttons for selecting patches from bank, an array of multifunctional potentiometers and a small 3 digit 7 segment display. My project would be in a similar spirit but with a few minor change in hardware layout: it would not include a built in keyboard but would be a headless unit that could be used by plugging in any standard MIDI keyboard. It would include a more sophisticated display that could communicate more explicitly to the user. The microKorg is an industry standard powerhouse synth packed into a small and inexpensive form factor. My goal was ambitious to say the least. At one point, I did have a stretch goal in mind. If I finished all the audio components and fx, I would add a small array of buttons that would allow the user play some notes without needing to connect a keyboard. This can be seen in my original design drawing. I truly was a bright-eyed summer child when I first envisioned this project.
 
-MIDI
-There is a 5-pin MIDI input circuit that allows the user to connect a standard MIDI cable between the MIDI out of a standard keyboard and my synthesizer. This functionality is plug-and-play. By plugging in the MIDI cable and powering on the device, you can immediately start playing notes and making music which you can hear by plugging in headphones or a speaker into the 1/8" audio jack.
+	I will explain my implementation by first covering what I managed to complete. I will discuss the key components in the order they were implemented, and then have a small section cover the lesser features and a run down of the things I failed to complete.
 
-Midi Optocoupler Circuit
+\subsection{The Hardware Prototype}
+	\paragraph{This section covers the hardware prototyping phase} It's important to cover hardware right out the gate. Much of the hardware was prototyped in parallel with the software because the system required the hardware interface in order to facilitate thorough testing.
 
-Daisy
-The MIDI circuit implements a standard of device safety for receiving incoming signals. An optocoupler receives signals and converts the incoming electrical signal from the MIDI line into an optical signal which can be read and converted to an electrical signal that is safe for the device. This safety precaution is meant to handle cases where the connected keyboard is malfunctioning or outputting an electrical signal that is too high voltage for the pins on the MCU. It also acts as a much easier-to-replace component in the circuit. If the MIDI device is outputting voltage dangerously outside the expected voltage range, the optocoupler will fry and can be easily replaced instead of frying the MCU.
+	\subsubsection{MIDI}
+	\paragraph{There is a 5-pin MIDI input circuit that allows the user to connect a standard MIDI cable between the MIDI output of a keyboard and the synthesizer} This functionality is plug-and-play. By plugging in the MIDI cable and powering on the device, the user can immediately start playing notes and music will play out headphones or a speaker  plugged into the 1/8" audio jack.
 
-Analog Potentiometers and Screen
-For adjusting parameters, I took a design philosophy of the Korg microKorg and set up an array of 5 analog potentiometers that had contextual control over various synth parameters which were determined by the internal state of the synthesizer. The internal state of the synthesizer is communicated to the user with a 20x4 character LCD screen that shows the user the current mutable context of the system.
+	\paragraph{The MIDI circuit implements a standard of device safety for receiving incoming signals} A device called an optocoupler (6N138) is the main player in the circuit. One side of the optocoupler receives incoming electrical signals from the MIDI input and converts it into an optical signal with an internal flashing diode. The other side senses the optical signal and converts it to an electrical signal that is safe for the device to read. This safety precaution is meant to handle cases where the connected keyboard is malfunctioning or outputting an electrical signal that is too high voltage for the pins on the MCU. If device failure occurs and the system is exposed to dangerous currents, the optocoupler will fry and the rest of the system remains protected.
+	\begin{figure}[H]
+		\includegraphics[width=8cm]{midi_optocoupler_circuit}
+		\centering
+	\end{figure}
 
-Photo Of Screen Main Menu
+	\subsubsection{Analog Potentiometers, Digital Rotary Encoder and Screen}
+	\paragraph{I ran with the design philosophy of the Korg microKorg and set up an array of 5 analog potentiometers} The potentiometers have control over various synth parameters. The parameters they effect are contextual, determined by the current internal state of the synthesizer. The internal state of the synthesizer is communicated to the user with a 20x4 character LCD screen that shows the user the current mutable context of the system. There is a main menu that displays a list of all the available menu context they can operate on. They can scroll through the main menu by turning the digital rotary encoder. The menu indicate which menu context is ready to be selected with an arrow symbol "<-". The user can then select the menu context by pushing down on the rotary encoder. They menu context will change to display the mutable parameters and the potentiometers will be mapped to the appropriate parameter values. Turning the turning the encoder knob will return them to the main menu and deactivate the potentiometers.
 
-Daisy
-For example, if the menu is displaying the oscillator control context, you can use the potentiometers to change the fundamental waveforms generated by the oscillators and set them as you like to a Sin, Triangle, Square, Sawtooth, or Noise generator. If the menu was instead displaying the Amp Envelope control context, you can use those same knobs to adjust the Attack, Decay, Sustain or Release parameters of the envelope. The way the menu context is controlled is via a digital rotary encoder with a built-in push button. Turning the knob will take the user out of their current control context into a universal menu of contexts that the user may control. They can turn the knob to highlight the component they wish to control (Filter, Envelope, etc) and engage the encoder push-button to transition to the control context of the highlighted component. The potentiometers would be mapped to adjust the fields within that context and perform specific interpolations of the components. Since some parameters are better controlled logarithmically, the integer value read from the knob can be converted to a float and scaled according to its required range. Some parameters only represent a few discrete values. The large values of the 16-bit numbers would instead be mapped to the smaller ranges required to represent the discrete values of the menu parameter.
 
-Photos of changing params
+	\begin{figure}[H]
+		\centering
+		\begin{subfigure}{.5\textwidth}
+			\centering
+			\caption{The Main menu screen. User navigates by through options using the rotary encoder. No menu context is currently selected making potentiometers inactive}
+			\includegraphics[width=.9\linewidth]{complete_synth_pics/menu_navigation}
+			\label{fig:sub1}
+		\end{subfigure}%
+		\begin{subfigure}{.5\textwidth}
+			\centering
+			\caption{The oscillator context. Knobs 1-4 are mapped to the displayed parameters}
+			\includegraphics[width=.9\linewidth]{complete_synth_pics/oscillator_context_small}
+			\label{fig:sub2}
+		\end{subfigure}
+		\caption{Navigating the menus with the encoder and using the adaptive potentiometers to mutate system parameters}
+		\label{fig:test}
+	\end{figure}	
 
-Daisy
-Power
-The 20x4 LCD screen and the optocoupler on the MIDI input circuit require 5v, which Daisy does not put out (another frustrating aspect of the device since there is 5v power available on the USB jack of the Daisy); so I added a standard breadboard power supply to the circuit accepts a barrel jack input with voltages between 5v and 12v. This voltage is fed into the VIN pin on Daisy and is used to power the entire circuit and all its peripherals. A 1/8" inch stereo audio jack is connected to the left and right DAC pins on the MCU and outputs a signal at line level gain out of the box without the need for an amplifier (a very nice feature). Finally, there is a USB to UART converter breakout board connected to a set of RX/TX UART pins on the MCU which allows two-way communication between a computer and the synthesizer via a remote control GUI a wrote in Python.
+	\paragraph{For example, if the menu is displaying the oscillator control context, you can use the potentiometers to configure the oscillator waveforms and adjust pitch offset}. If the menu was instead displaying the Amp Envelope control context, the knobs would be mapped to adjust the Attack, Decay, Sustain or Release parameters of the envelope. The parameter mapping also perform specific interpolations on the raw data values read from the potentiometers. Since some parameters are better controlled logarithmically, the integer value read from the knob can be converted to a float and scaled according to its required range. Some parameters only have a few discrete values. In these cases, the large values of the 16-bit numbers are instead mapped to the smaller ranges required to represent the discrete values of the parameter.6
 
-Audio DAC
-Daisy has a built-in high-resolution digital-to-analog converter capable of outputting audio samples at rates up to 96khz and 24-bit depth which goes well beyond the industry standard quality of 44.1khz and 16-bit depth. There are four DAC channels: two for stereo input and two for stereo output. In this project, I only use the stereo output as processing audio input is beyond the scope of this project.
+	\subsubsection{Power}
+	\paragraph{The 20x4 LCD screen and the optocoupler on the MIDI input circuit require a 5v power supply, which Daisy does provide} Yet another frustrating aspect of the Daisy platform since there is 5v power available on the USB jack. So I added a standard breadboard power supply to the circuit. It accepts a barrel jack input with voltages between 5v and 12v and steps the power down to 5v. This voltage is fed into the VIN pin on Daisy and is used to power the entire circuit and all its peripherals. A 1/8" inch stereo audio jack is connected to the left and right DAC pins on the MCU and outputs audio at line level gain out of the box without the need of an amplifier (a very nice feature). Finally, there is a USB to UART converter breakout board connected to a set of RX/TX UART pins on the MCU which allows two-way communication between an external computer and the synthesizer via a remote control GUI I wrote in Python.
+	
+	\subsubsection{Digital to Analog Converter (DAC)} 
+	\paragraph{Daisy has a built-in high-resolution digital-to-analog converter} It is capable of outputting audio samples at rates up to 96khz and 24-bit depth. This resolution far exceedes the industry standard quality of 44.1khz and 16-bit depth for CDs. There are four DAC channels: two for stereo input and two for stereo output. In this project, I only use the stereo output as processing audio input is beyond the scope of this project.
 
-UART, I2C, and 16-bit input ADC
-General purpose pins were configured to set up UART, I2C, and ADC communications. Two separate UART lines were used for setting up MIDI input and plain serial communication for controlling the system remotely. The ADCs were used for reading the potentiometers. Some GPIO pins were used to read the digital rotary encoder for menu navigation.
+	\subsubsection{UART, I2C, and 16-bit input ADC}
+	\paragraph{General purpose pins were configured to set up UART, I2C, and ADC communications} Two separate UART lines were used for setting up MIDI input and plain serial communication for controlling the system remotely. The ADCs were used for reading the potentiometers. Some GPIO pins were used to read the digital rotary encoder for menu navigation. An I2C line is used to display characters to the LCD screen.
 
-Diagram showing wiring of peripherals
+	\begin{figure}[H]
+		\includegraphics[width=\linewidth]{complete_synth_pics/keyboard_and_synth_labeled}
+		\caption{The entire synth hardware set up with labels}
+		\centering
+	\end{figure}
 
-Daisy
-Software
-This section goes into depth about the various software components that make up the actual audio synthesis and processing. I will address the software components in the order that they were implemented throughout the project, as it will also help to highlight the process of generating audio from the initial press of the eventual output of the audio to a speaker. I will cover the topics of Oscillators, Voices, Envelopes, and Filters completely as these comprise the critical components of the actual synthesis aspects of the project. I will only very briefly discuss other features in a few sentences as they have less to do with audio synthesis and more to do with overall system cohesion and functionality.
+\subsection{Software}
+	\paragraph{This section goes into depth about the various software components that make up the actual audio synthesis and processing} I will address the software components in the order that they were implemented throughout the project. This will help to highlight the process of generating audio from the initial keyboard input to eventual output of the audio to a speaker. I will cover the topics of \textbf{Oscillators, Voices, Envelopes, and Filters} in depth as these are the critical components of the actual synthesis aspects of the project. I will only very briefly discuss other features in a few sentences as they have less to do with audio synthesis and more to do with overall system cohesion and functionality. \textit{See concepts for definitions and background info}
 
-Oscillators
-The most fundamental part of any subtractive synthesizer is the oscillator. Generally speaking, an oscillator is simply a function generator. The oscillator will maintain a variable representing the phase of the function cycle. The sequence chart below illustrates how audio samples are generated from the oscillator and then placed into the output buffer of the DAC when it triggers an ISR.
+	\subsubsection{Oscillators}
+	\paragraph{The most fundamental component of any subtractive synthesizer is the oscillator} Generally speaking, an oscillator is a function generator. It will generate a repeating signal at a specified frequency much like the function generator of an oscilloscope. A digital oscillator maintains a variable representing the phase of the function cycle. Everytime an audio callback occurs, the current phase will be passed into the oscillator function, advance the phase by a delta value determined by the desired output frequency. The sequence chart below illustrates how audio samples are generated from the oscillator and then placed into the output buffer of the DAC when it triggers an ISR.
+	
+	\begin{figure}[H]
+		\includegraphics[width=4cm]{placeholder_duck}
+		\caption{Placeholder ducker: Oscillator sequence diagram needs to be exported}
+		\centering
+	\end{figure}
 
-Daisy
-Note: The diagram above will generate a 1hz sin wave which isn't audible and we'd like to hear our music if possible. So the oscillator must maintain a variable containing the desired frequency and calculate our phase delta so we can generate the function at the desired frequency. Phase delta is a value by which we increment the phase to get the next sample of our waveform. To generate a wave at 1hz with a sample rate of 44.1kz, we simply need to divide two pi by 44100. Starting with our phase at zero, if we add our phase\_delta to phase 44,100 times, we will have a value of two pi. Two change the pitch, we just need to multiply the phase delta by our desired frequency. If our pitch is set to 100hz, our calculated phase delta will allow our oscillator function to cycle 100 times in a second.
+	\paragraph{Note: The diagram above will generate a 1hz sin wave which isn't audible and music sounds best when you can hear it} So the oscillator must maintain a variable containing the desired frequency and calculate our phase delta so we can generate the function at the desired frequency. Phase delta is a value by which we increment the phase to get the next sample of our waveform. To generate a wave at 1hz with a sample rate of 44.1kz, we simply need to divide two pi by 44100. Starting with our phase at zero, if we add phase\_delta to the oscillator phase 44,100 times, we will have a value of two pi. Two change the pitch, we only need to multiply the phase delta by our desired frequency. If we want our pitch to be 100hz, our calculated phase delta will cause the oscillator function to cycle 100 times in a second.
 
-What about other waveforms? Sin waves are boring.
-This is true. Sin waves generally lack harmonic complexity and will generally produce very mellow tones. The oscillator class also maintains an enum describing what kind of oscillator it is. The oscillator waveform can be set with the set\_waveform method. Next time get\_sample is called, the corresponding waveform function will be called returning a sample from your fancy new harmonically rich waveform. For more information about these functions, the snippet below is a good start. Also, see Oscillator.cpp for the full source.
+	\paragraph{What about other waveforms? Sin waves are boring} This is true. Sin waves tend to lack harmonic complexity and will generally produce very mellow tones. The oscillator class also maintains an enum describing what \textit{kind} of oscillator it is (i.e. what function does it use). The oscillator waveform can be set with the set\_waveform method. S next time get\_sample is called, the oscillators corresponding waveform function will be called returning a sample from your fancy new harmonically rich waveform. Beautiful! For more information about these functions, the snippet below is a good start. Also, see Oscillator.cpp for the full source.
 
-\begin{lstlisting}{language=C++}
+\begin{minted}{c}
 //Oscillator.h
 enum WaveForm {
 	Sin,
@@ -303,7 +339,9 @@ float Oscillator::get_sample()
 	//More context removed here for brevity
 	return sample;
 }
-\end{lstlisting}
+\end{minted}
+
+\section{\textbf{FRANK: THIS IS THE END OF REVISED AND TYPESET CONTENT. I WILL CONTINUE MY REVISIONS LATER TONIGHT}}
 
 When the basic oscillator was set up and I was able to statically compile and upload code to make my little daisy output a continuous 440hz sin wave, I felt a rush of excitement. It was incredibly gratifying to hear my code working instead of just seeing it in a terminal or GUI. I played around, writing little loops and time delays to change the pitch and hear the pitch change in real-time and play scales. After that, I figured out the functions to generate the square function: a simple on/off function that sets the sample to 1.0 during the first half of the phase and the flipping it to -1.0 during the second half. Writing sawtooth and white noise functions was easy. I never was satisfied with the triangle waveform. It is supposed to straddle the line between a smooth sin wave and a choppy sawtooth in terms of complexity but it always sounded more like a slightly droopy sawtooth.
 
@@ -344,6 +382,7 @@ Envelopes can be used generically to modulate any kind of signal such as volume,
 
 A new class called Envelope was implemented with a state machine emulating the phases of the Envelope:
 
+\begin{lstlisting}{language=C++}
 //Envelope.h
 class Envelope {
 	public:
@@ -368,8 +407,11 @@ class Envelope {
 	uint16_t _attack_ms, _decay_ms, _release_ms;
 	float _sustain;
 };
-The voice class was refactored to have its own instance of the Envelope class so each voice grows in volume independently depending on when the voice becomes active. Every time the audio callback happens and the synth calls get_sample on a voice, the voice will return the product of its generated audio sample and the gain of the envelope.
+\end{lstlisting}
 
+The voice class was refactored to have its own instance of the Envelope class so each voice grows in volume independently depending on when the voice becomes active. Every time the audio callback happens and the synth calls get\_sample on a voice, the voice will return the product of its generated audio sample and the gain of the envelope.
+
+\begin{lstlisting}
 //Envelope.cpp
 float Voice::get_sample()
 {   
@@ -379,6 +421,7 @@ float Voice::get_sample()
 	float sample2 = (_osc2.get_sample() * _osc2_amp)/NUM_VOICES;
 	return (sample1 + sample2) * amp_env.val;
 }
+\end{lstlisting}
 Because the envelope does not produce any sound, the process method does not need to be called during the audio callback. The hardware timer callback would call the process method and the envelope would change its gain according to its current phase. The configuration of the timer is used to make sure the various time-based phases affect the envelope gain correctly according to time (Ex. If attack is set to 100 milliseconds, the gain should increase by .01 every millisecond)
 
 Envelope States	Explanation
@@ -406,7 +449,7 @@ The last of the core functions to be implemented in the synth was signal filteri
 The most common filters used in subtractive synthesis are low pass, high pass, and band pass filters. Applying a low pass filter to a harmonically rich signal has the effect of removing the harsher upper harmonic frequencies and making the signal more mellow and deep. This type of filter is effective in producing sounds like a bass guitar, bass drum, or cello. Applying a high pass filter will cut out the low frequencies in the signal. This is useful for creating a lead instrument intended to cut through the spectrum without sounding muddy from the lower range of frequencies. Usually, a high pass filter will be used to produce sounds like a flute, violin, or snare drum. A band pass filter is a combination of low and high pass filters, where a small frequency band somewhere in between is desired.
 
 I wrote a generic filter class that could be subclassed into the different types of filters.
-
+\begin{lstlisting}
 //Filter.h
 class Filter {
 	public:
@@ -430,6 +473,8 @@ class Filter {
 //Subclasses override process and update_coefs functions according to their functions
 class LowPassFilter : public Filter;
 class HighPassFilter : public Filter;
+\end{lstlisting}
+
 This part of the synthesizer was the biggest unknown to me at the time of implementation as I needed to learn more about digital signal processing to understand the math. I did a little research and came across the concept of filtering audio signals using the difference equation. Since my system works by generating audio one sample at a time, it made sense use to a filter that operates on discrete time samples. I was able to grasp the concept with a little extra effort. The process of designing a filter using the difference equation is as follows:
 
 Based on your desired filter, you must choose a method of generating appropriate filter coefficients. Some methods include Bilinear Transform, Chebyshev, Finite Impulse Response (FIR), Butterworth, etc.
@@ -439,6 +484,7 @@ After some research, I decided to use the bilinear transform to generate my filt
 
 Following is my code implementation of the low and high pass filters in my project with a sequence diagram to help visualize the flow of data through the filter and how previously generated values are stored for use on the next filter cycle.
 
+\begin{lstlisting}
 //Filter.cpp
 void LowPassFilter::update_coefs() {
 	float w0 = 2.0f * M_PI * cutoffFreq / sampleRate;
@@ -465,6 +511,7 @@ void HighPassFilter::update_coefs() {
 	a2 = 1.0f - alpha;
 }
 
+
 //This snippet of the second-order difference equation shows how the output is generated based on previous inputs. The input and output at the time of process are preserved and saved to x1 and y1 and the input/output values from the previous process cycle are saved to x2 and y2.
 float LowPassFilter::process(float input) {
 	float output = b0 / a0 * input + b1 / a0 * x1 + b2 / a0 * x2
@@ -477,6 +524,9 @@ float LowPassFilter::process(float input) {
 	
 	return output;
 }
+\end{lstlisting}
+
+
 Filter Sequence Diagram
 Adding filters to the project was a difficult concept to grasp. Because of my lack of previous experience, some concepts had to be taken with a bit of faith and proven by seeing them in action. This first naive attempt at filtering resulted in some stable low and high pass filters and some gained confidence. I believe now I can move forward and be able to do some deeper research into filters and implement more complex and capable filtering in the future.
 
