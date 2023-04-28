@@ -615,6 +615,32 @@ fit naturally in other sections.
 \appendix
 
 \section{User's Manual}
+\subsection{Hardware}
+\paragraph{Do I really need to explain how to construct the hardware? If so, is a guide for which pins to solder good enough?}
+\subsection{Compiling and flashing the firmware}
+\paragraph{In order to compile and flash the firmware you will to need the following}
+\begin{enumerate}
+	\item A host machine
+	\item The GCC toolchain for the ARM architecture
+	\item The Make tool to run the compilation
+	\item The Device Firmware Update tool (dfu-util) to flash the firmware
+	\item The project source code
+	\item A Daisy Seed development board from Electro-Smith
+	\item A micro USB cable
+\end{enumerate}
+
+\paragraph{Compilation:}
+\begin{enumerate}
+	\item On your host machine, clone the source code for this project from github by running: \textit{git clone https://github.com/thealienthing/shiny-octo-train}
+	\item '\textit{cd}' into the repo and run the command: \textit{git submodule update --init --recursive}. This will ensure that the libDaisy HAL library is cloned as it will need to be compiled first.
+	\item '\textit{cd}' into libDaisy and the command: \textit{make}. libDaisy will be compiled into a statically linked library that will be used in the compilation step for the synth firmware.
+	\item After libDaisy has been compiled, '\textit{cd}' out of libDaisy and run the command \textit{make} to compile the synth firmware.
+\end{enumerate}
+\paragraph{Flashing the firmware:}
+\begin{enumerate}
+	\item After the firmware binary has been compiled, the development board must be connected to the host machine and put into bootloader mode. Connect the micro USB cable between the host machine and the Daisy development board. There are two buttons on the Daisy board: One labeled boot and the other labeled reset. Hold down the boot button and press the reset button while still holding down the boot button. Order is important. The power LED should go dim while the board is in bootloader mode.
+	\item Now that we've put the Daisy into bootloader mode we can flash the firmware. In the top directory of the repo, run the command \textit{make program-dfu}. A text progress bar should print to the terminal to display the progress of the flash sequence. Once the flash sequence is completed, the program will exit and the board is ready to play music.
+\end{enumerate}
 
 \end{document}
 \endinput
