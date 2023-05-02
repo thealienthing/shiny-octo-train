@@ -1,0 +1,33 @@
+sequenceDiagram
+    actor User
+    participant Screen
+    participant Audio
+    participant Synth
+    participant Timer
+
+    Note over User, Timer: User plays a note
+    activate User
+    User -) Timer: Press key
+    activate Timer
+    Timer ->> Synth: Note On Event
+    deactivate Timer
+    note over Synth: Synth activate voice<br/>and set pitch
+
+    Audio ->> Synth: Process Audio
+    activate Synth
+    Synth ->> Audio: Audio Sample
+    deactivate Synth
+    Audio ->> User: Note play out
+
+    User -) Timer: Release key
+    deactivate User
+    activate Timer
+    Timer ->> Synth: Note Off Event
+    deactivate Timer
+    note over Synth: Synth deactivate voice
+
+    Audio ->> Synth: Process Audio
+    activate Synth
+    Synth ->> Audio: Sample value 0
+    deactivate Synth
+    Audio --x User: Silence

@@ -1,0 +1,12 @@
+sequenceDiagram
+    actor User
+    participant Screen
+    participant Audio
+    participant Synth
+    participant Timer
+
+    Note over User, Timer: No notes played, just slience
+    Audio ->> Synth:Process Audio
+    Synth ->> Audio: Sample value 0 
+    Audio --x User: Silence
+

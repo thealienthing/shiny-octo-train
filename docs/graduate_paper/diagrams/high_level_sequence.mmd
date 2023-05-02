@@ -1,0 +1,61 @@
+sequenceDiagram
+    actor User
+    participant Screen
+    participant Audio
+    participant Synth
+    participant Timer
+
+    Note over User, Timer: No notes played, just slience
+    Audio ->> Synth:Process Audio
+    Synth ->> Audio: Silence
+    Audio --x User: Silence
+
+    Note over User, Timer: User plays a note
+    activate User
+    User -) Timer: Press key
+    activate Timer
+    Timer ->> Synth: Note On Event
+    deactivate Timer
+    note over Synth: Synth activate voice<br/>and set pitch
+
+    Audio ->> Synth: Process Audio 
+    activate Synth
+    Synth ->> Audio: Audio Sample
+    deactivate Synth
+    Audio ->> User: Note play out
+
+    User -) Timer: Release key
+    deactivate User
+    activate Timer
+    Timer ->> Synth: Note Off Event
+    deactivate Timer
+    note over Synth: Synth deactivate voice
+    
+    Audio ->> Synth: Process Audio 
+    activate Synth
+    Synth ->> Audio: Silence
+    deactivate Synth
+    Audio --x User: Silence
+
+    Note over User, Timer: User sets filter cutoff
+    activate Screen
+    activate User
+    User -) Timer: Turn encoder highlight filter menu
+    activate Timer
+    Timer ->> Screen: Print menu highlighting filter
+    deactivate Timer
+    Screen ->> User: Menu
+    User -) Timer: Press encoder select
+    activate Timer
+    Timer ->> Screen: Print filter menu
+    deactivate Timer
+    Screen ->> User: Filter menu
+    User -) Timer: Move knob mapped to filter cutoff
+    activate Timer
+    Timer ->> Synth: Set cutoff
+    Timer ->> Screen: Update filter menu
+    deactivate Timer
+    Screen ->> User: Updated filter menu
+
+    deactivate User
+    deactivate Screen

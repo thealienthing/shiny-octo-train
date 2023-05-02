@@ -1,0 +1,31 @@
+sequenceDiagram
+    actor User
+    participant Screen
+    participant Audio
+    participant Synth
+    participant Timer
+
+    Note over User, Timer: User sets filter cutoff
+    activate Screen
+    activate User
+    Screen ->> User: Main menu
+    User -) Timer: Turn encoder to highlight filter menu
+    activate Timer
+    Timer ->> Screen: Print menu highlighting filter menu option
+    deactivate Timer
+    Screen ->> User: Main menu update
+    User -) Timer: Press encoder select
+    activate Timer
+    Timer ->> Synth: Filter menu select
+    Timer ->> Screen: Print filter menu
+    deactivate Timer
+    Screen ->> User: Filter menu
+    User -) Timer: Move knob mapped to filter cutoff
+    activate Timer
+    Timer ->> Synth: Set cutoff
+    Timer ->> Screen: Update filter menu
+    deactivate Timer
+    Screen ->> User: Updated filter menu values
+
+    deactivate User
+    deactivate Screen
