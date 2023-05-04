@@ -1,7 +1,9 @@
 graph TB
-    Hardware --> |processes MIDI, sets pitch for voices<br/>and uses synth to get sample for<br/> next callback| Synth
+    audio[Audio Callback] --> |Calls ProcessAudio on Synth<br/>pushes samples from synth<br/> to DAC output|Synth
+    timer[Timer Callback] --> |Receives MIDI<br/>Sends MIDI messages to Synth| Synth
 
-    subgraph Synth
+    subgraph Synth[Synth]
+        
         subgraph VoiceArray
             V1
             V2
