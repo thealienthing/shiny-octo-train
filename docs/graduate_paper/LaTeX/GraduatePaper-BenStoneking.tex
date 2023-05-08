@@ -105,13 +105,13 @@
 %% The abstract is a short summary of the work to be presented in the
 %% article.
 \begin{abstract}
-	The project explores the process of implementing an embedded real-time digital audio synthesizer. Emphasis is placed on leveraging the inherent strengths of the hardware (timers, hardware interrupts, etc) to produce a reliable musical instrument. The project is a focused exercise in implementing a digital audio processing pipeline with software implementations of common components such as oscillators, pitch control, signal gain attenuation, and filtering. It illustrates the process of implementing a capable, complex and extendable embedded system on a platform with limited processing power. The final product is a fundamental subtractive synthesizer: It responds to input from generic MIDI devices to produce an audio signal. It applies volume dynamics and timbre control to the signal using envelopes and filters. The device has a hardware interface consisting of knobs, encoders, and a screen allowing direct, real-time manipulation of the processing. A PC application can control the system remotely. The system is robust, but still lacks some additional core features. Implementing the expected functionality of electronic musical instruments was challenging. The project code base is close to 2250 lines. I spent substantial time just writing drivers to interface with hardware which often added up to very few lines of code. Processing speed and instruction space is limited and large code bases can quickly outgrow the capabilities of the device requiring efficient and concise code. Substantial effort and time was required to prototype the hardware interface on a breadboard and revise as new components were integrated. More time was required to design and build a permanent hardware fixture on a circuit board.
+	The project explores the implementation of an embedded real-time digital audio synthesizer. Emphasis is placed on leveraging the inherent strengths of the hardware (timers, hardware interrupts, etc) to produce a reliable musical instrument. The project is a focused exercise in implementing a digital audio processing pipeline with software implementations of common components such as oscillators, pitch control, signal gain attenuation, and filtering. It illustrates the process of implementing a capable, complex and extendable embedded system on a platform with limited processing power. The final product is a fundamental subtractive synthesizer: It responds to input from generic MIDI devices to produce an audio signal. It applies volume dynamics and timbre control to the signal using envelopes and filters. The device has a hardware interface consisting of knobs, encoders, and a screen allowing direct, real-time manipulation of the processing. A PC application can control the system remotely. The system is robust and extensible. Numerous features can be added. The project code base was written with to be efficient in its size and speed. The project firmware source is about 2,000 lines with with PC application and test code bringing it up to 2,500.
 \end{abstract}
 
 %%
 %% Keywords. The author(s) should pick words that accurately describe
 %% the work being presented. Separate the keywords with commas.
-\keywords{audio, synthesis, embedded, microcontroller, real-time, midi, hardware, oscillator, filter, envelope, DSP}
+\keywords{digital, audio, synthesis, embedded, microcontroller, real-time, midi, hardware, oscillator, filter, envelope, DSP, prototype, discrete-time, continuous-time, analog}
 
 %%
 %% This command processes the author and affiliation and title
@@ -120,116 +120,140 @@
 
 \section{Introduction}
 \subsection{Purpose}
-	The acquisition of musical gear is a common obsession that plagues millions of musicians around the world. The cost of gear for performance or music production presents a major financial struggle to musicians who already must work within a tight budget. A common thought occurs to musicians: "What if I just make my own X? Maybe I can save some money." This discussion occurs frequently within online and offline forums. Often times, musicians who have experience in making their own digital or analog instruments will give the same answer: "Yes. You can just make your own X. But no. You won't save any money. You will spend more and you should just save up some cash to buy your gear from a compony like Roland, Yamaha, Korg, etc." Over the years, I've researched this very topic and found this conclusion to be true but with a small caveat: You can in fact save money by making your audio production tool as a \textbf{digital system}. You can write as much software as you want. You can refactor and rebuild you software tool as much as you want, and never spend a dime. When physical electronic components are removed from the equation, if you have a system to run your software, you can make all your music production gear for free. This caveat has a caveat of its own: This takes substaintial time. Time is money. Therefore, every hour spent in implementing your system is implicitly adding to the price tag of your system.
+	The acquisition of musical gear is a common obsession that plagues millions of musicians around the world. The cost of gear for performance or music production presents a major financial struggle to musicians already working with a tight budget. A common thought occurs to musicians: "What if I just make my own X? Maybe I can save some money." This discussion occurs frequently within online and offline discourse. Often, musicians who have experience making their own digital or analog instruments give the same answer: "Yes. You can just make your own X. But no. You won't save any money. You will end up spending more and you should just save up some cash to just buy your gear." I've walked this path myself and found this conclusion to be true but with a small caveat: You can in fact save money by making your audio production tool as a \textbf{digital system}. You can write as much software as you want. You can refactor and rebuild you software tool over and over, and never spend a dime. When physical electronic components are removed from the equation, you can make all your music production gear for free. This caveat has a caveat of its own: This takes substantial time. Time is money. Therefore, every hour spent in implementing your system is implicitly adding to the hypothetical price tag of your system.
 	
-	I've known these facts for a long time and have seen them in action as my education has had me walk through the process of making \textit{yet another} database management system, and \textit{yet another} virtual machine. Unsurprisingly, my database hasn't replaced MySQL and my virtual machine has not replaced the Java Virtual Machine. Reinventing the proverbial wheel did not make the effort fruitless. Valuable wisdom and knowledge of how computers work was gained from these experiences. I applied this same principle to my experience as a musician with the goal of my master's project: Make \textit{yet another} digital synthesizer on an embedded microcontroller. \textbf{The endgame of this project was the journey itself: to learn how to implement a complex real-time embedded system, develop a digital audio pipeline, make a hardware interface to control it and see what invaluable knowledge can be extracted from the experience.} There is also the intrinsic side benefit of indulging my personal fantasy of making a piece of musical gear that is wholly mine. The aim of this project was to accomplish the task of creating this device and documenting the process and lessons learned: What is a valid working architecture to making such a system? Where does one begin? What kind of failure and setbacks should be expected? Can it be done within a reasonable amount of time without substantial reliance on previously existing frameworks and libraries? What sort of mathematical and technical knowledge is required?
+	Of course, implementing your own digital audio processing tools can be seen as reinventing the wheel. This project can be characterized as \textit{yet another} software synthesizer. The purpose of this project is not to create a product that is competitive with the mainstream market, but to discover the process and patterns of building an audio synthesis system on an embedded platform. My education has had me walk through the process of making \textit{yet another} database management system, and \textit{yet another} virtual machine. Unsurprisingly, my database hasn't replaced MySQL and my virtual machine has not replaced the Java Virtual Machine. Reinventing the proverbial wheel does not make the effort fruitless. Valuable wisdom and knowledge of how complex systems work is gained on the journey to replicate existing solutions. I applied this same principle to my master's project: Make \textit{yet another} digital synthesizer on an embedded microcontroller. \textbf{The endgame of this project is the journey itself}:
+	\begin{itemize}
+		\item Learn how to implement a complex real-time embedded system
+		\item Develop a modular digital audio pipeline
+		\item Build a hardware interface to control the system
+		\item Discover what invaluable knowledge can be extracted from the experience
+	\end{itemize}
+	The aim of this project was to accomplish the task of creating this device, document the architecture, process and the lessons learned. What is a valid working architecture to making such a system? Where does one begin? What kind of failure and setbacks should be expected? Can it be done within a reasonable amount of time without substantial reliance on previously existing frameworks and libraries? What sort of mathematical and technical knowledge is required?
 
 \subsection{Project Criteria}
-
 	\subsubsection{Minimum Requirements}
 	\label{requirements}
-	In order to meet the definition of a hardware subtractive synthesizer it must meet the following minimum requirements (see Concepts for definitions):
+	This implementation of a subtractive synthesizer must meet the following minimum requirements (see Concepts for definitions):
 	\begin{enumerate}
-		\item The device must produce audio at a minimum quality of 44.1khz and 16 bit-depth (CD Audio Quality)
-		\item Notes can be played by way of any generic MIDI keyboard.
-		\item An \textbf{oscillator} component must be implemented. It must generate the most common wave forms: Sin, sawtooth, square, triangle and white noise
-		\item The synthesizer (hereafter referred to as synth), but be polyphonic, capable of playing up to 8 discrete notes at a time.
-		\item A \textbf{voice} component allowing mixing of multiple oscillator waveforms must be implemented.
-		\item An \textbf{envelope} component must be implemented to dynamically attenuate the gain of each voice over time.
-		\item A \textbf{filter} component must be implemented to be able to selectively cut frequencies from the final signal. It should support lowpass, highpass and bandpass filtering. Filter frequency cutoff and resonance must be adjustable in real-time.
-%		\item A \textbf{low-frequency oscillator (LFO)} component must be implemented which the user may configure to modulate arbitrary signals within the system.
-%		\item Custom "patch" saving. Users can save their current configuration to a patch bank, and recall their saved a previous.
-		\item A \textbf{hardware interface} allowing personal interaction between the user and the system must be implemented. A MIDI input jack must be included for plugging in a keyboard. A 1/8" audio output jack should allow the user to hear playback with headphones or speakers. It should have a series of knobs and a screen communicate the system state to the user. The knobs should allow the user to navigate a menu to select a variety of parameters they wish to manipulate. The knobs should adapt to the context of the menu to adjust parameters appropriately.
-	\end{enumerate} \cite{rise_2016}
-
-%	\subsubsection{Additional Features}
-%	Mentioned above is the absolute bare minimum representation of what would constitute a common subtractive synthesizer. A series of other common but not required features were planned for the project:
-%	\begin{itemize}
-%		\item Additional generic envelope for modulating arbitrary signals on system
-%		\item MIDI Pitch and Modulation wheel support
-%		\item Additional audio FX: Delay, reverb, overdrive, etc.
-%		\item 3D printed enclosure box
-%		\item Expand synthesis options: Frequency Modulation (FM Synthesis), Sample based synthesis
-%	\end{itemize}
+		\item Produce audio at a minimum quality of 44.1khz and 16 bit-depth (Industry standard quality)
+		\item Compatible with any generic MIDI keyboard.
+		\item \textbf{Oscillator} module must generate the most common wave forms: Sin, sawtooth, square, triangle and white noise
+		\item Support polyphony, with capability to play up to eight discrete notes at a time.
+		\item Support mixing of multiple oscillators to generate hybrid waveforms.
+		\item Support \textbf{envelope} signal generation for dynamic modulation of other signals.
+		\item Implement a\textbf{Filter} module that supports lowpass, highpass and bandpass filtering, able to adjust frequency cutoff and resonance in real-time.
+		\item Implement \textbf{low-frequency oscillator (LFO)} module configurable to modulate the signals of other modules within the system.
+		\item Provide a memory bank where users can save their "patches" to use later.
+		\item Provide interaction between the user and the system via a \textbf{hardware interface}. User inputs include a MIDI jack for keyboard input and knobs for navigating a menu and changing parameters. Outputs include a 1/8" audio output jack for playback with headphones and speakers and a menu screen for communicating the system state to the user. Knobs adapt to the context of the menu to appropriately adjust parameters.
+	\end{enumerate}
 	
 	\subsubsection{Constraints}
-	To maximize the learning potential of this project and focus on the process rather than the final destination, I decided to set a few restrictions:
+	In order to maximize the learning potential of this project and focus on the process rather than the final destination, I set a few restrictions:
 	\begin{enumerate}
-		\item Language: The firmware must be implemented in a low-level programming language such as C/C++.
-		\item Libraries: Only the standard C/C++ libraries may be used. A Hardware Abstraction Layer to minimize hardware peripheral set up time may be used. Other than that exception, all software must be written from scratch. This includes digital signal processing (DSP) libraries; However, every audio processing function is handcrafted.
-		\item References: Referencing and reading other implementations is not explicitly restricted. Every effort must be put forth to understand the mathematical concepts of DSP and implement them without reliance on existing implementations.
+		\item Language: Implement the firmware in a low-level programming language such as C/C++. Complex, non-static data structures should be avoided to keep the system efficient, transparent and stable.
+		\item Libraries: Utilize only the standard C/C++ libraries with the exception of a Hardware Abstraction Layer to minimize hardware peripheral set up time. 
+		\item References: Put forth every effort to learn the mathematical concepts of DSP and implement them without referencing existing solutions.
 	\end{enumerate}
 	
 \subsection{Results}
-	The final state of project met most of the minimum requirements but failed to fulfill every feature: There was not enough time to implement LFOs info the system, and HAL library issues involving writing and reading from flash memory space got in the way of fully implementing a user patch bank. The system is able to perform its function as a versatile musical instrument. It is relatively stable, but needs a few revisions before it can be a reliable studio or stage performance-ready instrument.
+	\subsubsection{What did I learn?}
 	
-	\subsubsection{What was learned?}
+	\paragraph{Choose your device platform carefully} I chose the audio development board Daisy by Electro-Smith. It is marketed as an attractive option for musicians to implement their dream systems because of its high resolution digital to analog (DAC) converter and painless hardware peripheral abstractions. It turned out to not be as mature and stable as I hoped and had many issues with drivers, pin connections and lacking support for certain interrupt service routines. Initially, it was difficult to see that Daisy may not have been the best option for implementing a system scoped beyond a hobbyist project. The platform was designed for musicians to implement simpler systems with highly abstracted development libraries and programming languages/frameworks like MaxMSP, Puredata and Arduino. More attention and care was put into supporting these tools and making them work well while some lower level capabilities were sidelined.
 	
-	\paragraph{The device platform must be chosen carefully} I chose the audio development board Daisy by Electro-Smith. It is marketed as an attractive option for musicians to implement their dream systems because of its high resolution digital to analog (DAC) converter and painless hardware peripheral abstractions. It turned out to not be as mature and stable as I hoped and had many issues with drivers, pin connections and lacking support for certain interrupt service routines. At the time, it was difficult to see that Daisy may not have been the best option for implementing system scoped beyond a hobbyist project. The platform was designed for musicians to implement simpler systems with highly abstracted development libraries and programming languages/frameworks like MaxMSP, Puredata and Arduino. It appears more attention and care was put into supporting these tools and making them work well while some lower level capabilities were sidelined. The Daisy platform is very popular and is used commercially but still has yet to reach a highly stable and mature state.
+	\paragraph{Prototype hardware incrementally} After spending several months setting up my hardware peripherals on a breadboard and implementing core functionality, I felt the need to migrate the system off a breadboard to a more permanent and stable fixture. It was at this point I learned the cost of trying to do too much at once. I tried to design a soldered circuit board able to be embedded in an enclosure that was yet to be designed. My thought was that it may take several revisions of the enclosure before I knew where all my knobs, encoders, inputs, outputs and screen needed to be for ease of use and optimal functionality. I built up flying wire harnesses for all peripherals so that they could be moved around to test out different enclosure layouts. The result was an absolute mess of wires that were susceptible to interference. My first step in taking the system off the breadboard should have been simply solder my components into logical sections on perf board and make the system work as it did on the breadboard. It would not have been an optimal design and I would have to do another revision to get the system installed in an enclosure. But I would have saved so much time soldering and troubleshooting a sloppy design that ultimately failed. More time could have been allocated to adding additional capabilities to the software.
 	
-	\paragraph{Hardware prototyping must be incremental} After I had spent several months setting up my hardware peripherals on a breadboard and implementing core functionality, I felt the need to migrate the system off a breadboard to a more permanent and stable home. It was at this point I tried to do too much at once. I tried to design a soldered circuit board able to be embedded in a hardware enclosure that was yet to be designed. My thought was that it may take several revisions of the enclosure before I knew where all my knobs, encoders, inputs, outputs and screen needed to be for ease of use and optimal functionality. I built up flying wire harnesses for all peripherals so that they could be moved around to test out different enclosure layouts. The result was an absolute mess of wires that were susceptible to interference. My first step in taking the system off the breadboard should have been simply solder my components into logical sections on perf board and make the system work as it did on the breadboard. It would not have been optimal or have fit into an easy enclosure. I would still have to design a final enclosure and migrate the system to its final home, but I would have saved so much time soldering and troubleshooting my sloppy design. I could have allocated more time to software design and would have been able to complete more features like the LFO and patch bank mechanic.
+	\paragraph{Decouple pure software functions from hardware and test independently} My workflow for the entirety of the project was \textbf{write code, compile, flash, test, repeat}. This involves a lot of waiting. Waiting for the compiler. Waiting for the bootloader. Waiting for the flash process to complete. If I wrote my code more carefully to not be so tightly coupled to the Daisy system, I could have written some pure software test fixture code that runs on my host PC to test my different synth components independently. It would facilitate a much tighter development and testing loop. In addition, the modules would be more portable and easy to integrate into other systems.
 	
-	\paragraph{Pure software functions should be decoupled from hardware and tested independent of the hardware} My workflow for the entirety of the project was \textbf{write code, compile, flash, test, repeat}. This involves a lot of waiting. Waiting for the compiler. Waiting for the bootloader. Waiting for the flash process to complete. Part of me understood that something could be improved. I should have designed my code more carefully to not be so tightly coupled to the Daisy system. I could have wrote some pure software test fixture code that runs on my host PC to test my different synth components independently. That would require me to spend less time waiting and more time writing and testing my software incrementally. \textit{Example:} for my oscillator code, I could have written an oscillator test fixture that used my oscillator code to generate the fundamental waveforms and compare them to real world samples to ensure that my code was producing satisfactory results. After the tests passed, I could \textit{then} integrate it into my firmware. I was concerned that if I wasn't testing on the hardware itself that I potentially miss out on capturing critical bugs that on the hardware. What if my instructions are too slow for the system? What if the component is too difficult to incorporate into the firmware? These were valid concerns but turned out be non issues. Some features were not completed because of unnecessary waiting and slow development time.
-	
-	\paragraph{Purchase hardware components from trusted sources} I made the mistake of sourcing some components from Amazon. The cheap price and quick delivery was too much of a temptation. Several days of agonizing troubleshooting and software debugging were wasted because of one encoder in a bag of ten. It happened to have been soldered to its PCB in reverse and it was completely defective. I assumed my code was the problem. Only after hooking the offending part up to a multimeter was I able to see the problem. I replaced the part and my system worked without a single change to the software.
+	\paragraph{Purchase hardware components from trusted sources and verify functionality} I made the mistake of sourcing some components from Amazon. The cheap price and quick delivery was too much of a temptation. I ended up wasting several agonizing days troubleshooting and debugging software all because of one encoder in a bag of ten. The factory happened to solder its PCB in reverse and it was completely defective. I assumed my code was the problem. Only after hooking the offending part up to a multimeter was I able to see the problem. I replaced the part and my system worked without a single change to the software. It resonable good to suspect your implementation may be flawed before blaming hardware. Manufactured parts should be trusted, but also verified.
 	
 	\subsubsection{Complexity}
-	\paragraph{Lines of Code} The capstone project guideliens uses lines of code to quantify the complexity of the project. The project is expected to be around 5000 lines of code. Embedded systems have limited memory and speed requiring the programmer to design their algorithms and data structures to be concise and work as efficiently as possible. If the programmer does not operate in this way, the compiled firmware may be too big to be contained in the flash space. Additionally there may not be enough memory available to load the firmware from flash \textbf{and} contain the necessary stack and heap memory. In addition, adding features like the LCD screen required me to write driver code to display data in an efficient way. Over a week of time was invested just in writing the I2C driver code to make the LCD screen compatible with the system. The final driver code amounts to about 150 lines of code which is not representative of time and effort put in to implementing the functionality.
+	\paragraph{Looking at the code does not always accurately express the effort and time invested to develop a solution}. Writing driver code for the project was a long process. It required reading long data sheets for devices and how they work. Each component requires a surprisingly deep level of knowledge to properly communicate with them. Actually writing the code to communicate in the devices specific protocol can be long process of trial and error. 
 	
-%	\paragraph{The monolithic code structure} The final form of the system can be described as complex if not complicated. I tried my best to separate my code into a \textbf{Model View Control (MVC)} pattern. The \textit{model} in this case is the audio synthesis structure of the firmware: the oscillators, voices, filters, parameter structure and the synth class that contains them. It represents the core functionality of the system. The \textit{view} portion of the MVC consists of the components that convey the state of the system to the user: the LCD screen, the menus and their submenus. The \textit{control} portion of the MVC is the way in which the user interacts with the system: all the physical knobs, inputs, MIDI events, etc. Keeping these parts of the MVC separate was difficult. I tried to keep these components loosely coupled and reduce occurence of sharing references to each other. In the end, some structure needed to own them. Hardware needed to receive inputs and communicate them to the Model and View. So in the end, the hardware layer, the \textit{control} in MVC, became the sole owner of everything.
+	\paragraph{Implementing the driver code to communicate with the LCD screen over I2C took a couple weeks} Many hours of time were spent writing low level functions to pack a lot of information into just several bytes of data that perform one function. These functions need to be written to perform an insignificant task like writing a single character to the screen, moving the cursor, erasing the screen or just configure the screen. More functions need to be written using these new driver level functions to do things like write a complete string to a specific line or create a menu scrolling effect. After all this time is spent implementing these necessary functions, the driver code may only be one or two hundred lines long. This experience demonstrates the fact that lines of code is not an accurate model for determining the complexity of a system.
 	
-\subsection{Outline of this Paper}
-	\paragraph{The remainder of this paper will focus on a few core topics}
-	\begin{enumerate}
-		\item A concise glossary of terms to bring the reader up to speed on the key components of audio synthesis
-		\item A section outlining how any referenced works relate to the project
-		\item A complete description of the architecture of the project with an account of the most note-worthy steps in the implementation process. 
-		\item A section summarizing the project as a whole: the successes, the failures, the laughter, the tears and the path forward for the project.
-		\item A section expressing gratitude for the long-suffering support of my wife and children as well as faculty and a preachy commitment to the open source community and hacker ethic.
-		\item A bibliography of references works and resources
-	\end{enumerate}
+	\subsubsection{Design decisions}
+	\paragraph{The final architecture of the system as a whole cannot described perfectly with one model} It is a hybrid of several architectures. The system is \textbf{pipeline architecture}. Synth modules are chained together in a mostly linear fashion. Oscillators generate audio sample data. Samples from multiple oscillators are attenuated and combined into a new sample. The aggregated sample is passed through an envelope modulated attenuator. The sample is then passed to a filter. The filtered samples are passed through an audio fx chain where each effect module processes and passes data down to the next. The samples processed by the fx chain are passed through a master volume attenuator and put into the audio DAC's output buffer. The DAC finally converts the digital signal to an analog signal which plays out the physical speakers.
+	
+	It is an \textbf{event driven architecture}. The audio DAC interrupt drives the audio processing of the synthesizer pipepline. It is responsible for acquiring a sample from the synth and placing it into the DAC's output buffer (note how the DAC functions both as an event driver and as a component in the pipeline). The hardware timer interrupt processes user input. It uses the processed user input to control the various synth components. Because it runs much slower than the DAC, it also drives some synthesizer components like the envelope which generate modulation source signals rather than audio.
+	
+	It is also a \textbf{modular architecture}. Although modularity is a basic expectation of software design, it plays a much bigger role in synthesis itself. It has been a fundamental principle in synthesis since day one. The first synthesizers were a collection of analog circuit boards completely divorced from one another, and they were only connected by series of physical patch cables that could be endlessly rerouted in different permutations. This core principle is implemented into the software. The data structures are independent modules: oscillators, filters, envelopes and LFOs all able to connect to each other similar to how analog synthesizers are connected by patch cables. This aspect of the system obscures some of the pipeline nature of the software architecture, because the system is just a linear chain of single file units. Some modules are abstract components, aggregating smaller modules to achieve new functionality. Some modules like the envelope do not directly process audio. Instead, they generate signals parallel to the audio pipeline that affect how \textit{other} modules process data. 
+	
+	The software architecture does not entirely fit a single model, but is a combination of architectures and in some ways blurs the lines that distinguish them.
 
 \section{Related Works}
-For each reference in your paper, write a two- or three-sentence paragraph 
-describing how it relates to your work. Think of this as an annotated bibliography
-covering your literature search in an organized progression that highlights your 
-how your work is similar and different. This is particularly important if your project repeats
-previous work. At least 15 sources is a reasonable number.
-
-\textbf{Some authors prefer to include related works as part of the Introduction, because there
-is overlap. For project defense purposes, it best to have it as a separate section.}
+	\begin{description}
+		\item[Designing Sound by Andy Farnell] A practical guide to digital audio synthesis. Describes the common structures of DSP using a visual programming language called PureData. Used as primer for understanding modules implemented in this project.
+		\item[Think DSP: Digital Signal Processing in python by Allen Downey] DSP examples written in python. Referenced for generating oscillator functions and understanding concepts of filtering.
+		\item[Embedded Systems Architecture by Daniele LaCamera] Comprehensive textbook on embedded systems. Heavily referenced for hardware configuration and firmware design.
+		\item[Audio effects: Theory, implementation, and application by Joshua Reiss and Andrew McPherson] References in implementations of audio fx (filters, reverb, delay, phaser etc). Referenced for planned but yet unimplemented audio fx chain.
+		\item[Subtractive synthesis: The synthesizer academy by Scott Rise] Blog post on subtractive synthesis. Referenced as industry definition of subtractive synthesis and its applications.
+		\item[Learning synthesis: Oscillators by Eldar Tagi] Blog post explaining different types of oscillators, waveforms and their implementations in analog and digital domain. Referenced for study of the history of synthesis, definition of frequency modulation and the functions of oscillators.
+		\item[microKorg by Korg] A compact polyphonic analog synthesizer. An industry standard instrument used as a reference when defining the requirements of the project.
+		\item[What is a LFO and how to use it by Vanesa Paris] A blog post explaining the mechanics and applications of Low Frequency Oscillators. A reference for the requirements of the unimplemented LFO module.
+		\item[Midi for the Arduino - Build a Midi Input Circuit] A blog post explaining how to implement an optocoupler protected midi input circuit to an Arduino. This circuit was implemented in its entirety and adapted to work with the Daisy platform.
+		\item[Materials for Linear Algebra: Linear Filters by Joshua Holden] A free Duke University text book referenced extensively for understanding discrete time signal filtering with difference equation.
+		\item[Introduction to Digital Filters with Audio Applications by Julius Smith] A free Stanford University textbook on Digital Filters. Referenced heavily for learning about transfer functions, bilinear transform and second order difference equation.
+		\item[Introduction to Computer Music by Jeffrey Hass] Indiana University text book covering analog and digital synthesis concepts, filters, envelopes, etc. Very comprehensive and referenced for research on envelopes, filters and oscillators.
+		\item[libDaisy by Electro-Smith] Open source hardware abstraction layer library for the Daisy ecosystem. Heavily used in implementation for settings up DAC/Timer interrupts, potentiometer ADCs, digital encoder reading and I2C bus setup.
+		\item[Welsh's synthesizer cookbook by Fred Welsh] A "cookbook" for setting up any generic synthesizer to emulate sounds like pianos, violins, banjo, guitar etc. Referenced for researching concepts of subtractive synthesis.
+		\item[The MIDI Manual by David Miles Huber] A comprehensive textbook covering the MIDI protocol. Referenced for explanations of how data is packed into MIDI messages.
+	\end{description}
 
 \section{Concepts}
-	\textbf{Oscillator:} Generally speaking, an oscillator is a function generator. It will generate a repeating signal at a specified frequency much like the function generator of an oscilloscope.
-	\textbf{Monophonic:} A synth that can play only one pitch at a time.
-	\textbf{Polyphonic:} A synth that can play two or more discrete notes at a time.
+	\begin{itemize}
+		\item \textbf{Oscillator:} Generally speaking, an oscillator is a function generator. Generates a repeating signal at a specified frequency much like the function generator of an oscilloscope. The starting point of the audio signal chain.
+		\item \textbf{Monophonic:} A synth that can play only one pitch at a time.
+		\item \textbf{Polyphonic:} A synth that can play two or more discrete notes at a time.
+		\item \textbf{Voice:} A structure containing one or more oscillators. One voice can play one pitch at a time. Voices are used to support polyphony.
+		\item \textbf{Modulation:} The usage of an analog or digital signal as a function to alter the inputs of another function.
+		\item \textbf{Envelope:} A multiphase linear signal generator. Used as a modulation source for other signals.
+		\item \textbf{Low Frequency Oscillator (LFO):} An oscillator producing signals below human hearing. Used as a modulation source.
+		\item \textbf{Low Pass Filter:} A filter that removes high frequencies from a signal past a certain cutoff point.
+		\item \textbf{High Pass Filter:} Like a low pass filter but removing low frequencies.
+		\item \textbf{Sample Rate:} Refers to how often a digital signal is being sampled in samples per second.
+		\item \textbf{Bit Depth:} How many bits are used to represent a digital sample.
+		\item \textbf{Digital to Analog Converter (DAC):} A hardware component used to output a digital signal as an analog voltage signal.
+		\item \textbf{MIDI:} Musical Instrument Data Interface. A communications protocol for controlling electronic instruments, computer software, lighting systems etc. Supports hundreds of different kinds of messages. "Note On" and "Note Off" messages are the most common and contain pitch and velocity (how loudly the note is being played).
+		
+		
+	\end{itemize}
 
 \section{Software Architecture and Implementation}
 
-\subsection{Main Section}
-	\paragraph{The system is built as an interrupt driven pipeline architecture} A class called synth comprises the monolithic audio data processing pipeline. Two interrupt service routines function as the main operators of this pipeline: A \textbf{hardware timer} interrupt is responsible for capturing events from the user: moving knobs, navigating menus and playing notes on the keyboard. An \textbf{audio} interrupt, triggered by the high resolution DAC is responsible for getting audio output samples from the synth and pushing them to DAC's audio out buffer.
+\subsection{A High Level View}
+	\paragraph{As mentioned previously, the system is an interrupt driven, highly modular, pipeline architecture} A class called synth is a composition of modules that connect to form an digital audio processing pipeline. Two interrupt service routines function as the main operators of this pipeline: A \textbf{hardware timer} interrupt is responsible for capturing user input to control the synths parameters and the notes it plays. An \textbf{audio} interrupt, triggered by the high resolution DAC is responsible for driving the pipeline to generate digital audio samples and load the samples into the DAC's audio out buffer.
 	
-	\paragraph{The architecture can be describe as having five participants:} The \textbf{user} operating the synth and keyboard, the \textbf{menu screen} communicating the system state to the user, the \textbf{synth} generating audio samples, the \textbf{timer interrupt} reading hardware inputs to trigger events, and the \textbf{audio interrupt} requesting the next sample to write to the audio output DAC. Following is a series of sequence diagrams to describe common events within the system.
-	
-	\begin{figure}[H]
-		\centering
-		\caption{This sequence is the most common event for the runtime of the system. It represents the idle state when the user is not engaged in the system. The process audio callback is continuously requesting samples from the synth, and the synth is just returning a value of zero. The result is silence for the user. \textit{Note: although the timer appears in active, the interrupt is still occuring with no inputs to detect to trigger events.}}
-		\includegraphics[height=4cm]{no_note_sequence}
-	\end{figure}
+	There are five key participants involved in the system:
+	\begin{enumerate}
+		\item The \textbf{user} operating the system with the keyboard keyboard and hardware peripherals
+		\item The \textbf{menu system} communicating the system state to the user
+		\item The \textbf{synth} generating audio samples for the DAC
+		\item The \textbf{timer interrupt} reading hardware inputs to trigger events
+		\item The \textbf{audio interrupt} requesting the next sample to write to the audio output DAC.
+	\end{enumerate}
+
+%	\begin{figure}[h]
+%		\centering
+%		\caption{This sequence is the most common event for the runtime of the system. It represents the idle state when the user is not engaged in the system. The process audio callback is continuously requesting samples from the synth, and the synth is just returning a value of zero. The result is silence for the user. \textit{Note: although the timer appears in active, the interrupt is still occuring with no inputs to detect to trigger events.}}
+%		\includegraphics[width=.7\linewidth]{no_note_sequence}
+%	\end{figure}
 
 	\begin{figure}[H]
 		\centering
-		\caption{The second most common event is the act of the user playing a note on the keyboard. The timer interrupt detects the MIDI message from the keyboard and triggers a \textit{note on} event for the synth. The synth then activates one of its voices and sets the voice's pitch according to the note on event. Next time the audio interrupt occurs, the synth will generate and return an audio sample from that voice. The audio interrupt puts the sample into the DAC buffer which plays out the speakers for the user. Audio will continue to generated and played to the user until the key is released from the keyboard. The timer triggers a \textit{note off} event, telling the synth to deactivate the voice. Next time the audio interrupt occurs, the synth will return a zero valued sampled which results in silence for the user}
-		\includegraphics[width=.9\linewidth]{play_note_sequence}
+		\includegraphics[width=.7\linewidth]{play_note_sequence}
+		\caption{A sequence diagram of the interaction of the five main actors. The most common scenario is the user playing notes on the keyboard. The timer interrupt detects the MIDI message from the keyboard and triggers a \textit{note on} event for the synth. The synth responds by activating one of its voices and setting the voice's pitch according to the note on event. Next time the audio interrupt occurs, the synth will generate and return an audio sample from that voice. The audio interrupt puts the sample into the DAC buffer which plays out the speakers for the user. Audio will continue to be generated and played to the user until the key is released on the keyboard. The timer triggers a \textit{note off} event, telling the synth to deactivate the voice. Next time the audio interrupt occurs, the synth will return a zero valued sampled which results in silence for the user}
 	\end{figure}
 	
 	Keeping these actors in mind, we can now begin to understand how the synth, timer interrupt and audio interrupt work together.
 	
-	\subsubsection{The Synth}
-	\paragraph{The synth component is a pipeline by design, so it is comprised of a series of modular components} In order to understand how it works, I will break it down into a series of its fundamental modular components that make up the pipeline. This section assumes some background knowledge of the components. For a brief explanation, see Concepts.
+\subsection{The Synth and Its Modular Components}
+	\paragraph{This section is a noncomprehensive explanation of the fundamental components that make up the audio processing pipeline} It is intended to provide an explanation sufficient to read and understand the source code. It should also provide sufficient information to be able to write your own implementation. Every synth needs to start with some kind of signal, so the first component to address is the oscillator.
 	
-	\textbf{Oscillators}
-	\paragraph{The pipeline must begin with the oscillator so that there is audio data to be processed by subsequent components} The oscillator component is a class with only a few attributes: An enum representing what kind of function it generates, a variable to track the phase of the function cycle, and delta variable for how much the phase should be incremented to achieve the desired frequency. Every time an audio interrupt occurs, the get\_sample method is called: The sample is generated by passing the phase variable to the function input. The oscillator's phase variable is incremented by the delta variable. If the oscillators phase exceeds the value of \( 2\pi \), the functions phase is complete and the oscillator will subtract \( 2\pi \) from phase variable to start the phase over. The generated sample is returned for the audio interrupt to push to the DAC's output buffer for playback. Below is a sequence chart illustrating this process with the oscillator generating a sin wave function.\cite{farnell_2010}
+	\subsubsection{Oscillators}
+	\paragraph{The oscillator module is the very first component in the processing chain} This module is a class with just a few attributes: The oscillator frequency, n enum representing what kind of function it generates, a variable to track the phase of the function cycle, and delta variable for how much the phase should be incremented to produce samples at the set frequency. There are a few methods: set\_frequency, set\_waveform and get\_sample. 
+		
+	\paragraph{The get\_sample method is the core of the oscillator class} It generates samples for the current pitch and configured function. When the get\_sample method is called the sample is generated using the oscillator function with the phase variable as its input. After the sample is generated, the phase variable is incremented by the delta variable to prepare for the next sample. If phase exceeds the value of \( 2\pi \), the function's phase is complete and \( 2\pi \) is subtracted from phase variable to start the phase over. The generated sample is then returned as an output. Below is a sequence chart illustrating this process with the oscillator generating sin wave samples. The samples are used by the audio interrupt place in the DAC's output buffer for playback.\cite{farnell_2010}
 	
 	\begin{wrapfigure}{l}{.75\textwidth}
 		\includegraphics[width=\linewidth]{oscillator_sequence_diagram}
@@ -237,9 +261,14 @@ is overlap. For project defense purposes, it best to have it as a separate secti
 		\centering
 	\end{wrapfigure}
 	
-	\paragraph{The phase and delta variables:} Mentioned previously, the delta (hereafter called phase\_delta to reference the code snippets) is a calculated value by which we increment the phase to get the next sample of the waveform for the desired pitch. So how on earth do we calculate this magic phase\_delta? Lets start simple, to generate a sin wave at 1hz with a sample rate of 44.1kz, we simply need to divide \( 2\pi \) by 44100 to get the phase delta. We start by initializing phase to zero and set phase\_delta to \( 2\pi/44100 \). Every time the audio callback occurs, the oscillator will return the value of \( sin(phase) \) and then increment phase by phase\_delta. After one second of time has passed, the audio callback will have triggered 44,100 times, phase\_delta will have been added to phase 44,100 times and phase will be equal to \( 2\pi \) completing one cycle, and a 1hz sin wave will have been played out the speaker. Okay well cool, but humans can't hear a 1hz sin wave and music is most enjoyable when it's audible. Let's make some noise we can hear: To change the pitch, we only need to multiply the 1hz phase\_delta by our desired frequency, so the formula for calculating the phase delta of your desired pitch is \( 2\pi/44100 * frequency \). \textit{Note: 44100 is not a hard and fast number. If you wish to have your DAC use a higher sample rate like 96khz, then 44100 would be substituted with 96000. So the generic formula is \( 2\pi/sample_rate * frequency \). The sample rate of the DAC and the sample rate used to calculate the phase\_delta \textbf{must} match or the pitch will be off} Okay, so going back to making music: If we want our oscillator pitch to be 100hz, our calculated phase\_delta will be \( 2\pi/44100 * 100.0\). This phase delta will cause the oscillator function to cycle 100 times in a second. Pretty simple. All this behavior is contained in the set\_pitch method in the Oscillator class.
+	\paragraph{The phase and delta variables:} Mentioned previously, the delta variable (hereafter phase\_delta, the name of the oscillator classes member name) is a calculated value used to increment the phase. The value of phase\_delta is necessary to generate samples at the desired pitch.
+	\paragraph{So how on earth do we calculate this magic phase\_delta?} Lets start simple, to generate a sin wave at 1hz with a sample rate of 44.1kz, we simply need to divide \( 2\pi \) by 44100 to get the phase delta. Phase is initialized to zero and phase\_delta is calulated with the function \( 2\pi/44100 \). Every time the audio callback occurs, the oscillator will return the value of \( sin(phase) \) and then increment phase by phase\_delta. After one second of time has passed, the audio callback will have triggered 44,100 times, phase\_delta will have been added to phase 44,100 times and phase will be equal to \( 2\pi \) completing one cycle, and a 1hz sin wave will have been played out the speaker. 
 	
-	\paragraph{"What about other waveforms? Sin waves are boring!"} Totally. Sin waves lack harmonic complexity and will generally produce very smooth and mellow tones. Lets talk about that function enum I mentioned before. The Oscillator class has an enum called WaveForm to indicate what \textit{kind} of oscillator it is (i.e. what function does it use). The oscillator WaveForm enum is set with the set\_waveform method. Then the next time get\_sample is called by the audio callback, the function matching the oscillator's configured WaveForm will be used to generate a sample from your fancy new harmonically rich waveform. \cite{downey_2016} Beautiful! So what kind of functions are we using here? Besides the sin wave, all the classic wave forms are present: Sawtooth, Square, Triangle and White Noise. The square wave just an on/off function where half the time the returned value is -1.0 and the rest of the time the returned value is 1.0. The sawtooth save is a function that ramps gradually from low to high. The triangle resembles a sin wave but with a linear form instead of a curve. White Noise is generated with a pseudo-random number generator. \cite{tagi_2019} The snippet below is a good start for understanding the oscillators different waveform functions. See Oscillator.cpp for the full source.
+	\paragraph{Okay, well cool, but humans can't hear a 1hz sin wave and music is most enjoyable when it's audible} Let's make some noise we can hear: To change the pitch, we only need to multiply the 1hz phase\_delta by our desired frequency, so the formula for calculating the phase delta of your desired pitch is \( 2\pi/44100 * frequency \). \textit{Note: 44100 is not a hard and fast number. It is just the sample rate of the DAC. If the DAC is configured to use a higher sample rate like 96khz, then 44100 would be substituted with 96000. So the generic formula to calculate phase\_delta is \( 2\pi/sample_rate * frequency \). Note: The sample rate of the DAC and the sample rate used to calculate the phase\_delta \textbf{must} match or the pitch will be off} Okay, so going back to making music: If we want our oscillator pitch to be 100hz, our calculated phase\_delta will be \( 2\pi/44100 * 100.0\). This phase delta will cause the oscillator function to cycle 100 times in a second. Pretty simple. All this behavior is contained in the set\_pitch method in the Oscillator class. So now we have everything we need to generate sin wave samples at any pitch.
+	
+	\paragraph{"What about other waveforms? Sin waves are boring!"} Totally. Sin waves lack harmonic complexity and will generally produce very smooth and mellow tones. Let's talk about that function enum I mentioned before. The Oscillator class has an enum called WaveForm to indicate what \textit{kind} of oscillator it is (i.e. what function does it use). The oscillator WaveForm enum is set with the set\_waveform method. If the waveform is changed, the next time get\_sample is called by the audio callback, the function matching the new configured WaveForm will be used and generate a sample from your fancy new harmonically rich waveform. \cite{downey_2016} Beautiful! 
+	
+	\paragraph{So what kind of functions are we using here?} Besides the sin wave, all the classic wave forms are present: Sawtooth, Square, Triangle and White Noise. The square wave just an on/off function where 1.0 is returned the first half of the phase and -1.0 is returned during the second half. The sawtooth save is a function that starts the phase at -1.0 and ramps gradually to 1.0 at the end of the phase. The triangle resembles a sin wave but with a linear form instead of a curve giving it a triangular shape. White Noise is generated with a pseudo-random number generator. \cite{tagi_2019} The snippet below is a good start for understanding the oscillators different waveform functions. See Oscillator.cpp for the full source.
 	
 	
 	\begin{minted}{c}
@@ -279,12 +308,12 @@ float Oscillator::get_sample()
 }
 	\end{minted}
 
-	\paragraph{"So I've got this oscillator. How do I control I start making music now?"} To control the oscillator, the timer interrupt listens for MIDI events on the UART line. When a note on messages arrive, the MIDI message is parsed to get the 7-bit number that contains the pitch of the note. This number can be converted to the frequency value. This frequency can be passed to the set\_pitch method which handles all the phase\_delta calculations. However, an oscillator is pretty dumb. Once the pitch is set, it will play its not forever. As a workaround, when a note off message is received by the timer interrupt callback, the pitch can be set to zero hz to silence it. The pitch can now be controlled with the MIDI keyboard, but the system is limited to one note at a time. The Voice component will fix this problem.
+	\paragraph{"So I've got this oscillator. How do I control I start making music now?"} To control the oscillator, the timer interrupt listens for MIDI events on the UART line. When a note on messages arrive, the MIDI message is parsed to get the 7-bit number that contains the pitch of the note. This number can be accurately converted to the frequency value. This frequency can be passed to the set\_pitch method. However, an oscillator is pretty dumb. Once the pitch is set, it will play forever if no one tells it to shut up. As a workaround, when a note off message is received by the timer interrupt callback, you can set the pitch to zero hz to silence it. You can now use a MIDI keyboard to play pitches and turn them on and off. The system in this configuration is limited to one note at a time. The Voice component fixes this problem.
 	
 	\subsubsection{Voices}
-	\paragraph{In the world of synthesizers, a single discrete note playing a certain pitch is called a voice} A voice is a structure that contains at least one oscillator of its own. A synth with two voices can play two pitches at once: the oscillator(s) in the first voice are responsible for generating the samples for one pitch and the oscillators of the second voice are responsible for the other pitch. The Voice class in this project has this functionality and more.
+	\paragraph{In the world of synthesizers, a single discrete note playing a certain pitch is called a voice} A voice is a structure that contains at least one oscillator of its own. A synth with two voices can play two pitches at once: the oscillator(s) in the first voice are responsible for generating the samples for one pitch and the oscillators of the second voice are responsible for the other pitch. The Voice module in this project has this functionality and more.
 	
-	\paragraph{The class contains two separate oscillator class instances that can be set to any fundamental waveform}. Voice has a method called set\_pitch just like the oscillator classes which assigns the pitch to each of its respective oscillators. It also has a matching get\_sample method like the oscillators, which gets samples from both oscillators and adds them together and returns the aggregated sample. There is a separate gain parameter for each oscillator to control the gain ratio between the two oscillators. The oscillators can be configured with any fundamental waveforms such as sawtooth or triangle. This allows the user to generate a variety of new hybrid wave forms. The voice class can optionally configure a pitch offset to the second oscillator; another common synth feature in synthesizers. By detuning one oscillator from another, you can generate even more complex waveforms with frequency beating, added intensity, or even complete dissonance if desired. Lets take a closer look at this Voice class.
+	\paragraph{The Voice module is an aggregation of two separate oscillator class instances}. The Voice module has a method called set\_pitch and get\_sample just like the oscillator module. The set\_pitch method sets the pitch of its respective oscillators. The get\_sample method gets samples from both oscillators, adds them together and returns the aggregated sample. There is a separate gain parameter for each oscillator to control the gain ratio between the two oscillators. The oscillators can be configured with any fundamental waveforms such as sawtooth or triangle. This allows the user to generate a variety of new hybrid wave forms. The voice class can optionally configure a pitch offset to the second oscillator; another common synth feature in synthesizers. By detuning one oscillator from another, you can generate even more complex waveforms with frequency beating, added intensity, or even complete dissonance if desired. Lets take a closer look at this Voice class.
 	
 	\begin{figure}[H]
 		\includegraphics[width=\linewidth]{simple_voice}
@@ -292,9 +321,9 @@ float Oscillator::get_sample()
 		\centering
 	\end{figure}
 	
-	\paragraph{In order to add polyphony to the system, the pipeline needs to be contained in a larger data structure to hold the Voice components} A class called Synth was implemented and represents the audio pipeline at its highest level. The Synth class owns a primitive array of Voice instances called \textit{voices}. The voices array allocates eight voices in total but may allocate more. Eight seems to reach the upper limits of the needs of most musicians. With the voice class implemented, the pitch of the oscillators is no longer set directly by the timer interrupt as mentioned previously in the oscillators section. Now, the timer interrupt sends MIDI note on and note off events directly to the synth class. 
+	\paragraph{In order to support polyphony, the pipeline needs a collection of Voice components and structure to manage them} A class called Synth represents the audio pipeline at its highest level. The Synth class owns a primitive array of Voice instances called \textit{voices}. The voices array holds eight voices instances more may be allocated. Eight seems to reach the upper limits of the needs of most musicians. With the voice class implemented, the pitch of the oscillators is not set directly by the timer interrupt as mentioned previously. Now, the timer interrupt sends MIDI note on and note off events directly to the synth class, which calls set\_pitch on a voice. The voice in turn will directly set the oscillator pitch.
 	
-	\paragraph{When note on messages are received, it loops through the array of voices until it finds a voice that is not currently active (i.e. playing a note)} Just \textit{how} the synth determines if a voice is currently active will be covered in the next section. Once the synth finds an inactive voice, it sets the voice's pitch according to the MIDI event and marks it as active. Marking a voice as active informs the synth which voices it should get samples from when an audio callback occurs. When note off events occur, the synth will loop through the voices once again until it finds the active voice set to the pitch that matches the note off event. It then sets the voice as inactive. Voices that are inactive will be skipped when the synth loops through the voice array during the audio callback. With this functionality in place, multiple notes can now be played at once, with the voices turning on and off as keys are pressed down and let up. If there is a time when a user pushes down more keys than there are voices, the note that has been active the longest will be deactivated and used to play the new note. This means the old pitch will be dropped from playback and replaced with the new one. This is a common policy for handling these situations in synthesizers.
+	\paragraph{When note on messages are received, it loops through the array of voices until it finds a voice that is not currently active (i.e. playing a note)} Just \textit{how} the synth determines if a voice is currently active will be covered in the next section. Once the synth finds an inactive voice, it sets the voice's pitch according to the MIDI event and marks it as active. Marking a voice as active informs the synth which voices it should get samples from when an audio callback occurs. When note off events occur, the synth will loop through the voices once again until it finds the active voice with the matching pitch. It then sets the voice as inactive. Voices that are inactive will be skipped when the synth loops through the voice array during the audio callback. With this functionality in place, multiple notes can now be played at once, with the voices turning on and off as keys are pressed down and let up. If there is a time when a user pushes down more keys than there are voices, the note that has been active the longest will be deactivated and used to play the new note. This means the old pitch will be dropped from playback and replaced with the new one. This is a common policy for handling these situations in synthesizers.
 	
 	\begin{figure}[H]
 		\includegraphics[width=\linewidth]{voice_graph_diagram}
@@ -302,7 +331,7 @@ float Oscillator::get_sample()
 		\centering
 	\end{figure}
 	
-	With voices and the synth class added to the architecture, the system is now officially a polyphonic synthesizer. The next component to be added to the chain is the Envelope component.
+	With voices and the synth class added to the architecture, the system is now officially a polyphonic synthesizer. To learn more, see Synth.cpp, Voice.cpp and Oscillator.cpp. The next component to address is the Envelope module.
 
 
 	\subsubsection{Envelopes}
@@ -325,7 +354,7 @@ float Oscillator::get_sample()
 	
 	The \textbf{Release} phase occurs immediately after the key is released on the keyboard and is the final phase. The envelope can enter the release phase from any of the previously mentioned phases. Release refers to how long it takes for the envelope gain to return to 0 after the note is released. \cite{hass_2021}
 	
-	\paragraph{An amp envelope refers to when the volume of a voice is modulated by the signal gain of an envelope} Multiplying a voice's output signal by the amp envelope's signal gain results in the voice growing and diminishing in volume according to the phase of the envelope. This is how the synthesizer emulates the volume dynamics of many instruments. In a polyphonic synthesizer, every Voice must have its own amp envelope so that each note can grow and diminish independently of each other. The figure below shows the envelope signal and the effect it has on an oscillator when applied to the output gain. An envelope is triggered by a note on event. 
+	\paragraph{An amp envelope refers to when the volume of a voice is modulated by the signal gain of an envelope} Multiplying a voice's output gain by the amp envelope's signal results in the voice growing and diminishing in volume according to the phase of the envelope. This is how the synthesizer emulates the volume dynamics of many instruments. In a polyphonic synthesizer, every Voice must have its own amp envelope so that each note can grow and diminish independently of each other. The figure below shows the envelope signal and the effect it has on an oscillator when applied to the output gain. An envelope is triggered by a note on event. 
 	
 	\begin{wrapfigure}{r}{.5\textwidth}
 		\centering
@@ -333,7 +362,9 @@ float Oscillator::get_sample()
 		\caption{Graph of the amp envelope in action}
 	\end{wrapfigure}
 	
-	\paragraph{A class called Envelope was implemented with a state machine to represent the phases of the Envelope} In addition to the four previously mentioned phases, there is a READY state specific to this implementation to indicate to the synth that the voice owning it is inactive and therefore available to play a note. The Envelope is designed to change its signal gain every time a method called \textit{process} is called. In the process method, the gain is incremented or decremented by a certain amount until the gain reaches a point where it transitions to the next envelope phase. The amount by which the gain should be incremented is specific to the configuration of each phase. Since an envelope does not produce sound, the Envelope process method does not need to be run during the audio callback. The hardware timer takes on the duty of calling the envelope process method.
+	\paragraph{The Envelope module is implemented as a state machine to represent the four phases of an envelope} In addition to the four previously mentioned phases, there is a state specific to this implementation called Ready. The ready state indicates that the envelope is currently inactive. Since every Voice in the synth has its own envelope, it uses voice's envelope state as an intuitive way to know if it is inactive. If a voice's amp envelope state is "ready", the voice is available to play a note. 
+	
+	\paragraph{The Envelope is designed to change its signal every time a method named \textit{process} is called}. In the process method, the gain is incremented or decremented by a certain amount until the gain reaches limit indicating the end of the phase. The envelope then transitions to the next phase. The amount by which the gain should be incremented is specific to the configuration of each phase. Since an envelope does not produce sound, the Envelope process method does not need to be run during the audio callback. The resolution of an envelope signal does not need to be so high in order to be effective. The much slower hardware timer takes on the duty of calling the envelope process method.
 	
 	\paragraph{So how do we calculate the increment value for a phase?} We take the difference of the gain value at the beginning of its phase and the gain value of the end its phase. We then divide the difference by the phase's time with respect to the timer callback frequency. For example, during the attack phase, the envelope gain starts at 0.0 and ramps up to 1.0. In this case, the difference between the start and end gain is 1.0. If the attack time is 300ms and the interrupt frequency is 1000hz, the attack increment is \( 1.0/(1000*.3)=0.00333 \) Incrementing by this value with every timer interupt will result in the envelope gain reaching 1.0 in 300ms. The rest of the phases can be calculated in a similar way. See the full Envelope class source for more details.
 	
@@ -385,28 +416,40 @@ for(uint8_t i = 0; i < NUM_VOICES; i++) {
 	}
 }
 	\end{minted}
+
+	\begin{figure}[H]
+		\includegraphics[width=\linewidth]{Voice_Pipeline_Diagram}
+		\caption{The final Voice component is a mini pipeline itself, processing digital audio data through many functions with the envelope being used as a data source to modify pipeline functions in real time.}
+		\centering
+	\end{figure}
 	
 	
-	\paragraph{Envelopes can be used generically to modulate any kind of signal such as volume, filter frequency cutoff, or even the gain of an audio effect like reverb or distortion} The application of envelopes is limited to your imagination making them a powerful tool in audio synthesis. The same implementation of the envelope can be reused anywhere in the Synth class. I plan to add two more envelopes to the Synth class with the added feature of routing their signal to arbitrary data members within the class. Where the envelope signals are applied can be configured through the hardware menu interface. With Voices and Envelopes implemented, we now have polyphony and volume dynamics. The remaining component to bring the synth to life is filters.
+	\paragraph{The introduction of envelopes shows how deep the modular nature of synthesizers is} They are not a part in the linear chain of the audio processing pipeline. They are functions running parallel, injecting inputs into other modules. Envelopes can be used generically to modulate any kind of signal such as volume, filter frequency cutoff, or even the gain of an audio effect like reverb or distortion. The application of envelopes is limited to your imagination making them a powerful tool in audio synthesis. The same implementation of the envelope can be reused anywhere in the Synth class. Two more envelopes are planned for the Synth class with the added feature of routing their signals to arbitrary data members within the class. Where the envelope signals are applied can be configured through the hardware menu interface. With Voices and Envelopes implemented, we now have polyphony and volume dynamics. The remaining component to bring the synth to life is filters.
 
 	\subsubsection{Filters}
 	\paragraph{Up until this point, the control of the harmonic qualities of synth was fairly limited} The fundamental waveforms can be combined, mixed, and have their pitch altered to create harmonically rich signals. But the subtractive aspect of this subtractive synthesizer is conspicuously missing. Filters make up the subtractive nature of the system. They allow the user to selectively chop frequency bands from the final signal to emulate real-life instruments.\cite{welsh_2006} An synth audio filter typically has two main parameters: Frequency cutoff and resonance. Frequency cutoff (or just cutoff) determines the point where the filter begins cut out parts of the frequency spectrum. Resonance is a gain boost that can be applied around the cutoff frequency to boost a certain frequency band. \cite{musictech}
 	
 	\paragraph{The most common filters used in subtractive synthesis are low pass, high pass, and band pass filters} Applying a low pass filter to a signal has the effect of removing the more harsh upper harmonic frequencies making the signal more mellow and deep. This type of filter is effective in producing sounds like a bass guitar, bass drum, or cello. Applying a high pass filter will cut out the low frequencies in the signal. This is useful for creating a lead instrument intended to cut through the spectrum without sounding muddy from the lower range of frequencies. Usually, a high pass filter will be used to produce sounds like a flute, violin, or snare drum. A band pass filter is a combination of low and high pass filters. Both the high and low ends of the spectrum are removed leaving a small frequency band in the middle range. The system implements a Filter class that can be subclassed into the different types of filters depending on the desired frequency response. \cite{hass_2021} 
 	
-	\paragraph{My implementation of the Filtering is fairly simple: it uses a second-order difference equation} The difference equation is a type of discrete time-system that relates an output sample y[n] to its previous sample y[n-1] and y[n-2]. It applies also to input samples, relating input sample x[n] to x[n-1] and x[n-2]. When applied to an audio pipeline, it allows filtering to be performed on a discrete time signal within in a continous time domain.\cite{stanford_2007} 
+	\paragraph{My implementation of the Filtering is fairly simple: it uses a second-order difference equation} The difference equation is a type of discrete time-system that relates an output sample y[n] to its previous sample y[n-1] and y[n-2]. It applies also to input samples, relating input sample x[n] to x[n-1] and x[n-2]. When applied to an audio pipeline, it allows filtering to be performed on a discrete time signal within in a continous time domain.\cite{stanford_2007} The second-order difference equation is as follows: 
 	
-	The second-order difference equation is as follows: 
-	
-	\( y[n] = (b0x[n] + b1x[n-1] + b2x[n-2] - a1y[n-1] - a2y[n-2]) \)
+	\scalebox{1.3}{\( y[n] = (b0x[n] + b1x[n-1] + b2x[n-2] - a1y[n-1] - a2y[n-2]) \)}
 	
 	\paragraph{The variable y represents filtered output values and x represents unfiltered input values} The variables b0, b1, and b2 are known as feed forward coefficients. The variables a1 and a2 are known as feedback coefficients. The second-order difference equation is used to implement an \textit{infinite impule response}. The equation can be extended to perform all the needed functionality of our filter:
 	
-	\( y[n] = b0/a0*x[n] + b1/a0*x[n-1] + b2/a0*x[n-2] - a1/a0*y[n-1] - a2/a0*y[n-2] \)
+	\scalebox{1.3}{\( y[n] = \frac{b0}{a0}x[n] + \frac{b1}{a0}x[n-1] + \frac{b2}{a0}x[n-2] - \frac{a1}{a0}y[n-1] - \frac{a2}{a0}y[n-2] \)}
 	
 	\paragraph{In the updated function, we divide each of the feedback and feed forward coefficients by a third coefficent a0 which is known as the normalization coefficient} The normalization coefficient's function is to normalize the final output sample to unity gain and is calculated based off the filters resonance factor. The higher the resonance factor of the filter, the more a0 will boost the gain around the cutoff frequency. If you're as unfamiliar with DSP as I was when I started and you feel lost, you're in good company. It took many hours of staring and beard stroking for this to finally start clicking. I still feel my brain go fuzzy when I think about it. This section is packed with citations of textbooks on filters provided by several universities for free and can be read online for more information. \cite{lacamera_2020}
 	
-	\paragraph{"Okay. I believe you when you say this works. Now just where on earth did you get these coefficients?"} A method known as bilinear transform is used to generate the filter coefficients for my low-pass and high-pass filters. A bilinear transform function is used to map a continue continuous time transfer function to a discrete time transfer function. In this case, the discrete time-transfer function is the input samples from the oscillator. The continuous time transfer function is the filter as a second-order difference equation. The filter coefficients are generated by performing the bilinear transform based on the desired cutoff frequency and a fraction of the sample rate of the system.\cite{stanford_2007} The alpha portion of the filter represents how steep the attenuation of the signal is around the cutoff frequency of the filter. Resonance plays a part in the alpha coefficients as the resonance will factor into how much gain is applied around the cutoff frequency of the filter. Following is my code implementation of the low and high pass filters in my project with a sequence diagram to help visualize the flow of data through the filter and how previously generated values are stored for use on the next filter cycle.
+	\paragraph{"Okay. I believe you when you say this works. Now just where on earth did you get these coefficients?"} Because we are attempting to digitally emulate a filter that operates in the continuous time domain, we need to generate filter coefficients that will approximate the frequency response discrete time domain. A method known as bilinear transform is used to map a transfer function (in this case the filter frequency response) from the continuous time domain to a discrete time domain. By applying the bilinear transform, we can take approximate the coefficients necessary to perform the second order difference equation filter. The equation for bilinear transform is as follows: \cite{stanford_2007} 
+	
+	\scalebox{1.3}{\( s=c\frac{(1-z^{-1})}{(1+z^{-1})} \)}
+	
+	\paragraph{In the equation, s is a complex variable representing the filter coefficient in the continuous time domain} The variable z represents a discrete time transfer function which in our case is our filter cutoff frequency. The variable c is an arbitrary constant that is used to accurately map an analog frequency to a digital frequency. We can substitute z with a discrete time transfer function of the  filter cutoff frequency. The value of c is set to \( \frac{2}{T} \) where T is the sample rate. Evaluating the bilinear transfer will give us the coefficients we need for the difference equation filter. Below is a snippet of the coefficient calculation in action with extra comments explaining what is going on. The math for calculating the coefficients can quickly explode into long expressions. So some simplifications are made to keep thing easy on the eyes and brain. To get the dirty details, see the sources.
+	
+%	\paragraph{You may be wondering why most of the coefficients are just the first feed forward and feedback coefficients with extra arithmetic operations} The reason is that the first coefficient is just a constant that represents the frequency response of the filter. All the coefficients following are just minor attenuations or complete copies of the first in order to  The first coefficient is divided by two since the filter damping effect should be the weakest right at the cutoff frequency. The second is strongest to provide the greatest dampening effect. The third coefficient b2 is identical to the first, because by this point, the sample effected by b2 has already been significantly dampened by b0 and b1 so b2 will just do it a little bit more.
+	
+%	The alpha portion of the filter represents how steep the attenuation of the signal is around the cutoff frequency of the filter. Resonance plays a part in the alpha coefficients as the resonance will factor into how much gain is applied around the cutoff frequency of the filter. Following is my code implementation of the low and high pass filters in my project with a sequence diagram to help visualize the flow of data through the filter and how previously generated values are stored for use on the next filter cycle.
 	
 	\begin{minted}{c}
 //Filter.h
@@ -436,14 +479,15 @@ class Filter {
 	float x1, x2, y1, y2;
 };
 
+
+
 //This snippet of the second-order difference equation shows how
-//the output is generated based on previous inputs. The input and
-//output at the time of process are preserved and saved to x1 and y1
-//and the input/output values from the previous process cycle are
-//saved to x2 and y2. These saved inputs and outputs are used with
-//their cooresponding filter coefficients. The full effect of this
-//block shows how filtering is performed on a continous time transfer
-//domain to output samples in a discrete time transfer domain
+//the output is generated based on previous inputs. Each time process
+//is called, the input and output values and shifted over two be processed
+//with the next coefficients on the following process cycle. input becomes
+//x1, x1 becomes x2, etc. Each input and output will be multiplied by each
+//coefficient and incorporated into the final filtered sample which is the
+//function of the difference equation.
 float LowPassFilter::process(float input) {
 	float output = b0 / a0 * input + b1 / a0 * x1 + b2 / a0 * x2
 	- a1 / a0 * y1 - a2 / a0 * y2;
@@ -455,66 +499,50 @@ float LowPassFilter::process(float input) {
 	
 	return output;
 }
-	\end{minted}
-	
-	
-	\begin{wrapfigure}{r}{.5\textwidth}
-		\centering
-		\includegraphics[width=\linewidth]{filter_sequence_diagram}
-		\caption{Sequence diagram illustrating how audio samples are filtered}
-	\end{wrapfigure}
-	
-	\begin{minted}{c}
-//Filter.cpp
+
 void LowPassFilter::update_coefs() {
-	//w0 is the normalized cutoff frequency
-	float w0 = 2.0f * M_PI * cutoffFreq / sampleRate;
-	//Doing part of the bilinear transfer calculation here to make
-	//coeffecient calculation expressions easier to read
-	float cosw0 = std::cos(w0); 
-	//The attenuation factor around the cutoff
-	float alpha = std::sin(w0) / (2.0f * resonance); 
-	//The rest of the bilinear transform applied to generate the 
-	//coefficients for the second order difference equation
-	b0 = (1.0f - cosw0) / 2.0f;
-	b1 = 1.0f - cosw0;
-	b2 = (1.0f - cosw0) / 2.0f;
-	a0 = 1.0f + alpha;
-	a1 = -2.0f * cosw0;
-	a2 = 1.0f - alpha;
+	//Normalized cutoff frequency in radians per sample in digital domain.
+	float cutoff_norm = 2.0f * M_PI * cutoffFreq / sampleRate;
+	
+	//Applying cosin function to the normalized cutoff frequency to simplify
+	//the expressions for the bilinear transform
+	float cutoff_cos = std::cos(cutoff_norm);
+	
+	//freq_response_shape is refers to the shape of the frequency response
+	//in the filter as well as resonance boost around the cutoff frequency
+	float freq_response_shape = std::sin(cutoff_norm) / (2.0f * resonance);
+	
+	//A couple of steps in one here performing the bilinear transform
+	//We perform the bilinear transform by substituting the continuous time
+	//transfer function of the frequency cutoff to a transfer function of
+	//the frequency response in discrete time domain
+	b0 = (1.0f - cutoff_cos) / 2.0f;
+	b1 = 1.0f - cutoff_cos;
+	b2 = (1.0f - cutoff_cos) / 2.0f;
+	a0 = 1.0f + freq_response_shape;
+	a1 = -2.0f * cutoff_cos;
+	a2 = 1.0f - freq_response_shape;
 }
 	\end{minted}
 	
-	\paragraph{Adding filters to the project was a difficult concept to grasp} Because of my lack of previous experience, some concepts had to be taken with a bit of faith and proven by seeing them in action. Digital filters is such a complex concept that an entire semester of work could have be dedicated to fully understand the math behind them. This first naive attempt at filtering resulted in some stable low and high pass filters and some gained confidence. I believe now I can move forward and be able to do some deeper research into filters and implement more complex and capable filtering in the future.
-	
-\subsection{Hardware Platform}
-	\paragraph{A big decision in implementing this project was choosing the right microcontroller platform} I considered several options but settled on a popular and relatively new audio development ecosystem by Electro-Smith known as Daisy. Daisy is an Arm Cortex-M7 based development board that provides all the necessary processing power and peripherals necessary for audio processing. Daisy's core processor clocks at 480Mz and includeds extremely high-resolution digital-to-analog converter (DAC). In addition to the DAC, it supports the expected communication protocols such as I2C, UART, USB, Timers, etc. The biggest benefit to choosing Daisy as my platform was Electro-Smith's libDaisy library. libDaisy acts as an abstraction on top of the standard HAL libraries for the Cortex M7 and is designed to relieve the user of complications with hardware set up so they can focus on audio development. \cite{electro-smith} This made Daisy an attractive option. Audio processing was a completely foreign domain in programming, and Daisy coupled with its easy to use HAL seemed like a promising option that would give me the time I need to learn the ropes of audio development.
-	
-	\begin{wrapfigure}{r}{.5\textwidth}
-		\includegraphics[width=\linewidth]{daisy_promo_pic}
-		\caption{Daisy Seed by Electro-Smith. The microcontroller platform for this project}
-		\centering
-	\end{wrapfigure}
-
-	\paragraph{Daisy seemed to be a great choice at the time} Within minutes of connecting Daisy to my machine, I was able to set up an audio callback. I used a random number generator to play white noise out the DAC. After a few minutes of soldering some wires to an audio jack and connecting them to the DAC pins, I could hear static playing out my headphones. Hello world! It was exhilarating to write only a few lines of code and hear it come to life after a few minutes. I felt very strongly that Daisy was the right choice. What I was not aware of was the relative newness of the platform. Daisy originally was a Kickstarter-funded project which received incredible amounts of success and support. The platform was designed with musicians in mind, and the developers put a lot of work into supporting much more user-friendly development languages and frameworks like MaxMSP, Puredata, and Arduino. This made the system highly accessible to musicians with little to know experience in audio development. These layers of abstraction seems to have some unintended side effects. It meant that a lot of time put into customer accessibility, and full support for utilizing all hardware to its fullest capabilities was put off and is still in current development.
-
-%	\paragraph{This decision had unexpected consequences for my project} Some HAL library functions were not adaquately tested and did not work as they were supposed to.
+	\paragraph{With filters added to the mix, the synth is now subtractive and has endless potential to create new sounds} Many components remain to be implemented to the signal processing chain, like delay, reverb and overdrive effects. But the core system is in place and highly configurable. Next, I will explain the high level architecture of the hardware and how user interacts with it to drive the synth.
+%	
+%\subsection{Hardware Platform}
+%	\paragraph{A big decision in implementing this project was choosing the right microcontroller platform} I considered several options but settled on a popular and relatively new audio development ecosystem by Electro-Smith known as Daisy. Daisy is an Arm Cortex-M7 based development board that provides all the necessary processing power and peripherals necessary for audio processing. Daisy's core processor clocks at 480Mz and includeds extremely high-resolution digital-to-analog converter (DAC). In addition to the DAC, it supports the expected communication protocols such as I2C, UART, USB, Timers, etc. The biggest benefit to choosing Daisy as my platform was Electro-Smith's libDaisy library. libDaisy acts as an abstraction on top of the standard HAL libraries for the Cortex M7 and is designed to relieve the user of complications with hardware set up so they can focus on audio development. \cite{electro-smith} This made Daisy an attractive option. Audio processing was a completely foreign domain in programming, and Daisy coupled with its easy to use HAL seemed like a promising option that would give me the time I need to learn the ropes of audio development.
+%	
+%	\begin{wrapfigure}{r}{.5\textwidth}
+%		\includegraphics[width=\linewidth]{daisy_promo_pic}
+%		\caption{Daisy Seed by Electro-Smith. The microcontroller platform for this project}
+%		\centering
+%	\end{wrapfigure}
 %
-%	\begin{enumerate}
-%	\item One of the biggest disappointments was a lack of support for two-way USB communication outside of the bootloader. Toward the end of my project, I implemented a serial interfacing GUI application for remote control of my system. I discovered that the USB software support extended to either a dedicated interface for the device to either receive or transmit data over USB but not both. I had a choice to either hack a software solution involving handing off control between the host computer and device, or fix the USB configuration in the libDaisy library myself. A quicker option was to simply add a USB-UART converter chip and connect it to some generic UART pins on the device. I opted for the last option as I did not have extra time to waste at the end of my project.
-%	\item Another severely lacking feature was support for hardware s. Some of the HAL libraries provided satisfactory support for hardware interrupts for USB receive (this was insultingly frustrating as I could not talk back on the USB line). Additionally, there was no support for UART and GPIO interrupt service routines (ISR). This is the reason why MIDI data events processed with hardware timer driven polling. I believe this polling method resulted in MIDI data consumption that was not completely reliable.
-%	\item A last gripe I have with the platform is the datasheet claiming the availability of certain I2C and UART lines on the board's pins. It turned out that they are not all completely wired up in the board's current revision. This was not officially documented and instead made known through obscure forum posts on community forums. This lack of transparency and hardware support made hardware prototyping rather difficult.
-%	\end{enumerate}
+%	\paragraph{Daisy seemed to be a great choice at the time} Within minutes of connecting Daisy to my machine, I was able to set up an audio callback. I used a random number generator to play white noise out the DAC. After a few minutes of soldering some wires to an audio jack and connecting them to the DAC pins, I could hear static playing out my headphones. Hello world! It was exhilarating to write only a few lines of code and hear it come to life after a few minutes. I felt very strongly that Daisy was the right choice. What I was not aware of was the relative newness of the platform. Daisy originally was a Kickstarter-funded project which received incredible amounts of success and support. The platform was designed with musicians in mind, and the developers put a lot of work into supporting much more user-friendly development languages and frameworks like MaxMSP, Puredata, and Arduino. This made the system highly accessible to musicians with little to know experience in audio development. These layers of abstraction seems to have some unintended side effects. It meant that a lot of time put into customer accessibility, and full support for utilizing all hardware to its fullest capabilities was put off and is still in current development.
 %
-%	This whole experience soured me a bit about the Daisy platform in general. While I admire the ambition of the project to support programming in a variety of accessible languages that opens up audio development to new developers, I feel it would have been best to fully flesh out system in plain C before moving on to supporting things like Object Oriented Programming, visual programming languages, and Arduino. I \textbf{do} however relate to these developers biting off more than they could chew in their enthusiasm to implement these features. I made this same mistake in this very project (more on that later).
-
-	\paragraph{My original vision for the project was, as the master's capstone prompt recommends, very ambitious} My goal was to implement a near clone of \textit{my} first synthesizer, the Korg microKorg. The microKorg is a small but very powerful analog synthesizer with a minimalist interface. It has a small array of buttons for selecting patches from bank, an array of multifunctional potentiometers and a small 3 digit 7 segment display. My project would be in a similar spirit but with a few minor change in hardware layout: it would not include a built in keyboard but would be a headless unit that could be used by plugging in any standard MIDI keyboard. It would include a more sophisticated display that could communicate more explicitly to the user. The microKorg is an industry standard powerhouse synth packed into a small and inexpensive form factor. My goal was ambitious to say the least. \cite{ward_2003} At one point, I did have a stretch goal in mind. If I finished all the audio components and fx, I would add a small array of buttons that would allow the user play some notes without needing to connect a keyboard. This can be seen in my original design drawing. I truly was a bright-eyed summer child when I first envisioned this project.
+%	\paragraph{My original vision for the project was, as the master's capstone prompt recommends, very ambitious} My goal was to implement a near clone of \textit{my} first synthesizer, the Korg microKorg. The microKorg is a small but very powerful analog synthesizer with a minimalist interface. It has a small array of buttons for selecting patches from bank, an array of multifunctional potentiometers and a small 3 digit 7 segment display. My project would be in a similar spirit but with a few minor change in hardware layout: it would not include a built in keyboard but would be a headless unit that could be used by plugging in any standard MIDI keyboard. It would include a more sophisticated display that could communicate more explicitly to the user. The microKorg is an industry standard powerhouse synth packed into a small and inexpensive form factor. My goal was ambitious to say the least. \cite{ward_2003} At one point, I did have a stretch goal in mind. If I finished all the audio components and fx, I would add a small array of buttons that would allow the user play some notes without needing to connect a keyboard. This can be seen in my original design drawing. I truly was a bright-eyed summer child when I first envisioned this project.
 
 %	I will explain my implementation by first covering what I managed to complete. I will discuss the key components in the order they were implemented, and then have a small section cover the lesser features and a run down of the things I failed to complete.
 
 \subsection{The Hardware Prototype}
-	\paragraph{This section covers the hardware prototyping phase} It's important to cover hardware right out the gate. Much of the hardware was prototyped in parallel with the software because the system required the hardware interface in order to facilitate thorough testing.
-
 	\subsubsection{MIDI}
 	\paragraph{There is a 5-pin MIDI input circuit that allows the user to connect a standard MIDI cable between the MIDI output of a keyboard and the synthesizer} This functionality is plug-and-play. By plugging in the MIDI cable and powering on the device, the user can immediately start playing notes and music will play out headphones or a speaker  plugged into the 1/8" audio jack.
 	

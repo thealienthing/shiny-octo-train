@@ -19,16 +19,27 @@ LowPassFilter::LowPassFilter(float sample_rate, float cutoffFrequency, float q) 
 }
 
 void LowPassFilter::update_coefs() {
-    float w0 = 2.0f * M_PI * cutoffFreq / sampleRate;
-    float cosw0 = std::cos(w0);
-    float alpha = std::sin(w0) / (2.0f * resonance);
+    //Normalized cutoff frequency in radians per sample in digital domain.
+    float cutoff_norm = 2.0f * M_PI * cutoffFreq / sampleRate;
 
-    b0 = (1.0f - cosw0) / 2.0f;
-    b1 = 1.0f - cosw0;
-    b2 = (1.0f - cosw0) / 2.0f;
-    a0 = 1.0f + alpha;
-    a1 = -2.0f * cosw0;
-    a2 = 1.0f - alpha;
+    //Applying cosin function to the normalized cutoff frequency to simplify
+    //the expressions for the bilinear transform
+    float cutoff_cos = std::cos(cutoff_norm);
+
+    //freq_response_shape is refers to the shape of the frequency response
+    //in the filter as well as resonance boost around the cutoff frequency
+    float freq_response_shape = std::sin(cutoff_norm) / (2.0f * resonance);
+
+    //A couple of steps in one here performing the bilinear transform
+    //We perform the bilinear transform by substituting the continuous time
+    //transfer function of the frequency cutoff to a transfer function of
+    //the frequency response in discrete time domain
+    b0 = (1.0f - cutoff_cos) / 2.0f;
+    b1 = 1.0f - cutoff_cos;
+    b2 = (1.0f - cutoff_cos) / 2.0f;
+    a0 = 1.0f + freq_response_shape;
+    a1 = -2.0f * cutoff_cos;
+    a2 = 1.0f - freq_response_shape;
 }
 
 
@@ -53,15 +64,16 @@ HighPassFilter::HighPassFilter(float sample_rate, float cutoffFrequency, float q
 }
 
 void HighPassFilter::update_coefs() {
-    float w0 = 2.0f * M_PI * cutoffFreq / sampleRate;
-    float alpha = sin(w0) / (2.0f * resonance);
+    float cutoff_norm = 2.0f * M_PI * cutoffFreq / sampleRate;
+    float cutoff_cos = std::cos(cutoff_norm);
+    float freq_response_shape = sin(cutoff_norm) / (2.0f * resonance);
 
-    b0 = (1.0f + cos(w0)) / 2.0f;
-    b1 = -(1.0f + cos(w0));
-    b2 = (1.0f + cos(w0)) / 2.0f;
-    a0 = 1.0f + alpha;
-    a1 = -2.0f * cos(w0);
-    a2 = 1.0f - alpha;
+    b0 = (1.0f + cutoff_cos) / 2.0f;
+    b1 = -(1.0f + cutoff_cos);
+    b2 = (1.0f + cutoff_cos) / 2.0f;
+    a0 = 1.0f + freq_response_shape;
+    a1 = -2.0f * cutoff_cos;
+    a2 = 1.0f - freq_response_shape;
 }
 
 
