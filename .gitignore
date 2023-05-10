@@ -11,3 +11,10 @@ build/startup_stm32h750xx.o
 build/
 Makefile
 test/CursesScreen/curses_test
+docs/graduate_paper/LaTeX/GraduatePaper-BenStoneking.aux
+docs/graduate_paper/LaTeX/GraduatePaper-BenStoneking.bbl
+docs/graduate_paper/LaTeX/GraduatePaper-BenStoneking.blg
+docs/graduate_paper/LaTeX/GraduatePaper-BenStoneking.log
+docs/graduate_paper/LaTeX/GraduatePaper-BenStoneking.out
+docs/graduate_paper/LaTeX/GraduatePaper-BenStoneking.pdf
+docs/graduate_paper/LaTeX/GraduatePaper-BenStoneking.synctex.gz
