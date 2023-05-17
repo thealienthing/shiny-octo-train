@@ -160,7 +160,7 @@
 		\item Support polyphony, with capability to play up to eight discrete notes at a time.
 		\item Support mixing of multiple oscillators to generate hybrid waveforms.
 		\item Support \textbf{envelope} signal generation for dynamic modulation of other signals.
-		\item Implement a\textbf{Filter} module that supports lowpass, highpass and bandpass filtering, able to adjust frequency cutoff and resonance in real-time.
+		\item Implement a \textbf{Filter} module that supports lowpass, highpass and bandpass filtering, able to adjust frequency cutoff and resonance in real-time.
 		\item Implement \textbf{low-frequency oscillator (LFO)} module configurable to modulate the signals of other modules within the system.
 		\item Provide a memory bank where users can save their "patches" to use later.
 		\item Provide interaction between the user and the system via a \textbf{hardware interface}. User inputs include a MIDI jack for keyboard input and knobs for navigating a menu and changing parameters. Outputs include a 1/8" audio output jack for playback with headphones and speakers and a menu screen for communicating the system state to the user. Knobs adapt to the context of the menu to appropriately adjust parameters.
@@ -320,21 +320,21 @@ float Oscillator::get_sample()
 	
 	\paragraph{When "note on" messages are received, the synth loops through the array of voices until it finds a voice that is not currently active (i.e. playing a note)} Just \textit{how} it determines if a voice is currently active will be covered in the next section. Once the synth finds an inactive voice, it sets the voice's pitch according to the MIDI event and marks it as active. When note off events occur, the synth loops through the voices once again until it finds the active voice with the matching pitch. It then sets the voice as inactive. During an audio callback, the synth determines which voices it should get samples from by checking if they are active. Inactive voices are skipped. With this functionality in place, multiple notes can now be played at once, with the voices turning on and off as keys are pressed down and let up. If there is a time when a user pushes down more keys than there are voices, the note that has been active the longest will be deactivated and used to play the new note. This means the old pitch will be dropped from playback and replaced with the new one. This is a common policy for handling these situations in synthesizers.
 	
-	\begin{figure}[H]
-		\includegraphics[width=\linewidth]{voice_graph_diagram}
-		\caption{At this point in the system, the software architecture looks like this}
-		\centering
-	\end{figure}
+%	\begin{figure}[H]
+%		\includegraphics[width=\linewidth]{voice_graph_diagram}
+%		\caption{At this point in the system, the software architecture looks like this}
+%		\centering
+%	\end{figure}
 	
 	With voices and the synth class added to the architecture, the system is now officially a polyphonic synthesizer. To learn more, see Synth.cpp, Voice.cpp and Oscillator.cpp. The next component to address is the Envelope module.
 
 
 	\subsubsection{Envelopes}
 	
-	\begin{wrapfigure}{l}{.5\textwidth}
+	\begin{wrapfigure}{l}{.6\textwidth}
 		\centering
 		\caption{The states of the envelope and the events that trigger phase transitions}
-		\includegraphics[width=.8\linewidth]{envelope_state_diagram}
+		\includegraphics[width=.5\linewidth]{envelope_state_diagram}
 	\end{wrapfigure}
 	
 	\paragraph{Musical instruments get louder and quieter over time in different ways}. A percussive instrument like a drum or piano will instantly play at maximum volume. The loudness will diminish over time depending on the instrument. A bell, when struck, will ring out for a long time unless the player mutes the bell. A snare drum will go quiet almost immediately after it reaches its maximum volume. Conversely, a violin can increase in volume fast or slow and can play at the same volume indefinitely. Synthesizers have a way of emulating volume dynamics with an \textbf{amp envelope}. Before jumping into the Amp Envelope, a quick explanation of envelopes is needed. 
@@ -381,6 +381,10 @@ float Oscillator::get_sample()
 	\begin{equation}
 		\large
 		Interrupts: \frac{300}{1000}*1000=300
+		\label{eq:attack}
+	\end{equation}
+	\begin{equation}
+		\large
 		Attack constant: \frac{|0.0 - 1.0|}{300}=0.00333
 		\label{eq:attack}
 	\end{equation}
@@ -552,33 +556,17 @@ void LowPassFilter::update_coefs() {
 	\end{minted}
 	
 	\paragraph{With filters added to the mix, the synth is now subtractive and has endless potential to create new sounds} Many additional components are planned to be added to extend the systems capabilities, like LFO, additional routable envelopes and an audio fx chain. But the core system is in place and highly configurable. In the next section, I will cover the components of the hardware and how they work with the synth firmware.
-%	
-%\subsection{Hardware Platform}
-%	\paragraph{A big decision in implementing this project was choosing the right microcontroller platform} I considered several options but settled on a popular and relatively new audio development ecosystem by Electro-Smith known as Daisy. Daisy is an Arm Cortex-M7 based development board that provides all the necessary processing power and peripherals necessary for audio processing. Daisy's core processor clocks at 480Mz and includeds extremely high-resolution digital-to-analog converter (DAC). In addition to the DAC, it supports the expected communication protocols such as I2C, UART, USB, Timers, etc. The biggest benefit to choosing Daisy as my platform was Electro-Smith's libDaisy library. libDaisy acts as an abstraction on top of the standard HAL libraries for the Cortex M7 and is designed to relieve the user of complications with hardware set up so they can focus on audio development. \cite{electro-smith} This made Daisy an attractive option. Audio processing was a completely foreign domain in programming, and Daisy coupled with its easy to use HAL seemed like a promising option that would give me the time I need to learn the ropes of audio development.
-%	
-%	\begin{wrapfigure}{r}{.5\textwidth}
-%		\includegraphics[width=\linewidth]{daisy_promo_pic}
-%		\caption{Daisy Seed by Electro-Smith. The microcontroller platform for this project}
-%		\centering
-%	\end{wrapfigure}
-%
-%	\paragraph{Daisy seemed to be a great choice at the time} Within minutes of connecting Daisy to my machine, I was able to set up an audio callback. I used a random number generator to play white noise out the DAC. After a few minutes of soldering some wires to an audio jack and connecting them to the DAC pins, I could hear static playing out my headphones. Hello world! It was exhilarating to write only a few lines of code and hear it come to life after a few minutes. I felt very strongly that Daisy was the right choice. What I was not aware of was the relative newness of the platform. Daisy originally was a Kickstarter-funded project which received incredible amounts of success and support. The platform was designed with musicians in mind, and the developers put a lot of work into supporting much more user-friendly development languages and frameworks like MaxMSP, Puredata, and Arduino. This made the system highly accessible to musicians with little to know experience in audio development. These layers of abstraction seems to have some unintended side effects. It meant that a lot of time put into customer accessibility, and full support for utilizing all hardware to its fullest capabilities was put off and is still in current development.
-%
-%	\paragraph{My original vision for the project was, as the master's capstone prompt recommends, very ambitious} My goal was to implement a near clone of \textit{my} first synthesizer, the Korg microKorg. The microKorg is a small but very powerful analog synthesizer with a minimalist interface. It has a small array of buttons for selecting patches from bank, an array of multifunctional potentiometers and a small 3 digit 7 segment display. My project would be in a similar spirit but with a few minor change in hardware layout: it would not include a built in keyboard but would be a headless unit that could be used by plugging in any standard MIDI keyboard. It would include a more sophisticated display that could communicate more explicitly to the user. The microKorg is an industry standard powerhouse synth packed into a small and inexpensive form factor. My goal was ambitious to say the least. \cite{ward_2003} At one point, I did have a stretch goal in mind. If I finished all the audio components and fx, I would add a small array of buttons that would allow the user play some notes without needing to connect a keyboard. This can be seen in my original design drawing. I truly was a bright-eyed summer child when I first envisioned this project.
-
-%	I will explain my implementation by first covering what I managed to complete. I will discuss the key components in the order they were implemented, and then have a small section cover the lesser features and a run down of the things I failed to complete.
 
 \subsection{The Hardware Prototype}
 	\subsubsection{MIDI}
 	\paragraph{There is a 5-pin MIDI input circuit that allows the user to connect a standard MIDI cable between the MIDI output of a keyboard and the synthesizer} This functionality is plug-and-play allowing the user to play notes using any keyboard with a MIDI out jack.
-	
+
+	\paragraph{The MIDI circuit implements a standard of device safety for receiving incoming signals:} A device called an optocoupler (6N138) is the main component in the circuit. One side of the optocoupler receives incoming electrical signals from the MIDI input and converts it into an optical signal with an internal flashing diode. The other side of the chip has an internal light sensor to convert the optical signal back into a safe voltage for the UART line to read. This circuit handles cases where a connected keyboard or system is malfunctioning or outputting a voltage too high for the pins on the MCU. If device failure occurs the optocoupler will fry and the rest of the system remains protected. \cite{notesandvolts}
 	\begin{wrapfigure}{l}{.5\textwidth}
 		\includegraphics[width=8cm]{midi_optocoupler_circuit}
 		\caption{The MIDI input optocoupler circuit}
 		\centering
 	\end{wrapfigure}
-
-	\paragraph{The MIDI circuit implements a standard of device safety for receiving incoming signals:} A device called an optocoupler (6N138) is the main component in the circuit. One side of the optocoupler receives incoming electrical signals from the MIDI input and converts it into an optical signal with an internal flashing diode. The other side of the chip has an internal light sensor to convert the optical signal back into a safe voltage for the UART line to read. This circuit handles cases where a connected keyboard or system is malfunctioning or outputting a voltage too high for the pins on the MCU. If device failure occurs the optocoupler will fry and the rest of the system remains protected. \cite{notesandvolts}
 	
 	\paragraph{The hardware timer is responsible for receiving and processing MIDI data} The timer interrupt polls the UART line and parses the raw bytes into MIDI event data structures. The most common message types are note\_on and note\_off messages. Both message types contain a 7 bit number indicating the key that was pressed/released as well as a 7 bit number indicating the velocity (\textit{how hard} the key was pressed). Note\_off events have a velocity of 0.\cite{huber_2007} 
 	
@@ -588,6 +576,10 @@ void LowPassFilter::update_coefs() {
 	\paragraph{The method of controlling system parameters is based heavily on the Korg microKorg synthesizer} The interface is built around an array of five analog potentiometers. The parameters that the potentiometers control are contextual, determined by the current internal state of the synthesizer. The internal state of the synthesizer is communicated to the user with a 20x4 character LCD menu screen. Parameters are only mutable by the potentiometers as long as they are currently displayed on the screen. There is a main menu that displays a list of all the available menu contexts. The user can scroll through the main menu by turning the digital rotary encoder. The menu indicates which menu context is ready to be selected with an arrow symbol $<$$-$. The user can then select the menu context by pushing down on the rotary encoder. When a menu context is selected, the display renders the submenu with its associated parameters and the potentiometers are mapped to mutate the parameter values. While a submenu is selected, the registered readings on the potentiometers are interpolated to change the parameters with appropriate values. Turning the encoder knob will cause the screen to return to the main menu and deactivate the potentiometers. While in the main menu or any submenu, the settings of unrelated menu contexts will remain in their current state and be immutable.
 	
 	\paragraph{The hardware timer is also responsible for reading user input from the potentiometers and rotary encoder} When the timer interrupt runs, it reads in the ADCs connected to the potentiometers and stores their values in an array. The potentiometer readings and summed and averaged over the course of several interrupts to smooth the readings. After the readings are smoothed, if the difference between a value read from a potentiometer and the smoothed readings exceed a certain threshold, the system registers this as deliberate interaction between the user and the potentiometer. The reading from the potentiometer is then interpolated and assigned to the parameter mapped to it.
+	
+	\begin{figure}[h]
+	\includegraphics[width=.8\linewidth]{timer-interrupt}
+	\end{figure}
 
 	\begin{figure}[H]
 		\centering
@@ -677,6 +669,40 @@ void LowPassFilter::update_coefs() {
 
 \subsection{Navigating the menu}
 \paragraph{The menu system is navigated using the rotary encoder} Turn the encoder to scroll the menu and view the available menu contexts. An arrow icon will point to the submenu that will be selected when you press the encoder button down. When you find a menu you wish to configure, highlight it with the arrow icon and press down on the encoder. The menu will clear and render parameters of the submenu. At this point, the potentiometers are active and mapped to alter the parameters of this menu. The parameters listed on screen from top to bottom map to the first four potentiometers from left to right. Move the leftmost potentiometer will adjust to the top parameter in the screen and so on. To return to the main menu, turn the rotary encoder any direction.
+
+\subsection{Using the multipurpose knobs}
+\paragraph{The first four potentiometers from left to right map to the parameters on screen from top to bottom.} Depending on the selected menu, the values read from the knobs and displayed on screen will be different. Sometimes, the knob values may represent a discrete number in a numeric range, or they may just represent a specific type or setting like "sawtooth" for oscillator waveform. Moving a knob will not affect any change in the parameters unless the read value describes a new setting inside the mapped range. Since the knobs are multipurpose, you may need to move the knob a bit in one direction before seeing the change take affect. This is intentional so that you do not accidentally erase any existing settings you may have had because the knobs were moved to a new position while in a separate context. While in a menu context, only the parameters of that menu will be mutable. All other parameters will remain unchanged until you navigate back to the submenu that controls them. Once you are done changing parameters, move the menu context knob to return to the main menu and all parameters will be in an immutable state.
+
+\subsection{Configuring oscillators}
+\paragraph{To configure the oscillator waveforms, turn the menu encoder until the Oscillators submenu is highlighted by the arrow icon.} Press down the menu encoder to select the oscillator menu. The screen will reprint to display the current configuration of the oscillators:\\
+	\begin{enumerate}
+		\item Osc1Wave - Sin, Saw, Triangle, Square and Noise
+		\item Osc2Wave - Same as Osc1Wave
+		\item Osc2Semi - Semitone offset added to oscillator 2 pitch. Range from -24 to +24 (two octave below and above)
+		\item Osc2Tune - Hertz offset added to oscillator 2. Much smaller than semitones, used to for more subtle tuning and detuning.
+	\end{enumerate}
+
+\paragraph{To change the waveforms of the oscillators, rotate knobs 1 and 2 until the waveforms listed on the LCD screen begin to change.} If you are not sure whether you need to rotate clockwise or counter-clockwise, it may be a good idea to rotate all the way counter-clockwise until the knob is at its minimum value. Then you can start turning the knob until you select your desired waveform. After some practice and familiarizing yourself with the order of the waveforms, you will gain an intuition for which way you should turn the knobs to configure the waveforms more quickly. This same technique applies to all other parameters. The Osc2Semi parameters represents how many note values you are pitching up or down the second oscillator. You can pitch it down two full octaves, up to octaves or any number of semitones in between. Osc2Tune will apply a more granular level of pitch control in hertz. This allows you to alter the pitch to fit in between semitones to make the notes sharp or flat in relation to conventional keyboard tunings.
+
+\subsection{Configuring the amp envelope}
+\paragraph{To configure the amp envelope, turn the menu encoder until the Amp Envelope submenu is highlighted by the arrow icon.} Press down on the encoder to select the Amp Envelope menu. The screen will reprint to display the current envelope configuration:\\
+	\begin{enumerate}
+		\item Attack - How long it takes to reach maximum gain on the envelope in milliseconds (5-5000ms)
+		\item Decay - How long it takes to reach the sustain gain on the envelope in milliseconds (5-5000ms)
+		\item Sustain - The value of the sustain gain (0-1.0). The lower the value, the more quiet the voices will be during sustain.
+		\item Release - How long it takes for the gain to diminish back to 0 after releasing a note (5-5000ms).
+	\end{enumerate}
+
+\paragraph{The envelope configuration is easier to intuitively configure with the adaptive knobs}. Since the knobs are mapped to a range with many more values, moving the knobs will change the values almost immediately on screen. If you set a long attack value and press down on the keyboard, you will notice that the notes take much longer to reach max gain and will appear to swell in volume. The same observations can be made by setting longer sustain and release values. As an exercise, you can try setting up the envelope to mimic the dynamics of a guitar: Set the attack to 10ms, sustain and release to 500ms and decay to 0.5. The synth will now play notes with a percussive affect like plucking strings. The voice will reach full volume very quickly and then fade away slowly over time.
+
+\subsection{Filters and Mixer} 
+\paragraph{These menus contain some usable parameters but some parameters remain inactive as they require additional features.} To change the mix between the two oscillators within the voices, select the Mixer menu. Osc1 Lvl and Osc2 Lvl contain the gain value for each respective oscillator ranging from 0-1.0. To get a 50/50 mix of the two oscillators, set each parameter to 0.5. You can play with the mix by making one oscillator louder than the other. The configure the filter, select the the Filter menu. The cutoff parameter will affect what frequency the filter will begin to attenuate a the frequency spectrum and has a range from (100hz to 20000hz). If filter type is set to low pass, setting the frequency to 20000hz will affectively let all frequencies pass through resulting in the signal remaining unaffected. Setting the cuttoff to 1000hz will cut out most of the high frequency harmonics resulting in a much more mellow sound. Altering the resonance parameter will creating a gain boosting affect around the cutoff point on the filter with values ranging between 0-8.0. Setting a very high resonance factor will cause a lot of boosting around the cutoff point. It may not be immediately obvious, but "sweeping" the cutoff frequency by turning the knob as you play a note will demonstrating the boosting effect around the cutoff point. A more audible whirring or swishing affect can be heard (a classic sound effect often used with synthesizers).
+
+\subsection{Using the Remote Control GUI} To use the GUI app, you will need a USB Mini cable. Connect the USB Mini jack to the serial interface board located directly under the power supply board on the synth and your host PC. The source code is included in the synth repo as a submodule. By running \textit{git submodule update --init --recursive} within the main repo, the submodule \textit{serial\_control\_interface} will be cloned. \textit{cd} into this directory. It is written in python and utilizes the pyserial library and PySimpleGUI.
+
+To get started, create a python virtual environment and install the required libraries by running \textit{pip install -r requirements.txt}. The program can now be run with the command \textit{python main.py <serial device descriptor>}. On a standard linux ubuntu distribution, the device descriptor will appear as /dev/ttyUSB0. You may need to add your user to the \textit{dialout} group to have permissions to access serial devices.
+
+After you run this command, the GUI window will pop up with several tabs. The interface should be familiar with all the same available parameters available to change as in the menu screen. Moving the sliders or selecting a radio button will tell the GUI backend to transmit a command through the serial wire with encoded parameter data.
 
 \section{Related Works}
 \begin{description}
