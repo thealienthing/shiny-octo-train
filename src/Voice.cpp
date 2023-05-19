@@ -45,9 +45,9 @@ void Voice::set_waveform(Osc_Number osc_num, WaveForm waveform)
 float Voice::get_sample()
 {   
     if(amp_env.phase != Envelope::Phase::TAIL_OFF) {
-        float sample1 = (_osc1.get_sample() * _osc1_amp)/NUM_VOICES;
-        float sample2 = (_osc2.get_sample() * _osc2_amp)/NUM_VOICES;
-        return (sample1 + sample2) * amp_env.val;
+        float sample1 = (_osc1.get_sample() * _osc1_amp);
+        float sample2 = (_osc2.get_sample() * _osc2_amp);
+        return ((sample1 + sample2)/2 * amp_env.val)*0.5;
     }
     else {
         return 0.0;

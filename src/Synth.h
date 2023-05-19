@@ -60,7 +60,12 @@ public:
     void SetFilterResonance(float resonance);
     void PrintVoiceMap();
     void PrintVoiceInfo(uint8_t voice);
-    void AmpEnvelopeSet(Envelope::Phase phase, uint16_t val);
+    
+    void SetEnvelopeAttack(uint16_t attack);
+    void SetEnvelopeDecay(uint16_t decay);
+    void SetEnvelopeSustain(float sustain);
+    void SetEnvelopeRelease(uint16_t release);
+
     void AmpEnvelopeProcess();
     void ApplyPatch();
 

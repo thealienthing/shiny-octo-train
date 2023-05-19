@@ -73,7 +73,7 @@ void Hardware::Timer5Callback(void* data)
     if(timer5_counter % 10 == 0) {
         double vol = LINEAR_TO_LOG(smoothed_readings[4], UINT16_MAX);
         //synth_hw.PrintLine("Master = %f", vol);
-        synth->_amp = vol;
+        synth->_amp = vol*0.8;
     }
     if(synth->_console_print) {
         synth->_console_print = false;
@@ -306,6 +306,11 @@ void Hardware::synth_hardware_init() {
     
     //Setup the lcd screen
     synth_lcd.init();
+    System::Delay(5);
+    synth_lcd.init();
+    System::Delay(5);
+    synth_lcd.init();
+    System::Delay(5);
     synth_lcd.cursor_setup(true, true);
     synth_lcd.clear();
 
@@ -338,7 +343,8 @@ void Hardware::synth_hardware_init() {
     
     timer5.Start();
 
-    load_patch1(&(synth->patch_params));
+    //load_patch1(&(synth->patch_params));
+    System::Delay(100);
     synth->ApplyPatch();
 
     synth_hw.PrintLine("Initializing patchbay...");

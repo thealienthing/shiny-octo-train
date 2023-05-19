@@ -22,7 +22,7 @@ float Synth::ProcessAudio() {
         }
     }
     sample = filter->process(sample);
-    return sample * _amp;
+    return (sample * _amp)/(float)NUM_VOICES;
 }
 
 void Synth::SetFilterType(FilterType filter_type) {
@@ -61,17 +61,21 @@ void Synth::SetFilterResonance(float resonance) {
     filter->set_resonance(patch_params.filter_resonance);
 }
 
-void Synth::AmpEnvelopeSet(Envelope::Phase phase, uint16_t val) {
-    for(uint8_t i = 0; i < NUM_VOICES; i++) {
-        if(phase == Envelope::Phase::ATTACK)
-            _voices[i].amp_env.set_attack(val);
-        else if(phase == Envelope::Phase::DECAY)
-            _voices[i].amp_env.set_decay(val);
-        else if(phase == Envelope::Phase::SUSTAIN)
-            _voices[i].amp_env.set_sustain(val);
-        else if(phase == Envelope::Phase::RELEASE)
-            _voices[i].amp_env.set_release(val);
-    }
+void Synth::SetEnvelopeAttack(uint16_t attack) {
+    for(uint8_t i = 0; i < NUM_VOICES; i++)
+        _voices[i].amp_env.set_attack(attack);
+}
+void Synth::SetEnvelopeDecay(uint16_t decay) {
+    for(uint8_t i = 0; i < NUM_VOICES; i++)
+        _voices[i].amp_env.set_decay(decay);
+}
+void Synth::SetEnvelopeSustain(float sustain) {
+    for(uint8_t i = 0; i < NUM_VOICES; i++)
+        _voices[i].amp_env.set_sustain(sustain);
+}
+void Synth::SetEnvelopeRelease(uint16_t release) {
+    for(uint8_t i = 0; i < NUM_VOICES; i++)
+        _voices[i].amp_env.set_release(release);
 }
 
 void Synth::SetOscillatorLevel(Voice::Osc_Number osc, float level) {
@@ -144,19 +148,19 @@ void Synth::MidiCCProcess(ControlChangeEvent event) {
 
         //Amp and filter envelope controls
         case CC_AMP_ENV_ATTACK: {
-            AmpEnvelopeSet(Envelope::Phase::ATTACK, event.value);
+            //AmpEnvelopeSet(Envelope::Phase::ATTACK, event.value);
             break;
         }
         case CC_AMP_ENV_DECAY: {
-            AmpEnvelopeSet(Envelope::Phase::DECAY, event.value);
+            //AmpEnvelopeSet(Envelope::Phase::DECAY, event.value);
             break;
         }
         case CC_AMP_ENV_SUSTAIN: {
-            AmpEnvelopeSet(Envelope::Phase::SUSTAIN, event.value);
+            //AmpEnvelopeSet(Envelope::Phase::SUSTAIN, event.value);
             break;
         }
         case CC_AMP_ENV_RELEASE: {
-            AmpEnvelopeSet(Envelope::Phase::RELEASE, event.value);
+            //AmpEnvelopeSet(Envelope::Phase::RELEASE, event.value);
             break;
         }
         case CC_FILTER_ENV_ATTACK: {
@@ -279,8 +283,8 @@ void Synth::ApplyPatch() {
     SetFilterResonance(patch_params.filter_resonance);
 
     //Setup amp envelope according to patch params
-    AmpEnvelopeSet(Envelope::ATTACK, patch_params.amp_env_attack);
-    AmpEnvelopeSet(Envelope::DECAY, patch_params.amp_env_decay);
-    AmpEnvelopeSet(Envelope::SUSTAIN, patch_params.amp_env_sustain);
-    AmpEnvelopeSet(Envelope::RELEASE, patch_params.amp_env_release);
+    SetEnvelopeAttack(patch_params.amp_env_attack);
+    SetEnvelopeDecay(patch_params.amp_env_decay);
+    SetEnvelopeSustain(patch_params.amp_env_sustain);
+    SetEnvelopeRelease(patch_params.amp_env_release);
 }

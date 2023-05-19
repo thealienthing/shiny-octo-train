@@ -94,7 +94,7 @@ struct PatchParams {
 
     //filter menu
     int filter_type = 0;
-    uint32_t filter_cutoff = 100; // Percent of frequencies allowed to pass
+    uint32_t filter_cutoff = 6000; // Percent of frequencies allowed to pass
     float filter_resonance = 1.0;
     float filter_env_intensity = 0.5;
 

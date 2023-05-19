@@ -37,7 +37,7 @@ public:
     float get_release();
     void set_attack(uint16_t attack);
     void set_decay(uint16_t decay);
-    void set_sustain(uint16_t sustain);
+    void set_sustain(float sustain);
     void set_release(uint16_t release);
     
 private:

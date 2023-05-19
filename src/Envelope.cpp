@@ -68,8 +68,9 @@ void Envelope::set_decay(uint16_t decay) {
     //
 }
 
-void Envelope::set_sustain(uint16_t sustain) {
-    _sustain = (float)sustain / (float)UINT16_MAX;
+void Envelope::set_sustain(float sustain) {
+    // _sustain = (float)sustain / (float)UINT16_MAX; //This line seems like a mistake. I should be passing the normalized value
+    _sustain = sustain;
     //If sustain has changed, we need to update decay time
     //set_decay(_decay);
     //

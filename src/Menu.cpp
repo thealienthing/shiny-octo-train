@@ -3,7 +3,7 @@
 #include <cstdio>
 #include "LCDScreen.h"
 
-extern PatchParams patch_params;
+//extern PatchParams patch_params;
 char WaveFormStrings[(int)WaveFormEnd][10] = {"Sin", "Tri", "Saw", "Square", "Noise"};
 char FilterTypeStrings[(int)FilterTypeEnd][10] = {"-24Low", "-12Low", "-12Band", "-12High"};
 
@@ -322,21 +322,21 @@ void Menu::update_menu_params(int param_num) {
                 attack = attack*LINEAR_TO_LOG(attack, 5000);
                 attack = (attack < 5) ? 5 : attack;
                 synth->patch_params.amp_env_attack = attack;
-                synth->AmpEnvelopeSet(Envelope::ATTACK, synth->patch_params.amp_env_attack);
+                synth->SetEnvelopeAttack(synth->patch_params.amp_env_attack);
             }
             else if(param_num == 1){
                 //Same thing here for decay time. Max decay time 5000ms
                 int decay = KNOB_RANGE_TO_MS_RANGE(knob_readings[param_num], 5000);
                 decay = decay*LINEAR_TO_LOG(decay, 5000);
-                decay = (decay < 5) ? 5 : decay;
+                decay = (decay < 20) ? 20 : decay;
                 synth->patch_params.amp_env_decay = decay;
-                synth->AmpEnvelopeSet(Envelope::DECAY, synth->patch_params.amp_env_decay);
+                synth->SetEnvelopeDecay(synth->patch_params.amp_env_decay);
             }
 
             else if(param_num == 2){
                 //Volume range 0-1.0
                 synth->patch_params.amp_env_sustain = (float)knob_readings[param_num]/(float)UINT16_MAX;
-                synth->AmpEnvelopeSet(Envelope::SUSTAIN, knob_readings[param_num]);
+                synth->SetEnvelopeSustain(synth->patch_params.amp_env_sustain);
             }
             else if(param_num == 3){
                 //Same thing here as with attack and decay. Max release 5000ms
@@ -344,7 +344,7 @@ void Menu::update_menu_params(int param_num) {
                 release = release*LINEAR_TO_LOG(release, 5000);
                 release = (release < 5) ? 5 : release;
                 synth->patch_params.amp_env_release = release;
-                synth->AmpEnvelopeSet(Envelope::RELEASE, synth->patch_params.amp_env_release);
+                synth->SetEnvelopeRelease(synth->patch_params.amp_env_release);
             }
             else {
 
