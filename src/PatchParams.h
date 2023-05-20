@@ -93,7 +93,7 @@ struct PatchParams {
     float noise_level = 0.0;
 
     //filter menu
-    int filter_type = 0;
+    FilterType filter_type = FilterType::LowPass;
     uint32_t filter_cutoff = 6000; // Percent of frequencies allowed to pass
     float filter_resonance = 1.0;
     float filter_env_intensity = 0.5;
@@ -164,7 +164,7 @@ inline void load_patch1(PatchParams* params) {
     params->noise_level = 0.0;
 
     //filter menu
-    params->filter_type = 0;
+    params->filter_type = FilterType::LowPass;
     params->filter_cutoff = 1000; // Percent of frequencies allowed to pass
     params->filter_resonance = 1.0;
     params->filter_env_intensity = 0.5;

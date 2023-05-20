@@ -10,7 +10,7 @@ Synth::Synth(float sample_rate) {
         _voices[i].set_waveform(Voice::Osc_Number::Osc1, _osc1_wf);
         _voices[i].set_waveform(Voice::Osc_Number::Osc2, _osc2_wf);
     }
-    filter = new LowPassFilter(sample_rate, patch_params.filter_cutoff, patch_params.filter_resonance);
+    filter = new Filter(FilterType::LowPass, sample_rate, patch_params.filter_cutoff, patch_params.filter_resonance);
 }
 
 float Synth::ProcessAudio() {
@@ -26,29 +26,7 @@ float Synth::ProcessAudio() {
 }
 
 void Synth::SetFilterType(FilterType filter_type) {
-    /*
-    if(filter != nullptr) {
-        delete filter;
-        if(patch_params.filter_type == FilterType::LowPass){
-            filter = new LowPassFilter(_sample_rate,
-                patch_params.filter_cutoff,
-                patch_params.filter_resonance
-            );
-        }
-        else if(patch_params.filter_type == FilterType::HighPass){
-            filter = new HighPassFilter(_sample_rate,
-                patch_params.filter_cutoff,
-                patch_params.filter_resonance
-            );
-        }
-        else {
-            filter = new LowPassFilter(_sample_rate,
-                patch_params.filter_cutoff,
-                patch_params.filter_resonance
-            );
-        }
-    }
-    */
+    filter->set_filter_type(filter_type);
 }
 
 void Synth::SetFilterCutoff(uint32_t freq_hz) {

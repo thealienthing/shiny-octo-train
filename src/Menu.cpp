@@ -5,7 +5,7 @@
 
 //extern PatchParams patch_params;
 char WaveFormStrings[(int)WaveFormEnd][10] = {"Sin", "Tri", "Saw", "Square", "Noise"};
-char FilterTypeStrings[(int)FilterTypeEnd][10] = {"-24Low", "-12Low", "-12Band", "-12High"};
+char FilterTypeStrings[(int)FilterTypeEnd][10] = {"LowPass", "HighPass", "BandPass"};
 
 MenuOption::MenuOption(const char* _name, MenuID _id) {
     strcpy(name, _name);
@@ -136,7 +136,7 @@ void Menu::print_menu_params() {
             break;
         }
         case MenuID::FILTER: {
-            FilterType filter_index[] = {FilterType::LowPass24db, FilterType::LowPass12db, FilterType::BandPass12db, FilterType::HighPass12db};
+            FilterType filter_index[] = {FilterType::LowPass, FilterType::HighPass, FilterType::BandPass};
             lcd->put_cur(0,10);
             sprintf(out, "%9s", FilterTypeStrings[filter_index[synth->patch_params.filter_type]]);
             lcd->send_string(out);
@@ -274,9 +274,10 @@ void Menu::update_menu_params(int param_num) {
             break;
         }
         case MenuID::FILTER: {
-            FilterType filter_index[] = {FilterType::LowPass24db, FilterType::LowPass12db, FilterType::BandPass12db, FilterType::HighPass12db};
+            FilterType filter_index[] = {FilterType::LowPass, FilterType::HighPass, FilterType::BandPass};
             if(param_num == 0){
-                synth->patch_params.filter_type = filter_index[KNOB_RANGE_TO_INT(knob_readings[param_num],(int)FilterType::HighPass12db)];
+                synth->patch_params.filter_type = filter_index[KNOB_RANGE_TO_INT(knob_readings[param_num],(int)FilterType::BandPass)];
+                synth->SetFilterType(synth->patch_params.filter_type);
             }
             else if(param_num == 1) {
                 synth->patch_params.filter_cutoff = knob_readings[param_num]/(float)UINT16_MAX*20000;
