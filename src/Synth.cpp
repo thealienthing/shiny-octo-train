@@ -206,7 +206,7 @@ void Synth::MidiNoteOn(NoteOnEvent event) {
         _voices[voice_index].amp_env.note_on();
     }
     
-    PrintVoiceMap();
+    //PrintVoiceMap();
 }
 
 void Synth::MidiNoteOff(NoteOffEvent event) {
@@ -229,7 +229,7 @@ void Synth::MidiNoteOff(NoteOffEvent event) {
     //_voice_map[_voice_count-1] = NoteOnEvent();
     //_voice_count--;
 
-    PrintVoiceMap();
+    //PrintVoiceMap();
 }
 
 void Synth::PrintVoiceMap() {
