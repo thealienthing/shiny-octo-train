@@ -218,6 +218,7 @@ void Hardware::MIDIProcess() {
             case NoteOff:
             {
                 synth_hw.SetLed(false);
+                synth_hw.PrintLine("NoteOff -> %d", msg.AsNoteOn().note);
                 synth->MidiNoteOff(msg.AsNoteOff());
                 // auto note_msg = msg.AsNoteOff();
                 // _amp = 0.0;
